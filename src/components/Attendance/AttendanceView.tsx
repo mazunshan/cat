@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Users, TrendingUp, CheckCircle, XCircle, AlertTriangle, Filter, Download, Search, Edit, Info } from 'lucide-react';
-import { useAttendance } from '../../hooks/useSupabase';
+import { useAttendance } from '../../hooks/useDatabase';
 import { useAuth } from '../../context/AuthContext';
 import AttendanceCalendar from './AttendanceCalendar';
 import AttendanceStats from './AttendanceStats';
