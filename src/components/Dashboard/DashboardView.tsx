@@ -2,9 +2,12 @@ import React from 'react';
 import { Users, ShoppingBag, DollarSign, TrendingUp, Clock, AlertTriangle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import StatsCard from './StatsCard';
+import SalesPerformanceRanking from './SalesPerformanceRanking';
 import { useCustomers, useOrders, useProducts } from '../../hooks/useDatabase';
+import { useAuth } from '../../context/AuthContext';
 
 const DashboardView: React.FC = () => {
+  const { user } = useAuth();
   const { customers = [], loading: customersLoading, error: customersError } = useCustomers();
   const { orders = [], loading: ordersLoading, error: ordersError } = useOrders();
   const { products = [], loading: productsLoading, error: productsError } = useProducts();
@@ -251,150 +254,163 @@ const DashboardView: React.FC = () => {
         />
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sales Trend */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">销售趋势</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={salesData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="name" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'white', 
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                }}
-                formatter={(value, name) => [
-                  name === 'sales' ? `¥${value.toLocaleString()}` : value,
-                  name === 'sales' ? '销售额' : '订单数'
-                ]}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="sales" 
-                stroke="#3B82F6" 
-                strokeWidth={3}
-                dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, stroke: '#3B82F6', strokeWidth: 2 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Breed Distribution */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">品种销售分布</h3>
-          {breedData.length > 0 ? (
-            <>
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Left Column - Charts (3/4 width) */}
+        <div className="lg:col-span-3 space-y-6">
+          {/* Charts Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Sales Trend */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">销售趋势</h3>
               <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={breedData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {breedData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
+                <LineChart data={salesData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="name" stroke="#6b7280" />
+                  <YAxis stroke="#6b7280" />
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: 'white', 
                       border: '1px solid #e5e7eb',
-                      borderRadius: '8px'
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                     }}
-                    formatter={(value) => [`${value}%`, '占比']}
+                    formatter={(value, name) => [
+                      name === 'sales' ? `¥${value.toLocaleString()}` : value,
+                      name === 'sales' ? '销售额' : '订单数'
+                    ]}
                   />
-                </PieChart>
+                  <Line 
+                    type="monotone" 
+                    dataKey="sales" 
+                    stroke="#3B82F6" 
+                    strokeWidth={3}
+                    dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, stroke: '#3B82F6', strokeWidth: 2 }}
+                  />
+                </LineChart>
               </ResponsiveContainer>
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                {breedData.map((item, index) => (
-                  <div key={index} className="flex items-center">
-                    <div 
-                      className="w-3 h-3 rounded-full mr-2" 
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <span className="text-sm text-gray-600">{item.name} ({item.value}%)</span>
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="flex items-center justify-center h-64 text-gray-500">
-              <p>暂无销售数据</p>
             </div>
-          )}
-        </div>
 
-        {/* Payment Methods */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">付款方式分布</h3>
-          {paymentMethodData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={paymentMethodData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="name" stroke="#6b7280" />
-                <YAxis stroke="#6b7280" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white', 
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px'
-                  }}
-                  formatter={(value) => [`${value}%`, '占比']}
-                />
-                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                  {paymentMethodData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex items-center justify-center h-64 text-gray-500">
-              <p>暂无订单数据</p>
-            </div>
-          )}
-        </div>
-
-        {/* Recent Activity */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">最近活动</h3>
-          <div className="space-y-4">
-            {recentActivities.length > 0 ? (
-              recentActivities.map((activity, index) => (
-                <div key={index} className={`flex items-center p-3 rounded-lg ${
-                  activity.color === 'blue' ? 'bg-blue-50' :
-                  activity.color === 'green' ? 'bg-green-50' :
-                  'bg-yellow-50'
-                }`}>
-                  <div className={`w-2 h-2 rounded-full mr-3 ${
-                    activity.color === 'blue' ? 'bg-blue-500' :
-                    activity.color === 'green' ? 'bg-green-500' :
-                    'bg-yellow-500'
-                  }`} />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-800">{activity.title}</p>
-                    <p className="text-xs text-gray-600">{activity.description}</p>
+            {/* Breed Distribution */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">品种销售分布</h3>
+              {breedData.length > 0 ? (
+                <>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={breedData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {breedData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'white', 
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px'
+                        }}
+                        formatter={(value) => [`${value}%`, '占比']}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    {breedData.map((item, index) => (
+                      <div key={index} className="flex items-center">
+                        <div 
+                          className="w-3 h-3 rounded-full mr-2" 
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <span className="text-sm text-gray-600">{item.name} ({item.value}%)</span>
+                      </div>
+                    ))}
                   </div>
-                  <span className="text-xs text-gray-500">{getActivityTimeText(activity.time)}</span>
+                </>
+              ) : (
+                <div className="flex items-center justify-center h-64 text-gray-500">
+                  <p>暂无销售数据</p>
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <p>暂无最近活动</p>
+              )}
+            </div>
+
+            {/* Payment Methods */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">付款方式分布</h3>
+              {paymentMethodData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={paymentMethodData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="name" stroke="#6b7280" />
+                    <YAxis stroke="#6b7280" />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'white', 
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px'
+                      }}
+                      formatter={(value) => [`${value}%`, '占比']}
+                    />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                      {paymentMethodData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-64 text-gray-500">
+                  <p>暂无订单数据</p>
+                </div>
+              )}
+            </div>
+
+            {/* Recent Activity */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">最近活动</h3>
+              <div className="space-y-4">
+                {recentActivities.length > 0 ? (
+                  recentActivities.map((activity, index) => (
+                    <div key={index} className={`flex items-center p-3 rounded-lg ${
+                      activity.color === 'blue' ? 'bg-blue-50' :
+                      activity.color === 'green' ? 'bg-green-50' :
+                      'bg-yellow-50'
+                    }`}>
+                      <div className={`w-2 h-2 rounded-full mr-3 ${
+                        activity.color === 'blue' ? 'bg-blue-500' :
+                        activity.color === 'green' ? 'bg-green-500' :
+                        'bg-yellow-500'
+                      }`} />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-800">{activity.title}</p>
+                        <p className="text-xs text-gray-600">{activity.description}</p>
+                      </div>
+                      <span className="text-xs text-gray-500">{getActivityTimeText(activity.time)}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>暂无最近活动</p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
+
+        {/* Right Column - Sales Performance Ranking (1/4 width, only for admin) */}
+        {user?.role === 'admin' && (
+          <div className="lg:col-span-1">
+            <SalesPerformanceRanking orders={safeOrders} customers={safeCustomers} />
+          </div>
+        )}
       </div>
     </div>
   );
