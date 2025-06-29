@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   Home, Users, ShoppingBag, Package, BookOpen, 
-  BarChart3, Settings, LogOut, HeadphonesIcon, Clock
+  BarChart3, Settings, LogOut, HeadphonesIcon, Clock, Trophy
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -21,8 +21,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
       { id: 'orders', label: '订单管理', icon: ShoppingBag, roles: ['admin', 'sales', 'after_sales'] },
       { id: 'products', label: '产品管理', icon: Package, roles: ['admin', 'sales'] },
       { id: 'knowledge', label: '知识库', icon: BookOpen, roles: ['admin', 'sales', 'after_sales'] },
-      { id: 'attendance', label: '考勤打卡', icon: Clock, roles: ['admin', 'sales', 'after_sales'] },
-      { id: 'analytics', label: '数据分析', icon: BarChart3, roles: ['admin'] }
+      { id: 'attendance', label: '考勤打卡', icon: Clock, roles: ['admin', 'sales', 'after_sales'] }
     ];
 
     // 售后专员特有的菜单项
@@ -35,8 +34,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
       });
     }
 
-    // 管理员可以访问系统设置
+    // 管理员特有的菜单项
     if (user?.role === 'admin') {
+      baseItems.push({ 
+        id: 'analytics', 
+        label: '销售业绩排名', 
+        icon: Trophy, 
+        roles: ['admin'] 
+      });
       baseItems.push({ 
         id: 'settings', 
         label: '系统设置', 

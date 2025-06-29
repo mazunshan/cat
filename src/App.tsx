@@ -12,6 +12,7 @@ import KnowledgeView from './components/Knowledge/KnowledgeView';
 import SettingsView from './components/Settings/SettingsView';
 import AfterSalesView from './components/AfterSales/AfterSalesView';
 import AttendanceView from './components/Attendance/AttendanceView';
+import SalesPerformanceView from './components/Dashboard/SalesPerformanceView';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, user, loginStatus, loginMessage, clearLoginMessage } = useAuth();
@@ -29,7 +30,7 @@ const AppContent: React.FC = () => {
       products: '产品管理',
       knowledge: '知识库',
       attendance: '考勤管理',
-      analytics: '数据分析',
+      analytics: '销售业绩排名',
       settings: '系统设置',
       after_sales: '售后服务'
     };
@@ -51,7 +52,7 @@ const AppContent: React.FC = () => {
       case 'attendance':
         return <AttendanceView />;
       case 'analytics':
-        return <DashboardView />; // Reusing dashboard for now
+        return <SalesPerformanceView />;
       case 'settings':
         return <SettingsView />;
       case 'after_sales':
