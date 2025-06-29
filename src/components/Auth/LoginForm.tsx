@@ -187,15 +187,6 @@ const LoginForm: React.FC = () => {
           </button>
         </form>
 
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <p className="text-sm text-gray-600 mb-2">测试账户:</p>
-          <div className="text-xs text-gray-500 space-y-1">
-            <p>管理员: admin / password123</p>
-            <p>销售员: sales1 / password123 (需要验证码)</p>
-            <p>售后专员: aftersales1 / password123 (需要验证码)</p>
-          </div>
-        </div>
-
         {/* Supabase 配置提示 */}
         {loginStatus === 'error' && isConnectionError && (
           <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
