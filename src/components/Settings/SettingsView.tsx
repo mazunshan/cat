@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Users, Shield, Bell, Globe, RefreshCw, Trash2, AlertTriangle, CheckCircle, User, Key, Copy } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { supabase } from '../../lib/supabase';
 
 interface SystemSettings {
   general: {
@@ -38,17 +37,26 @@ interface UserData {
   email: string;
   name: string;
   role: string;
-  is_active: boolean;
-  created_at: string;
-  last_login?: string;
+  isActive: boolean;
+  createdAt: string;
 }
 
 const SettingsView: React.FC = () => {
-  const { user, systemSettings, updateSystemSettings, generateVerificationCode } = useAuth();
+  const { 
+    user, 
+    systemSettings, 
+    updateSystemSettings, 
+    generateVerificationCode,
+    users,
+    addUser,
+    toggleUserStatus,
+    removeUser,
+    refreshUsers
+  } = useAuth();
+  
   const [activeTab, setActiveTab] = useState('general');
   const [loading, setLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
-  const [users, setUsers] = useState<UserData[]>([]);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showVerificationCode, setShowVerificationCode] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
@@ -98,30 +106,6 @@ const SettingsView: React.FC = () => {
     { id: 'security', label: '安全设置', icon: Shield },
     { id: 'notifications', label: '通知设置', icon: Bell }
   ];
-
-  // 加载用户数据
-  const fetchUsers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Failed to fetch users:', error);
-        return;
-      }
-      setUsers(data || []);
-    } catch (error) {
-      console.error('Failed to fetch users:', error);
-    }
-  };
-
-  useEffect(() => {
-    if (user?.role === 'admin') {
-      fetchUsers();
-    }
-  }, [user]);
 
   // 同步系统设置
   useEffect(() => {
@@ -177,52 +161,10 @@ const SettingsView: React.FC = () => {
 
     try {
       setLoading(true);
-      
-      // First create the auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: newUser.email,
-        password: newUser.password,
-        options: {
-          data: {
-            username: newUser.username,
-            role: newUser.role,
-            name: newUser.name
-          }
-        }
-      });
-
-      if (authError) {
-        console.error('Auth signup error:', authError);
-        throw authError;
-      }
-
-      if (authData.user) {
-        // Then create the user profile
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .insert([{
-            id: authData.user.id,
-            username: newUser.username,
-            email: newUser.email,
-            name: newUser.name,
-            role: newUser.role,
-            is_active: true
-          }])
-          .select()
-          .single();
-
-        if (userError) {
-          console.error('User profile creation error:', userError);
-          throw userError;
-        }
-
-        if (userData) {
-          setUsers(prev => [userData, ...prev]);
-          setNewUser({ username: '', email: '', name: '', role: 'sales', password: '' });
-          setShowAddUserModal(false);
-          alert(`用户 ${userData.name} 创建成功！`);
-        }
-      }
+      await addUser(newUser);
+      setNewUser({ username: '', email: '', name: '', role: 'sales', password: '' });
+      setShowAddUserModal(false);
+      alert(`用户 ${newUser.name} 创建成功！`);
     } catch (error) {
       console.error('Failed to add user:', error);
       alert('添加用户失败: ' + (error as Error).message);
@@ -233,18 +175,10 @@ const SettingsView: React.FC = () => {
 
   const handleToggleUserStatus = async (userId: string, currentStatus: boolean) => {
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ is_active: !currentStatus })
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      setUsers(prev => prev.map(u => 
-        u.id === userId ? { ...u, is_active: !currentStatus } : u
-      ));
+      await toggleUserStatus(userId, currentStatus);
     } catch (error) {
       console.error('Failed to toggle user status:', error);
+      alert('更新用户状态失败');
     }
   };
 
@@ -258,33 +192,7 @@ const SettingsView: React.FC = () => {
     
     try {
       setLoading(true);
-      
-      // Delete from users table
-      const { error: userError } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', userToDelete.id);
-
-      if (userError) {
-        console.error('Error deleting user from users table:', userError);
-        throw userError;
-      }
-
-      // Delete from auth.users if possible
-      try {
-        const { error: authError } = await supabase.auth.admin.deleteUser(
-          userToDelete.id
-        );
-        
-        if (authError) {
-          console.warn('Could not delete user from auth.users:', authError);
-        }
-      } catch (authError) {
-        console.warn('Could not delete user from auth.users:', authError);
-      }
-
-      // Update UI
-      setUsers(prev => prev.filter(u => u.id !== userToDelete.id));
+      await removeUser(userToDelete.id);
       setShowDeleteUserModal(false);
       setUserToDelete(null);
       alert(`用户 ${userToDelete.name} 已成功删除`);
@@ -478,26 +386,26 @@ const SettingsView: React.FC = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                    userData.is_active 
+                    userData.isActive 
                       ? 'bg-green-100 text-green-600' 
                       : 'bg-red-100 text-red-600'
                   }`}>
-                    {userData.is_active ? '活跃' : '禁用'}
+                    {userData.isActive ? '活跃' : '禁用'}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(userData.created_at).toLocaleDateString('zh-CN')}
+                  {new Date(userData.createdAt).toLocaleDateString('zh-CN')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button 
-                    onClick={() => handleToggleUserStatus(userData.id, userData.is_active)}
+                    onClick={() => handleToggleUserStatus(userData.id, userData.isActive)}
                     className={`mr-4 ${
-                      userData.is_active 
+                      userData.isActive 
                         ? 'text-red-600 hover:text-red-900' 
                         : 'text-green-600 hover:text-green-900'
                     }`}
                   >
-                    {userData.is_active ? '禁用' : '启用'}
+                    {userData.isActive ? '禁用' : '启用'}
                   </button>
                   <button 
                     onClick={() => handleDeleteUser(userData)}
