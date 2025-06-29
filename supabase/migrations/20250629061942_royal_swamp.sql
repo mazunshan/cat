@@ -1,7 +1,24 @@
--- ============================================================================
--- 猫咪销售管理系统完整数据库迁移脚本
--- 修复版本 - 避免策略重复创建错误
--- ============================================================================
+/*
+  # 猫咪销售管理系统完整数据库架构
+
+  1. 表结构
+    - 用户管理：users
+    - 客户管理：customers, customer_files
+    - 产品管理：products
+    - 订单管理：orders, order_products, installment_plans, payments
+    - 知识库：knowledge_base
+    - 售后服务：after_sales_records
+    - 考勤管理：attendance_records
+
+  2. 安全设置
+    - 所有表启用行级安全策略(RLS)
+    - 基于角色的访问控制
+    - 适当的数据隔离
+
+  3. 测试数据
+    - 包含完整的测试账户和示例数据
+    - 支持系统所有功能的演示
+*/
 
 -- ============================================================================
 -- 第一步：清理现有策略（避免重复创建错误）
@@ -10,51 +27,97 @@
 -- 删除可能存在的策略
 DO $$
 BEGIN
-    -- 删除 users 表的策略
-    DROP POLICY IF EXISTS "Enable read access for authenticated users" ON users;
-    DROP POLICY IF EXISTS "Enable insert access for authenticated users" ON users;
-    DROP POLICY IF EXISTS "Enable update access for authenticated users" ON users;
-    DROP POLICY IF EXISTS "Enable delete access for authenticated users" ON users;
-    DROP POLICY IF EXISTS "Users can read their own profile" ON users;
-    DROP POLICY IF EXISTS "Users can update their own profile" ON users;
-    DROP POLICY IF EXISTS "Authenticated users can read all profiles" ON users;
-    DROP POLICY IF EXISTS "Users can insert their own profile" ON users;
-    DROP POLICY IF EXISTS "Admins can delete users" ON users;
-    DROP POLICY IF EXISTS "Service role can manage all users" ON users;
+    -- 尝试删除所有可能存在的策略
+    EXECUTE 'DROP POLICY IF EXISTS users_read_policy ON users';
+    EXECUTE 'DROP POLICY IF EXISTS users_insert_policy ON users';
+    EXECUTE 'DROP POLICY IF EXISTS users_update_policy ON users';
+    EXECUTE 'DROP POLICY IF EXISTS users_delete_policy ON users';
     
-    -- 删除 customers 表的策略
-    DROP POLICY IF EXISTS "Enable read access for authenticated users" ON customers;
-    DROP POLICY IF EXISTS "Enable insert access for authenticated users" ON customers;
-    DROP POLICY IF EXISTS "Enable update access for authenticated users" ON customers;
-    DROP POLICY IF EXISTS "Enable delete access for authenticated users" ON customers;
+    EXECUTE 'DROP POLICY IF EXISTS customers_read_policy ON customers';
+    EXECUTE 'DROP POLICY IF EXISTS customers_insert_policy ON customers';
+    EXECUTE 'DROP POLICY IF EXISTS customers_update_policy ON customers';
+    EXECUTE 'DROP POLICY IF EXISTS customers_delete_policy ON customers';
     
-    -- 删除其他表的策略
-    DROP POLICY IF EXISTS "Users can read customer files" ON customer_files;
-    DROP POLICY IF EXISTS "Users can insert customer files" ON customer_files;
-    DROP POLICY IF EXISTS "Users can read all products" ON products;
-    DROP POLICY IF EXISTS "Users can insert products" ON products;
-    DROP POLICY IF EXISTS "Users can update products" ON products;
-    DROP POLICY IF EXISTS "Users can read all orders" ON orders;
-    DROP POLICY IF EXISTS "Users can insert orders" ON orders;
-    DROP POLICY IF EXISTS "Users can update orders" ON orders;
-    DROP POLICY IF EXISTS "Users can read order products" ON order_products;
-    DROP POLICY IF EXISTS "Users can insert order products" ON order_products;
-    DROP POLICY IF EXISTS "Users can read installment plans" ON installment_plans;
-    DROP POLICY IF EXISTS "Users can insert installment plans" ON installment_plans;
-    DROP POLICY IF EXISTS "Users can update installment plans" ON installment_plans;
-    DROP POLICY IF EXISTS "Users can read payments" ON payments;
-    DROP POLICY IF EXISTS "Users can insert payments" ON payments;
-    DROP POLICY IF EXISTS "Users can update payments" ON payments;
-    DROP POLICY IF EXISTS "Users can read knowledge base" ON knowledge_base;
-    DROP POLICY IF EXISTS "Users can insert knowledge base" ON knowledge_base;
-    DROP POLICY IF EXISTS "Users can update knowledge base" ON knowledge_base;
-    DROP POLICY IF EXISTS "Users can read after sales records" ON after_sales_records;
-    DROP POLICY IF EXISTS "After sales and admin can insert records" ON after_sales_records;
-    DROP POLICY IF EXISTS "After sales and admin can update records" ON after_sales_records;
-    DROP POLICY IF EXISTS "Users can read all attendance records" ON attendance_records;
-    DROP POLICY IF EXISTS "Users can insert their own attendance" ON attendance_records;
-    DROP POLICY IF EXISTS "Users can update their own attendance" ON attendance_records;
-    DROP POLICY IF EXISTS "Admins can manage all attendance records" ON attendance_records;
+    EXECUTE 'DROP POLICY IF EXISTS customer_files_read_policy ON customer_files';
+    EXECUTE 'DROP POLICY IF EXISTS customer_files_insert_policy ON customer_files';
+    
+    EXECUTE 'DROP POLICY IF EXISTS products_read_policy ON products';
+    EXECUTE 'DROP POLICY IF EXISTS products_insert_policy ON products';
+    EXECUTE 'DROP POLICY IF EXISTS products_update_policy ON products';
+    
+    EXECUTE 'DROP POLICY IF EXISTS orders_read_policy ON orders';
+    EXECUTE 'DROP POLICY IF EXISTS orders_insert_policy ON orders';
+    EXECUTE 'DROP POLICY IF EXISTS orders_update_policy ON orders';
+    
+    EXECUTE 'DROP POLICY IF EXISTS order_products_read_policy ON order_products';
+    EXECUTE 'DROP POLICY IF EXISTS order_products_insert_policy ON order_products';
+    
+    EXECUTE 'DROP POLICY IF EXISTS installment_plans_read_policy ON installment_plans';
+    EXECUTE 'DROP POLICY IF EXISTS installment_plans_insert_policy ON installment_plans';
+    EXECUTE 'DROP POLICY IF EXISTS installment_plans_update_policy ON installment_plans';
+    
+    EXECUTE 'DROP POLICY IF EXISTS payments_read_policy ON payments';
+    EXECUTE 'DROP POLICY IF EXISTS payments_insert_policy ON payments';
+    EXECUTE 'DROP POLICY IF EXISTS payments_update_policy ON payments';
+    
+    EXECUTE 'DROP POLICY IF EXISTS knowledge_base_read_policy ON knowledge_base';
+    EXECUTE 'DROP POLICY IF EXISTS knowledge_base_insert_policy ON knowledge_base';
+    EXECUTE 'DROP POLICY IF EXISTS knowledge_base_update_policy ON knowledge_base';
+    
+    EXECUTE 'DROP POLICY IF EXISTS after_sales_records_read_policy ON after_sales_records';
+    EXECUTE 'DROP POLICY IF EXISTS after_sales_records_insert_policy ON after_sales_records';
+    EXECUTE 'DROP POLICY IF EXISTS after_sales_records_update_policy ON after_sales_records';
+    
+    EXECUTE 'DROP POLICY IF EXISTS attendance_records_read_policy ON attendance_records';
+    EXECUTE 'DROP POLICY IF EXISTS attendance_records_insert_policy ON attendance_records';
+    EXECUTE 'DROP POLICY IF EXISTS attendance_records_update_policy ON attendance_records';
+    EXECUTE 'DROP POLICY IF EXISTS attendance_records_admin_policy ON attendance_records';
+    
+    -- 删除可能存在的其他通用命名策略
+    EXECUTE 'DROP POLICY IF EXISTS "Enable read access for authenticated users" ON users';
+    EXECUTE 'DROP POLICY IF EXISTS "Enable insert access for authenticated users" ON users';
+    EXECUTE 'DROP POLICY IF EXISTS "Enable update access for authenticated users" ON users';
+    EXECUTE 'DROP POLICY IF EXISTS "Enable delete access for authenticated users" ON users';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "Enable read access for authenticated users" ON customers';
+    EXECUTE 'DROP POLICY IF EXISTS "Enable insert access for authenticated users" ON customers';
+    EXECUTE 'DROP POLICY IF EXISTS "Enable update access for authenticated users" ON customers';
+    EXECUTE 'DROP POLICY IF EXISTS "Enable delete access for authenticated users" ON customers';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "Users can read customer files" ON customer_files';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can insert customer files" ON customer_files';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "Users can read all products" ON products';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can insert products" ON products';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can update products" ON products';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "Users can read all orders" ON orders';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can insert orders" ON orders';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can update orders" ON orders';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "Users can read order products" ON order_products';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can insert order products" ON order_products';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "Users can read installment plans" ON installment_plans';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can insert installment plans" ON installment_plans';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can update installment plans" ON installment_plans';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "Users can read payments" ON payments';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can insert payments" ON payments';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can update payments" ON payments';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "Users can read knowledge base" ON knowledge_base';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can insert knowledge base" ON knowledge_base';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can update knowledge base" ON knowledge_base';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "Users can read after sales records" ON after_sales_records';
+    EXECUTE 'DROP POLICY IF EXISTS "After sales and admin can insert records" ON after_sales_records';
+    EXECUTE 'DROP POLICY IF EXISTS "After sales and admin can update records" ON after_sales_records';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "Users can read all attendance records" ON attendance_records';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can insert their own attendance" ON attendance_records';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can update their own attendance" ON attendance_records';
+    EXECUTE 'DROP POLICY IF EXISTS "Admins can manage all attendance records" ON attendance_records';
 EXCEPTION
     WHEN OTHERS THEN
         -- 忽略策略不存在的错误
