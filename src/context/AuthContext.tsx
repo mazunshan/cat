@@ -550,23 +550,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return true;
       }
 
-      // 查询用户信息
+      // 查询用户信息 - 修复：使用 .limit(1) 而不是 .single()
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
         .eq('username', username)
         .eq('is_active', true)
-        .single();
+        .limit(1);
 
-      if (userError || !userData) {
+      if (userError) {
+        console.error('Error querying user:', userError);
+        setLoginStatus('error');
+        setLoginMessage('查询用户信息时发生错误，请重试');
+        return false;
+      }
+
+      // 检查是否找到用户
+      if (!userData || userData.length === 0) {
         console.error('User not found or inactive:', username);
         setLoginStatus('error');
         setLoginMessage(`用户名 "${username}" 不存在或已被禁用。请使用有效的账户。`);
         return false;
       }
 
+      const userRecord = userData[0];
+
       // 检查验证码
-      if (userData.role !== 'admin' && systemSettings.requireVerificationCode) {
+      if (userRecord.role !== 'admin' && systemSettings.requireVerificationCode) {
         if (!verificationCode) {
           setAuthState(prev => ({ ...prev, verificationRequired: true }));
           setLoginStatus('idle');
@@ -584,7 +594,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // 尝试登录
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: userData.email,
+        email: userRecord.email,
         password: password
       });
 
