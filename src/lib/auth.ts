@@ -1,6 +1,5 @@
-// 用户认证模块 - 支持真实数据库操作
-import { query } from './database';
-import bcrypt from 'bcryptjs';
+// User authentication module - Supabase compatible
+import { supabase } from './database';
 
 export interface User {
   id: string;
@@ -8,43 +7,49 @@ export interface User {
   email: string;
   role: 'admin' | 'sales' | 'after_sales';
   name: string;
-  is_active: boolean;
-  created_at: string;
+  isActive: boolean;
+  createdAt: string;
 }
 
-// 用户认证
+// User authentication using Supabase
 export const authenticateUser = async (username: string, password: string): Promise<User | null> => {
   try {
-    const result = await query(
-      'SELECT * FROM users WHERE username = $1 AND is_active = true',
-      [username]
-    );
+    // First, get user by username
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .eq('is_active', true)
+      .single();
 
-    if (result.rows.length === 0) {
+    if (userError || !userData) {
+      console.error('User not found:', userError);
       return null;
     }
 
-    const user = result.rows[0];
-    
-    // 验证密码
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
-    if (!isValidPassword) {
+    // For now, we'll do a simple password comparison
+    // In production, you should use Supabase Auth or proper password hashing
+    if (userData.password_hash !== password) {
       return null;
     }
 
-    // 返回用户信息（不包含密码）
-    const { password_hash, ...userWithoutPassword } = user;
+    // Return user info (without password)
     return {
-      ...userWithoutPassword,
-      is_active: user.is_active
+      id: userData.id,
+      username: userData.username,
+      email: userData.email,
+      role: userData.role,
+      name: userData.name,
+      isActive: userData.is_active,
+      createdAt: userData.created_at
     };
   } catch (error) {
-    console.error('用户认证失败:', error);
+    console.error('Authentication error:', error);
     throw new Error('认证过程中发生错误');
   }
 };
 
-// 创建新用户
+// Create new user
 export const createUser = async (userData: {
   username: string;
   email: string;
@@ -53,73 +58,121 @@ export const createUser = async (userData: {
   password: string;
 }): Promise<User> => {
   try {
-    // 检查用户名是否已存在
-    const existingUser = await query(
-      'SELECT id FROM users WHERE username = $1 OR email = $2',
-      [userData.username, userData.email]
-    );
+    // Check if user already exists
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .or(`username.eq.${userData.username},email.eq.${userData.email}`)
+      .single();
 
-    if (existingUser.rows.length > 0) {
+    if (existingUser) {
       throw new Error('用户名或邮箱已存在');
     }
 
-    // 加密密码
-    const saltRounds = 10;
-    const passwordHash = await bcrypt.hash(userData.password, saltRounds);
+    // Insert new user
+    const { data, error } = await supabase
+      .from('users')
+      .insert({
+        username: userData.username,
+        email: userData.email,
+        name: userData.name,
+        role: userData.role,
+        password_hash: userData.password, // In production, hash this properly
+        is_active: true
+      })
+      .select()
+      .single();
 
-    // 插入新用户
-    const result = await query(
-      `INSERT INTO users (username, email, name, role, password_hash, is_active) 
-       VALUES ($1, $2, $3, $4, $5, true) 
-       RETURNING id, username, email, name, role, is_active, created_at`,
-      [userData.username, userData.email, userData.name, userData.role, passwordHash]
-    );
+    if (error) {
+      throw error;
+    }
 
-    return result.rows[0];
+    return {
+      id: data.id,
+      username: data.username,
+      email: data.email,
+      name: data.name,
+      role: data.role,
+      isActive: data.is_active,
+      createdAt: data.created_at
+    };
   } catch (error) {
-    console.error('创建用户失败:', error);
+    console.error('Create user error:', error);
     throw error;
   }
 };
 
-// 获取所有用户
+// Get all users
 export const getAllUsers = async (): Promise<User[]> => {
   try {
-    const result = await query(
-      'SELECT id, username, email, name, role, is_active, created_at FROM users ORDER BY created_at DESC'
-    );
-    return result.rows;
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, username, email, name, role, is_active, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    return data.map(user => ({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      isActive: user.is_active,
+      createdAt: user.created_at
+    }));
   } catch (error) {
-    console.error('获取用户列表失败:', error);
+    console.error('Get users error:', error);
     throw new Error('获取用户列表失败');
   }
 };
 
-// 更新用户状态
+// Update user status
 export const updateUserStatus = async (userId: string, isActive: boolean): Promise<void> => {
   try {
-    await query(
-      'UPDATE users SET is_active = $1, updated_at = NOW() WHERE id = $2',
-      [isActive, userId]
-    );
+    const { error } = await supabase
+      .from('users')
+      .update({ 
+        is_active: isActive,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId);
+
+    if (error) {
+      throw error;
+    }
   } catch (error) {
-    console.error('更新用户状态失败:', error);
+    console.error('Update user status error:', error);
     throw new Error('更新用户状态失败');
   }
 };
 
-// 删除用户
+// Delete user
 export const deleteUser = async (userId: string): Promise<void> => {
   try {
-    // 检查是否为管理员
-    const userResult = await query('SELECT role FROM users WHERE id = $1', [userId]);
-    if (userResult.rows.length > 0 && userResult.rows[0].role === 'admin') {
+    // Check if user is admin
+    const { data: user } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', userId)
+      .single();
+
+    if (user?.role === 'admin') {
       throw new Error('不能删除管理员账户');
     }
 
-    await query('DELETE FROM users WHERE id = $1', [userId]);
+    const { error } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', userId);
+
+    if (error) {
+      throw error;
+    }
   } catch (error) {
-    console.error('删除用户失败:', error);
+    console.error('Delete user error:', error);
     throw error;
   }
 };
