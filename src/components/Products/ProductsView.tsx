@@ -3,7 +3,7 @@ import { Plus, Filter, Grid, List, AlertTriangle, Trash2 } from 'lucide-react';
 import ProductCard from './ProductCard';
 import ProductDetail from './ProductDetail';
 import AddProductModal from './AddProductModal';
-import { useProducts } from '../../hooks/useSupabase';
+import { useProducts } from '../../hooks/useDatabase';
 import { useAuth } from '../../context/AuthContext';
 import { Product } from '../../types';
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Search, Filter, Eye, ThumbsUp, Calendar, AlertTriangle, Edit, Trash2, Lock } from 'lucide-react';
 import AddKnowledgeModal from './AddKnowledgeModal';
 import EditKnowledgeModal from './EditKnowledgeModal';
-import { useKnowledgeBase } from '../../hooks/useSupabase';
+import { useKnowledgeBase } from '../../hooks/useDatabase';
 import { useAuth } from '../../context/AuthContext';
 import { KnowledgeBase } from '../../types';
 

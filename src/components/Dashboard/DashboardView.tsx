@@ -2,7 +2,7 @@ import React from 'react';
 import { Users, ShoppingBag, DollarSign, TrendingUp, Clock, AlertTriangle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import StatsCard from './StatsCard';
-import { useCustomers, useOrders, useProducts } from '../../hooks/useSupabase';
+import { useCustomers, useOrders, useProducts } from '../../hooks/useDatabase';
 
 const DashboardView: React.FC = () => {
   const { customers = [], loading: customersLoading, error: customersError } = useCustomers();

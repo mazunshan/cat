@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Filter, Calendar, Clock, CheckCircle, AlertTriangle, MessageSquare, Phone, User, RefreshCw } from 'lucide-react';
-import { useOrders, useCustomers } from '../../hooks/useSupabase';
+import { useOrders, useCustomers } from '../../hooks/useDatabase';
 import { Order } from '../../types';
 
 const AfterSalesView: React.FC = () => {

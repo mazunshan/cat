@@ -4,7 +4,7 @@ import CustomerCard from './CustomerCard';
 import CustomerDetail from './CustomerDetail';
 import AddCustomerModal from './AddCustomerModal';
 import EditCustomerModal from './EditCustomerModal';
-import { useCustomers } from '../../hooks/useSupabase';
+import { useCustomers } from '../../hooks/useDatabase';
 import { Customer } from '../../types';
 
 const CustomersView: React.FC = () => {

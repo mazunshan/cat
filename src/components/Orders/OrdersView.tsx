@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Filter, Download, Search, Eye, AlertTriangle } from 'lucide-react';
 import InstallmentProgress from './InstallmentProgress';
 import AddOrderModal from './AddOrderModal';
-import { useOrders, useCustomers, useProducts } from '../../hooks/useSupabase';
+import { useOrders, useCustomers, useProducts } from '../../hooks/useDatabase';
 import { Order } from '../../types';
 
 const OrdersView: React.FC = () => {
