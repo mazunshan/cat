@@ -24,7 +24,7 @@ interface SystemSettings {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // 更新的测试用户数据 - 与数据库中的数据保持一致
-const mockUsers: User[] = [
+const mockUsers: (User & { password: string })[] = [
   {
     id: '00000000-0000-0000-0000-000000000001',
     username: 'admin',
@@ -32,7 +32,8 @@ const mockUsers: User[] = [
     role: 'admin',
     name: 'Administrator',
     isActive: true,
-    createdAt: '2024-01-01'
+    createdAt: '2024-01-01',
+    password: 'password123'
   },
   {
     id: '00000000-0000-0000-0000-000000000002',
@@ -41,7 +42,8 @@ const mockUsers: User[] = [
     role: 'sales',
     name: 'Alice Chen',
     isActive: true,
-    createdAt: '2024-01-15'
+    createdAt: '2024-01-15',
+    password: 'password123'
   },
   {
     id: '00000000-0000-0000-0000-000000000003',
@@ -50,7 +52,8 @@ const mockUsers: User[] = [
     role: 'sales',
     name: 'Bob Wang',
     isActive: true,
-    createdAt: '2024-02-01'
+    createdAt: '2024-02-01',
+    password: 'password123'
   },
   {
     id: '00000000-0000-0000-0000-000000000004',
@@ -59,7 +62,8 @@ const mockUsers: User[] = [
     role: 'sales',
     name: 'Carol Li',
     isActive: true,
-    createdAt: '2024-02-15'
+    createdAt: '2024-02-15',
+    password: 'password123'
   },
   {
     id: '00000000-0000-0000-0000-000000000005',
@@ -68,7 +72,8 @@ const mockUsers: User[] = [
     role: 'after_sales',
     name: 'David Zhang',
     isActive: true,
-    createdAt: '2024-03-01'
+    createdAt: '2024-03-01',
+    password: 'password123'
   }
 ];
 
@@ -462,7 +467,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             error.message.includes('invalid') || 
             error.message.includes('expired') ||
             error.message.includes('user_not_found')) {
-          console.log('Invalid session detected, logging out...');
+          console.log('Invalid session detected, logging出...');
           logout();
           return;
         }
@@ -505,16 +510,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (isDevelopmentMode()) {
         console.log('Development mode - simulating login');
         
-        // 查找用户
-        const user = mockUsers.find(u => u.username === username && u.isActive);
+        // 查找用户并验证密码
+        const user = mockUsers.find(u => u.username === username && u.isActive && u.password === password);
         if (!user) {
-          console.error('User not found or inactive:', username);
+          console.error('User not found, inactive, or wrong password:', username);
           setLoginStatus('error');
-          setLoginMessage(`用户名 "${username}" 不存在。请使用有效的测试账户：admin, sales1, sales2, sales3, aftersales1`);
+          setLoginMessage('用户名或密码错误。请使用有效的测试账户：admin/password123, sales1/password123, aftersales1/password123');
           return false;
         }
 
-        // 检查验证码
+        // 检查验证码（管理员不需要验证码）
         if (user.role !== 'admin' && systemSettings.requireVerificationCode) {
           if (!verificationCode) {
             setAuthState(prev => ({ ...prev, verificationRequired: true }));
@@ -531,9 +536,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
-        // 模拟登录成功
+        // 模拟登录成功 - 移除密码字段
+        const { password: _, ...userWithoutPassword } = user;
         setAuthState({
-          user,
+          user: userWithoutPassword,
           isAuthenticated: true,
           verificationRequired: false
         });
@@ -550,7 +556,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return true;
       }
 
-      // 查询用户信息 - 修复：使用 .limit(1) 而不是 .single()
+      // 生产模式：使用 Supabase 认证
+      // 查询用户信息
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
@@ -575,7 +582,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const userRecord = userData[0];
 
-      // 检查验证码
+      // 检查验证码（管理员不需要验证码）
       if (userRecord.role !== 'admin' && systemSettings.requireVerificationCode) {
         if (!verificationCode) {
           setAuthState(prev => ({ ...prev, verificationRequired: true }));
@@ -592,7 +599,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
-      // 尝试登录
+      // 尝试使用 Supabase 认证登录
       const { data, error } = await supabase.auth.signInWithPassword({
         email: userRecord.email,
         password: password
