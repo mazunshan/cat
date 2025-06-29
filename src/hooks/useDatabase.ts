@@ -13,15 +13,10 @@ export const useCustomers = () => {
       setLoading(true);
       setError(null);
       
-      // Check if Supabase is configured
-      if (!supabase) {
-        throw new Error('Supabase未配置: 请在.env文件中设置正确的VITE_SUPABASE_URL和VITE_SUPABASE_ANON_KEY');
-      }
-
       // Test connection
       const isConnected = await testConnection();
       if (!isConnected) {
-        throw new Error('数据库连接失败: 请检查Supabase配置和网络连接');
+        throw new Error('数据库连接失败');
       }
 
       // Fetch customers with files
@@ -79,10 +74,6 @@ export const useCustomers = () => {
 
   const addCustomer = async (customerData: Omit<Customer, 'id' | 'createdAt' | 'files' | 'orders'>) => {
     try {
-      if (!supabase) {
-        throw new Error('Supabase未配置');
-      }
-
       const { data, error } = await supabase
         .from('customers')
         .insert({
@@ -129,10 +120,6 @@ export const useCustomers = () => {
 
   const updateCustomer = async (customerId: string, customerData: Omit<Customer, 'id' | 'createdAt' | 'files' | 'orders'>) => {
     try {
-      if (!supabase) {
-        throw new Error('Supabase未配置');
-      }
-
       const { data, error } = await supabase
         .from('customers')
         .update({
@@ -184,10 +171,6 @@ export const useCustomers = () => {
 
   const deleteCustomer = async (customerId: string) => {
     try {
-      if (!supabase) {
-        throw new Error('Supabase未配置');
-      }
-
       const { error } = await supabase
         .from('customers')
         .delete()
@@ -222,13 +205,9 @@ export const useOrders = () => {
       setLoading(true);
       setError(null);
 
-      if (!supabase) {
-        throw new Error('Supabase未配置: 请在.env文件中设置正确的VITE_SUPABASE_URL和VITE_SUPABASE_ANON_KEY');
-      }
-
       const isConnected = await testConnection();
       if (!isConnected) {
-        throw new Error('数据库连接失败: 请检查Supabase配置和网络连接');
+        throw new Error('数据库连接失败');
       }
 
       // Fetch orders with products
@@ -284,10 +263,6 @@ export const useOrders = () => {
 
   const addOrder = async (orderData: Omit<Order, 'id' | 'orderNumber' | 'orderDate'>) => {
     try {
-      if (!supabase) {
-        throw new Error('Supabase未配置');
-      }
-
       // Generate order number
       const orderNumber = `ORD-${new Date().getFullYear()}-${String(orders.length + 1).padStart(3, '0')}`;
       
@@ -363,13 +338,9 @@ export const useProducts = () => {
       setLoading(true);
       setError(null);
 
-      if (!supabase) {
-        throw new Error('Supabase未配置: 请在.env文件中设置正确的VITE_SUPABASE_URL和VITE_SUPABASE_ANON_KEY');
-      }
-
       const isConnected = await testConnection();
       if (!isConnected) {
-        throw new Error('数据库连接失败: 请检查Supabase配置和网络连接');
+        throw new Error('数据库连接失败');
       }
 
       const { data, error: productsError } = await supabase
@@ -407,10 +378,6 @@ export const useProducts = () => {
 
   const addProduct = async (productData: Omit<Product, 'id'>) => {
     try {
-      if (!supabase) {
-        throw new Error('Supabase未配置');
-      }
-
       const { data, error } = await supabase
         .from('products')
         .insert({
@@ -456,10 +423,6 @@ export const useProducts = () => {
 
   const deleteProduct = async (productId: string) => {
     try {
-      if (!supabase) {
-        throw new Error('Supabase未配置');
-      }
-
       const { error } = await supabase
         .from('products')
         .delete()
@@ -494,13 +457,9 @@ export const useKnowledgeBase = () => {
       setLoading(true);
       setError(null);
 
-      if (!supabase) {
-        throw new Error('Supabase未配置: 请在.env文件中设置正确的VITE_SUPABASE_URL和VITE_SUPABASE_ANON_KEY');
-      }
-
       const isConnected = await testConnection();
       if (!isConnected) {
-        throw new Error('数据库连接失败: 请检查Supabase配置和网络连接');
+        throw new Error('数据库连接失败');
       }
 
       const { data, error: kbError } = await supabase
@@ -537,10 +496,6 @@ export const useKnowledgeBase = () => {
 
   const addKnowledge = async (knowledgeData: Omit<KnowledgeBase, 'id' | 'viewCount' | 'createdAt' | 'updatedAt'>) => {
     try {
-      if (!supabase) {
-        throw new Error('Supabase未配置');
-      }
-
       const { data, error } = await supabase
         .from('knowledge_base')
         .insert({
@@ -581,10 +536,6 @@ export const useKnowledgeBase = () => {
 
   const updateKnowledge = async (knowledgeId: string, knowledgeData: Omit<KnowledgeBase, 'id' | 'viewCount' | 'createdAt' | 'updatedAt'>) => {
     try {
-      if (!supabase) {
-        throw new Error('Supabase未配置');
-      }
-
       const { data, error } = await supabase
         .from('knowledge_base')
         .update({
@@ -629,10 +580,6 @@ export const useKnowledgeBase = () => {
 
   const deleteKnowledge = async (knowledgeId: string) => {
     try {
-      if (!supabase) {
-        throw new Error('Supabase未配置');
-      }
-
       const { error } = await supabase
         .from('knowledge_base')
         .delete()
@@ -675,13 +622,9 @@ export const useAttendance = () => {
       setLoading(true);
       setError(null);
 
-      if (!supabase) {
-        throw new Error('Supabase未配置: 请在.env文件中设置正确的VITE_SUPABASE_URL和VITE_SUPABASE_ANON_KEY');
-      }
-
       const isConnected = await testConnection();
       if (!isConnected) {
-        throw new Error('数据库连接失败: 请检查Supabase配置和网络连接');
+        throw new Error('数据库连接失败');
       }
 
       const { data, error: attendanceError } = await supabase
@@ -718,10 +661,6 @@ export const useAttendance = () => {
 
   const addAttendance = async (attendanceData: Omit<AttendanceRecord, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
-      if (!supabase) {
-        throw new Error('Supabase未配置');
-      }
-
       const { data, error } = await supabase
         .from('attendance_records')
         .upsert({
@@ -768,10 +707,6 @@ export const useAttendance = () => {
 
   const updateAttendance = async (recordId: string, attendanceData: AttendanceRecord) => {
     try {
-      if (!supabase) {
-        throw new Error('Supabase未配置');
-      }
-
       const { data, error } = await supabase
         .from('attendance_records')
         .update({
