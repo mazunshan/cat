@@ -82,8 +82,23 @@ export interface Product {
   description: string;
   images: string[];
   videos: string[];
+  quarantineVideos: QuarantineVideo[]; // 新增检疫视频字段
   isAvailable: boolean;
   features: string[];
+}
+
+// 新增检疫视频类型
+export interface QuarantineVideo {
+  id: string;
+  url: string;
+  title: string;
+  description: string;
+  recordedDate: string;
+  duration?: number; // 视频时长（秒）
+  fileSize?: number; // 文件大小（字节）
+  veterinarian?: string; // 检疫兽医
+  quarantineStatus: 'healthy' | 'under_observation' | 'treated' | 'cleared';
+  uploadedAt: string;
 }
 
 export interface KnowledgeBase {

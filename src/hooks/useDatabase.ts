@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Customer, Order, Product, KnowledgeBase, AttendanceRecord, AfterSalesRecord, ServiceTemplate, CustomerFeedback } from '../types';
+import { Customer, Order, Product, KnowledgeBase, AttendanceRecord, AfterSalesRecord, ServiceTemplate, CustomerFeedback, QuarantineVideo } from '../types';
 
 // 模拟客户数据 - 确保在整个应用中保持一致
 const mockCustomers: Customer[] = [
@@ -80,7 +80,7 @@ const mockCustomers: Customer[] = [
   }
 ];
 
-// 模拟产品数据
+// 模拟产品数据 - 增加检疫视频
 const mockProducts: Product[] = [
   {
     id: '1',
@@ -95,6 +95,32 @@ const mockProducts: Product[] = [
       'https://images.pexels.com/photos/1170986/pexels-photo-1170986.jpeg'
     ],
     videos: [],
+    quarantineVideos: [
+      {
+        id: 'qv1',
+        url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
+        title: '入场检疫视频',
+        description: '猫咪入场时的健康检查视频，包含体温测量、基础体检等',
+        recordedDate: '2024-01-10',
+        duration: 180,
+        fileSize: 1048576,
+        veterinarian: '李兽医',
+        quarantineStatus: 'healthy',
+        uploadedAt: '2024-01-10T10:00:00Z'
+      },
+      {
+        id: 'qv2',
+        url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_2mb.mp4',
+        title: '7天观察期检查',
+        description: '观察期第7天的健康状况检查，确认无异常症状',
+        recordedDate: '2024-01-17',
+        duration: 120,
+        fileSize: 2097152,
+        veterinarian: '李兽医',
+        quarantineStatus: 'cleared',
+        uploadedAt: '2024-01-17T14:30:00Z'
+      }
+    ],
     isAvailable: true,
     features: ['纯种血统', '疫苗齐全', '健康保证', '可上门看猫']
   },
@@ -111,6 +137,20 @@ const mockProducts: Product[] = [
       'https://images.pexels.com/photos/2071873/pexels-photo-2071873.jpeg'
     ],
     videos: [],
+    quarantineVideos: [
+      {
+        id: 'qv3',
+        url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
+        title: '健康检疫报告',
+        description: '布偶猫全面健康检查，包含血液检测、疫苗接种记录',
+        recordedDate: '2024-02-05',
+        duration: 240,
+        fileSize: 1572864,
+        veterinarian: '王兽医',
+        quarantineStatus: 'healthy',
+        uploadedAt: '2024-02-05T09:15:00Z'
+      }
+    ],
     isAvailable: true,
     features: ['CFA认证', '父母均有证书', '毛色标准', '性格亲人']
   },
@@ -126,6 +166,20 @@ const mockProducts: Product[] = [
       'https://images.pexels.com/photos/1276553/pexels-photo-1276553.jpeg'
     ],
     videos: [],
+    quarantineVideos: [
+      {
+        id: 'qv4',
+        url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_2mb.mp4',
+        title: '专业检疫认证',
+        description: '波斯猫专业检疫认证视频，确认符合出售标准',
+        recordedDate: '2024-02-20',
+        duration: 300,
+        fileSize: 2621440,
+        veterinarian: '张兽医',
+        quarantineStatus: 'cleared',
+        uploadedAt: '2024-02-20T16:45:00Z'
+      }
+    ],
     isAvailable: true,
     features: ['顶级血统', '毛质极佳', '五官标准', '性格温和']
   },
@@ -141,6 +195,7 @@ const mockProducts: Product[] = [
       'https://images.pexels.com/photos/1404819/pexels-photo-1404819.jpeg'
     ],
     videos: [],
+    quarantineVideos: [],
     isAvailable: true,
     features: ['健康活泼', '适应性强', '容易照料', '性格友好']
   },
@@ -156,6 +211,7 @@ const mockProducts: Product[] = [
       'https://images.pexels.com/photos/1056251/pexels-photo-1056251.jpeg'
     ],
     videos: [],
+    quarantineVideos: [],
     isAvailable: true,
     features: ['大型猫种', '毛发浓密', '性格温和', '智商很高']
   }
