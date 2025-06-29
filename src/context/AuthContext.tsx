@@ -29,7 +29,7 @@ interface SystemSettings {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// 测试用户数据（用于开发模式）
+// 统一的用户数据（用于开发模式）
 const mockUsers: (User & { password: string })[] = [
   {
     id: '00000000-0000-0000-0000-000000000001',
@@ -43,8 +43,8 @@ const mockUsers: (User & { password: string })[] = [
   },
   {
     id: '00000000-0000-0000-0000-000000000002',
-    username: 'sales1',
-    email: 'sales1@catstore.com',
+    username: 'alice',
+    email: 'alice@catstore.com',
     role: 'sales',
     name: 'Alice Chen',
     isActive: true,
@@ -52,13 +52,63 @@ const mockUsers: (User & { password: string })[] = [
     password: 'password123'
   },
   {
+    id: '00000000-0000-0000-0000-000000000003',
+    username: 'bob',
+    email: 'bob@catstore.com',
+    role: 'sales',
+    name: 'Bob Wang',
+    isActive: true,
+    createdAt: '2024-01-20',
+    password: 'password123'
+  },
+  {
+    id: '00000000-0000-0000-0000-000000000004',
+    username: 'carol',
+    email: 'carol@catstore.com',
+    role: 'sales',
+    name: 'Carol Li',
+    isActive: true,
+    createdAt: '2024-02-01',
+    password: 'password123'
+  },
+  {
     id: '00000000-0000-0000-0000-000000000005',
-    username: 'aftersales1',
-    email: 'aftersales1@catstore.com',
+    username: 'david',
+    email: 'david@catstore.com',
     role: 'after_sales',
     name: 'David Zhang',
     isActive: true,
     createdAt: '2024-03-01',
+    password: 'password123'
+  },
+  {
+    id: '00000000-0000-0000-0000-000000000006',
+    username: 'emma',
+    email: 'emma@catstore.com',
+    role: 'sales',
+    name: 'Emma Liu',
+    isActive: true,
+    createdAt: '2024-02-15',
+    password: 'password123'
+  },
+  {
+    id: '00000000-0000-0000-0000-000000000007',
+    username: 'frank',
+    email: 'frank@catstore.com',
+    role: 'sales',
+    name: 'Frank Zhou',
+    isActive: true,
+    createdAt: '2024-03-10',
+    password: 'password123'
+  },
+  {
+    id: '00000000-0000-0000-0000-000000000008',
+    username: 'grace',
+    email: 'grace@catstore.com',
+    role: 'sales',
+    name: 'Grace Wu',
+    isActive: true,
+    createdAt: '2024-03-15',
     password: 'password123'
   }
 ];

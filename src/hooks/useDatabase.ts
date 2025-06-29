@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Customer, Order, Product, KnowledgeBase, AttendanceRecord, AfterSalesRecord, ServiceTemplate, CustomerFeedback, QuarantineVideo } from '../types';
 
+// 统一的销售员名单 - 确保在整个应用中保持一致
+export const SALES_STAFF = [
+  'Alice Chen',
+  'Bob Wang', 
+  'Carol Li',
+  'Emma Liu',
+  'Frank Zhou',
+  'Grace Wu'
+];
+
 // 模拟客户数据 - 确保在整个应用中保持一致
 const mockCustomers: Customer[] = [
   {
@@ -75,6 +85,51 @@ const mockCustomers: Customer[] = [
     notes: '程序员，工作忙碌，希望养一只安静的美短陪伴',
     createdAt: '2024-03-10',
     assignedSales: 'Alice Chen',
+    files: [],
+    orders: []
+  },
+  {
+    id: '6',
+    name: '赵医生',
+    gender: 'male',
+    phone: '13400134006',
+    wechat: 'dr_zhao',
+    address: '成都市锦江区春熙路999号',
+    occupation: '医生',
+    tags: ['专业人士', '英短', '品质要求高'],
+    notes: '医生职业，对猫咪健康要求很高，希望购买健康的英短',
+    createdAt: '2024-03-20',
+    assignedSales: 'Emma Liu',
+    files: [],
+    orders: []
+  },
+  {
+    id: '7',
+    name: '孙女士',
+    gender: 'female',
+    phone: '13300133007',
+    wechat: 'sun_lady',
+    address: '武汉市武昌区中南路777号',
+    occupation: '教师',
+    tags: ['教育工作者', '布偶猫', '温和性格'],
+    notes: '小学教师，喜欢温和的布偶猫，希望能陪伴孩子成长',
+    createdAt: '2024-04-01',
+    assignedSales: 'Frank Zhou',
+    files: [],
+    orders: []
+  },
+  {
+    id: '8',
+    name: '周先生',
+    gender: 'male',
+    phone: '13200132008',
+    wechat: 'zhou_sir',
+    address: '西安市雁塔区高新路555号',
+    occupation: '工程师',
+    tags: ['技术人员', '俄蓝', '安静性格'],
+    notes: '软件工程师，喜欢安静的俄罗斯蓝猫，适合居家办公',
+    createdAt: '2024-04-10',
+    assignedSales: 'Grace Wu',
     files: [],
     orders: []
   }
@@ -214,10 +269,26 @@ const mockProducts: Product[] = [
     quarantineVideos: [],
     isAvailable: true,
     features: ['大型猫种', '毛发浓密', '性格温和', '智商很高']
+  },
+  {
+    id: '6',
+    name: '蓝色俄罗斯蓝猫',
+    breed: '俄罗斯蓝猫',
+    age: '4个月',
+    gender: 'male',
+    price: 9500,
+    description: '纯种俄罗斯蓝猫，毛色呈银蓝色，性格安静优雅。',
+    images: [
+      'https://images.pexels.com/photos/1404819/pexels-photo-1404819.jpeg'
+    ],
+    videos: [],
+    quarantineVideos: [],
+    isAvailable: true,
+    features: ['毛色独特', '性格安静', '适合公寓', '低过敏性']
   }
 ];
 
-// 模拟订单数据
+// 模拟订单数据 - 分配给不同销售员
 const mockOrders: Order[] = [
   {
     id: '1',
@@ -307,6 +378,129 @@ const mockOrders: Order[] = [
         price: 15000,
         quantity: 1,
         image: 'https://images.pexels.com/photos/1276553/pexels-photo-1276553.jpeg'
+      }
+    ]
+  },
+  {
+    id: '4',
+    customerId: '4',
+    orderNumber: 'ORD-2024-004',
+    amount: 18000,
+    paymentMethod: 'full',
+    status: 'completed',
+    orderDate: '2024-03-15',
+    salesPerson: 'Carol Li',
+    products: [
+      {
+        id: '5',
+        name: '银色缅因猫',
+        breed: '缅因猫',
+        price: 18000,
+        quantity: 1,
+        image: 'https://images.pexels.com/photos/1056251/pexels-photo-1056251.jpeg'
+      }
+    ]
+  },
+  {
+    id: '5',
+    customerId: '5',
+    orderNumber: 'ORD-2024-005',
+    amount: 6800,
+    paymentMethod: 'full',
+    status: 'shipped',
+    orderDate: '2024-03-25',
+    salesPerson: 'Alice Chen',
+    products: [
+      {
+        id: '4',
+        name: '橘色美短',
+        breed: '美国短毛猫',
+        price: 6800,
+        quantity: 1,
+        image: 'https://images.pexels.com/photos/1404819/pexels-photo-1404819.jpeg'
+      }
+    ]
+  },
+  {
+    id: '6',
+    customerId: '6',
+    orderNumber: 'ORD-2024-006',
+    amount: 8800,
+    paymentMethod: 'installment',
+    status: 'paid',
+    orderDate: '2024-04-01',
+    salesPerson: 'Emma Liu',
+    installmentPlan: {
+      totalInstallments: 4,
+      installmentAmount: 2200,
+      paidInstallments: 1,
+      nextPaymentDate: '2024-05-01',
+      payments: [
+        {
+          id: '4',
+          installmentNumber: 1,
+          amount: 2200,
+          dueDate: '2024-04-01',
+          paidDate: '2024-04-01',
+          status: 'paid'
+        },
+        {
+          id: '5',
+          installmentNumber: 2,
+          amount: 2200,
+          dueDate: '2024-05-01',
+          status: 'pending'
+        }
+      ]
+    },
+    products: [
+      {
+        id: '1',
+        name: '银渐层英短',
+        breed: '英国短毛猫',
+        price: 8800,
+        quantity: 1,
+        image: 'https://images.pexels.com/photos/1543793/pexels-photo-1543793.jpeg'
+      }
+    ]
+  },
+  {
+    id: '7',
+    customerId: '7',
+    orderNumber: 'ORD-2024-007',
+    amount: 12000,
+    paymentMethod: 'full',
+    status: 'completed',
+    orderDate: '2024-04-10',
+    salesPerson: 'Frank Zhou',
+    products: [
+      {
+        id: '2',
+        name: '蓝双色布偶猫',
+        breed: '布偶猫',
+        price: 12000,
+        quantity: 1,
+        image: 'https://images.pexels.com/photos/1741205/pexels-photo-1741205.jpeg'
+      }
+    ]
+  },
+  {
+    id: '8',
+    customerId: '8',
+    orderNumber: 'ORD-2024-008',
+    amount: 9500,
+    paymentMethod: 'full',
+    status: 'shipped',
+    orderDate: '2024-04-15',
+    salesPerson: 'Grace Wu',
+    products: [
+      {
+        id: '6',
+        name: '蓝色俄罗斯蓝猫',
+        breed: '俄罗斯蓝猫',
+        price: 9500,
+        quantity: 1,
+        image: 'https://images.pexels.com/photos/1404819/pexels-photo-1404819.jpeg'
       }
     ]
   }

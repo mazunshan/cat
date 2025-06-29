@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Upload, Plus } from 'lucide-react';
 import { Customer } from '../../types';
+import { SALES_STAFF } from '../../hooks/useDatabase';
 
 interface AddCustomerModalProps {
   isOpen: boolean;
@@ -18,7 +19,7 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, on
     occupation: '',
     tags: [] as string[],
     notes: '',
-    assignedSales: 'Alice Chen'
+    assignedSales: SALES_STAFF[0] // 默认选择第一个销售员
   });
 
   const [newTag, setNewTag] = useState('');
@@ -35,7 +36,7 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, on
       occupation: '',
       tags: [],
       notes: '',
-      assignedSales: 'Alice Chen'
+      assignedSales: SALES_STAFF[0]
     });
     onClose();
   };
@@ -165,9 +166,11 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, on
               onChange={(e) => setFormData(prev => ({ ...prev, assignedSales: e.target.value }))}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="Alice Chen">Alice Chen</option>
-              <option value="Bob Wang">Bob Wang</option>
-              <option value="Carol Li">Carol Li</option>
+              {SALES_STAFF.map(salesperson => (
+                <option key={salesperson} value={salesperson}>
+                  {salesperson}
+                </option>
+              ))}
             </select>
           </div>
 

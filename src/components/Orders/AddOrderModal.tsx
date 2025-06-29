@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Plus, Minus } from 'lucide-react';
 import { Order, Customer, Product } from '../../types';
+import { SALES_STAFF } from '../../hooks/useDatabase';
 
 interface AddOrderModalProps {
   isOpen: boolean;
@@ -19,7 +20,7 @@ const AddOrderModal: React.FC<AddOrderModalProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     customerId: '',
-    salesPerson: 'Alice Chen',
+    salesPerson: SALES_STAFF[0],
     paymentMethod: 'full' as 'full' | 'installment',
     status: 'pending_payment' as Order['status'],
     products: [] as Array<{
@@ -79,7 +80,7 @@ const AddOrderModal: React.FC<AddOrderModalProps> = ({
   const resetForm = () => {
     setFormData({
       customerId: '',
-      salesPerson: 'Alice Chen',
+      salesPerson: SALES_STAFF[0],
       paymentMethod: 'full',
       status: 'pending_payment',
       products: [],
@@ -172,9 +173,11 @@ const AddOrderModal: React.FC<AddOrderModalProps> = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, salesPerson: e.target.value }))}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="Alice Chen">Alice Chen</option>
-                <option value="Bob Wang">Bob Wang</option>
-                <option value="Carol Li">Carol Li</option>
+                {SALES_STAFF.map(salesperson => (
+                  <option key={salesperson} value={salesperson}>
+                    {salesperson}
+                  </option>
+                ))}
               </select>
             </div>
 

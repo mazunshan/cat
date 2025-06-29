@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus } from 'lucide-react';
 import { Customer } from '../../types';
+import { SALES_STAFF } from '../../hooks/useDatabase';
 
 interface EditCustomerModalProps {
   isOpen: boolean;
@@ -19,7 +20,7 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
     occupation: '',
     tags: [] as string[],
     notes: '',
-    assignedSales: 'Alice Chen'
+    assignedSales: SALES_STAFF[0]
   });
 
   const [newTag, setNewTag] = useState('');
@@ -173,9 +174,11 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
               onChange={(e) => setFormData(prev => ({ ...prev, assignedSales: e.target.value }))}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="Alice Chen">Alice Chen</option>
-              <option value="Bob Wang">Bob Wang</option>
-              <option value="Carol Li">Carol Li</option>
+              {SALES_STAFF.map(salesperson => (
+                <option key={salesperson} value={salesperson}>
+                  {salesperson}
+                </option>
+              ))}
             </select>
           </div>
 
