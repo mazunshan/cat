@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Customer, Order, Product, KnowledgeBase, AttendanceRecord } from '../types';
+import { Customer, Order, Product, KnowledgeBase, AttendanceRecord, AfterSalesRecord, ServiceTemplate, CustomerFeedback } from '../types';
 
 // 模拟客户数据 - 确保在整个应用中保持一致
 const mockCustomers: Customer[] = [
@@ -189,7 +189,7 @@ const mockOrders: Order[] = [
     orderNumber: 'ORD-2024-002',
     amount: 12000,
     paymentMethod: 'installment',
-    status: 'paid',
+    status: 'shipped',
     orderDate: '2024-02-10',
     salesPerson: 'Alice Chen',
     installmentPlan: {
@@ -233,6 +233,161 @@ const mockOrders: Order[] = [
         image: 'https://images.pexels.com/photos/1741205/pexels-photo-1741205.jpeg'
       }
     ]
+  },
+  {
+    id: '3',
+    customerId: '3',
+    orderNumber: 'ORD-2024-003',
+    amount: 15000,
+    paymentMethod: 'full',
+    status: 'completed',
+    orderDate: '2024-03-01',
+    salesPerson: 'Bob Wang',
+    products: [
+      {
+        id: '3',
+        name: '金吉拉波斯猫',
+        breed: '波斯猫',
+        price: 15000,
+        quantity: 1,
+        image: 'https://images.pexels.com/photos/1276553/pexels-photo-1276553.jpeg'
+      }
+    ]
+  }
+];
+
+// 模拟售后服务记录
+const mockAfterSalesRecords: AfterSalesRecord[] = [
+  {
+    id: '1',
+    orderId: '1',
+    customerId: '1',
+    type: 'phone_visit',
+    status: 'completed',
+    priority: 'medium',
+    title: '7天回访电话',
+    description: '购买后7天例行回访，了解猫咪适应情况',
+    solution: '客户反馈猫咪适应良好，食欲正常，已经熟悉新环境。建议继续观察，有问题随时联系。',
+    assignedTo: 'David Zhang',
+    createdBy: 'David Zhang',
+    scheduledDate: '2024-02-08',
+    completedDate: '2024-02-08',
+    customerSatisfaction: 5,
+    followUpRequired: false,
+    attachments: [],
+    tags: ['例行回访', '适应良好'],
+    createdAt: '2024-02-08T10:00:00Z',
+    updatedAt: '2024-02-08T15:30:00Z'
+  },
+  {
+    id: '2',
+    orderId: '2',
+    customerId: '2',
+    type: 'health_consultation',
+    status: 'completed',
+    priority: 'high',
+    title: '猫咪饮食咨询',
+    description: '客户咨询布偶猫的饮食搭配和营养需求',
+    solution: '已提供详细的饮食指南，推荐了适合的猫粮品牌和喂养频次。建议幼猫期每天3-4次，成年后改为2次。',
+    assignedTo: 'David Zhang',
+    createdBy: 'David Zhang',
+    scheduledDate: '2024-02-15',
+    completedDate: '2024-02-15',
+    customerSatisfaction: 4,
+    followUpRequired: true,
+    followUpDate: '2024-03-15',
+    attachments: ['饮食指南.pdf'],
+    tags: ['饮食咨询', '营养指导'],
+    createdAt: '2024-02-15T09:00:00Z',
+    updatedAt: '2024-02-15T16:45:00Z'
+  },
+  {
+    id: '3',
+    orderId: '1',
+    customerId: '1',
+    type: 'home_service',
+    status: 'pending',
+    priority: 'medium',
+    title: '30天上门检查',
+    description: '购买后30天上门健康检查服务',
+    assignedTo: 'David Zhang',
+    createdBy: 'David Zhang',
+    scheduledDate: '2024-03-01',
+    followUpRequired: false,
+    attachments: [],
+    tags: ['上门服务', '健康检查'],
+    createdAt: '2024-02-25T14:00:00Z',
+    updatedAt: '2024-02-25T14:00:00Z'
+  },
+  {
+    id: '4',
+    orderId: '3',
+    customerId: '3',
+    type: 'complaint',
+    status: 'in_progress',
+    priority: 'urgent',
+    title: '猫咪健康问题投诉',
+    description: '客户反映波斯猫出现轻微眼部分泌物增多的情况',
+    assignedTo: 'David Zhang',
+    createdBy: 'David Zhang',
+    scheduledDate: '2024-03-05',
+    followUpRequired: true,
+    attachments: ['眼部照片1.jpg', '眼部照片2.jpg'],
+    tags: ['健康问题', '眼部护理', '紧急处理'],
+    createdAt: '2024-03-04T11:30:00Z',
+    updatedAt: '2024-03-04T18:20:00Z'
+  }
+];
+
+// 模拟服务模板
+const mockServiceTemplates: ServiceTemplate[] = [
+  {
+    id: '1',
+    name: '7天回访电话',
+    type: 'phone_visit',
+    description: '购买后7天内进行电话回访，了解猫咪适应情况',
+    defaultPriority: 'medium',
+    estimatedDuration: 15,
+    checklist: [
+      '询问猫咪食欲情况',
+      '了解猫咪精神状态',
+      '确认疫苗接种情况',
+      '提醒定期体检',
+      '收集客户反馈'
+    ],
+    isActive: true
+  },
+  {
+    id: '2',
+    name: '健康咨询服务',
+    type: 'health_consultation',
+    description: '为客户提供专业的猫咪健康咨询服务',
+    defaultPriority: 'high',
+    estimatedDuration: 30,
+    checklist: [
+      '了解具体问题',
+      '分析症状表现',
+      '提供专业建议',
+      '推荐就医方案',
+      '安排后续跟进'
+    ],
+    isActive: true
+  },
+  {
+    id: '3',
+    name: '上门健康检查',
+    type: 'home_service',
+    description: '专业兽医上门为猫咪进行健康检查',
+    defaultPriority: 'medium',
+    estimatedDuration: 60,
+    checklist: [
+      '预约上门时间',
+      '准备检查设备',
+      '进行全面体检',
+      '记录健康状况',
+      '提供护理建议'
+    ],
+    isActive: true
   }
 ];
 
@@ -242,6 +397,8 @@ let globalProducts = [...mockProducts];
 let globalOrders = [...mockOrders];
 let globalKnowledgeBase: KnowledgeBase[] = [];
 let globalAttendanceRecords: AttendanceRecord[] = [];
+let globalAfterSalesRecords = [...mockAfterSalesRecords];
+let globalServiceTemplates = [...mockServiceTemplates];
 
 // 客户数据钩子
 export const useCustomers = () => {
@@ -524,5 +681,105 @@ export const useAttendance = () => {
     addAttendance, 
     updateAttendance, 
     refetch: fetchAttendance 
+  };
+};
+
+// 售后服务记录钩子
+export const useAfterSalesRecords = () => {
+  const [afterSalesRecords, setAfterSalesRecords] = useState<AfterSalesRecord[]>(globalAfterSalesRecords);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchAfterSalesRecords = async () => {
+    setLoading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setAfterSalesRecords([...globalAfterSalesRecords]);
+      setError(null);
+    } catch (err) {
+      setError('获取售后服务记录失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addAfterSalesRecord = async (recordData: Omit<AfterSalesRecord, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newRecord: AfterSalesRecord = {
+      id: Date.now().toString(),
+      ...recordData,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    globalAfterSalesRecords = [newRecord, ...globalAfterSalesRecords];
+    setAfterSalesRecords([...globalAfterSalesRecords]);
+    return newRecord;
+  };
+
+  const updateAfterSalesRecord = async (recordId: string, recordData: Partial<AfterSalesRecord>) => {
+    const existingRecord = globalAfterSalesRecords.find(r => r.id === recordId);
+    if (!existingRecord) throw new Error('售后服务记录不存在');
+
+    const updatedRecord: AfterSalesRecord = {
+      ...existingRecord,
+      ...recordData,
+      updatedAt: new Date().toISOString()
+    };
+
+    globalAfterSalesRecords = globalAfterSalesRecords.map(record => 
+      record.id === recordId ? updatedRecord : record
+    );
+    setAfterSalesRecords([...globalAfterSalesRecords]);
+    return updatedRecord;
+  };
+
+  const deleteAfterSalesRecord = async (recordId: string) => {
+    globalAfterSalesRecords = globalAfterSalesRecords.filter(record => record.id !== recordId);
+    setAfterSalesRecords([...globalAfterSalesRecords]);
+  };
+
+  useEffect(() => {
+    fetchAfterSalesRecords();
+  }, []);
+
+  return { 
+    afterSalesRecords, 
+    loading, 
+    error, 
+    addAfterSalesRecord, 
+    updateAfterSalesRecord, 
+    deleteAfterSalesRecord, 
+    refetch: fetchAfterSalesRecords 
+  };
+};
+
+// 服务模板钩子
+export const useServiceTemplates = () => {
+  const [serviceTemplates, setServiceTemplates] = useState<ServiceTemplate[]>(globalServiceTemplates);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchServiceTemplates = async () => {
+    setLoading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setServiceTemplates([...globalServiceTemplates]);
+      setError(null);
+    } catch (err) {
+      setError('获取服务模板失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchServiceTemplates();
+  }, []);
+
+  return { 
+    serviceTemplates, 
+    loading, 
+    error, 
+    refetch: fetchServiceTemplates 
   };
 };

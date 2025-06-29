@@ -96,7 +96,7 @@ export interface KnowledgeBase {
   viewCount: number;
   createdAt: string;
   updatedAt: string;
-  createdBy?: string; // 添加创建者字段
+  createdBy?: string;
 }
 
 export interface AttendanceRecord {
@@ -109,6 +109,52 @@ export interface AttendanceRecord {
   notes?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// 新增售后服务相关类型
+export interface AfterSalesRecord {
+  id: string;
+  orderId: string;
+  customerId: string;
+  type: 'phone_visit' | 'health_consultation' | 'home_service' | 'complaint' | 'feedback' | 'maintenance';
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  title: string;
+  description: string;
+  solution?: string;
+  assignedTo: string;
+  createdBy: string;
+  scheduledDate?: string;
+  completedDate?: string;
+  customerSatisfaction?: number; // 1-5 星评分
+  followUpRequired: boolean;
+  followUpDate?: string;
+  attachments: string[];
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ServiceTemplate {
+  id: string;
+  name: string;
+  type: AfterSalesRecord['type'];
+  description: string;
+  defaultPriority: AfterSalesRecord['priority'];
+  estimatedDuration: number; // 预计处理时间（分钟）
+  checklist: string[];
+  isActive: boolean;
+}
+
+export interface CustomerFeedback {
+  id: string;
+  afterSalesRecordId: string;
+  customerId: string;
+  rating: number; // 1-5 星
+  comment: string;
+  improvements: string[];
+  wouldRecommend: boolean;
+  createdAt: string;
 }
 
 export interface DashboardStats {
