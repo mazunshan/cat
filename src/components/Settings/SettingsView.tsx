@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Users, Shield, Bell, Globe, RefreshCw, Trash2, AlertTriangle, CheckCircle, User, Key, Copy } from 'lucide-react';
+import { Save, Users, Shield, Bell, Globe, RefreshCw, Trash2, AlertTriangle, CheckCircle, User, Key, Copy, Database } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import DatabaseStatus from '../Common/DatabaseStatus';
 
 interface SystemSettings {
   general: {
@@ -104,7 +105,8 @@ const SettingsView: React.FC = () => {
     { id: 'general', label: '基本设置', icon: Globe },
     { id: 'users', label: '用户管理', icon: Users },
     { id: 'security', label: '安全设置', icon: Shield },
-    { id: 'notifications', label: '通知设置', icon: Bell }
+    { id: 'notifications', label: '通知设置', icon: Bell },
+    { id: 'database', label: '数据库状态', icon: Database }
   ];
 
   // 同步系统设置
@@ -749,6 +751,12 @@ const SettingsView: React.FC = () => {
     </div>
   );
 
+  const renderDatabaseStatus = () => (
+    <div className="space-y-6">
+      <DatabaseStatus />
+    </div>
+  );
+
   const renderContent = () => {
     switch (activeTab) {
       case 'general':
@@ -759,6 +767,8 @@ const SettingsView: React.FC = () => {
         return renderSecuritySettings();
       case 'notifications':
         return renderNotificationSettings();
+      case 'database':
+        return renderDatabaseStatus();
       default:
         return renderGeneralSettings();
     }
@@ -808,33 +818,35 @@ const SettingsView: React.FC = () => {
             <h2 className="text-2xl font-bold text-gray-800">
               {tabs.find(tab => tab.id === activeTab)?.label}
             </h2>
-            <button
-              onClick={handleSave}
-              disabled={saveStatus === 'saving'}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center disabled:opacity-50"
-            >
-              {saveStatus === 'saving' ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  保存中...
-                </>
-              ) : saveStatus === 'success' ? (
-                <>
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  已保存
-                </>
-              ) : saveStatus === 'error' ? (
-                <>
-                  <AlertTriangle className="w-4 h-4 mr-2" />
-                  保存失败
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  保存设置
-                </>
-              )}
-            </button>
+            {activeTab !== 'database' && (
+              <button
+                onClick={handleSave}
+                disabled={saveStatus === 'saving'}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center disabled:opacity-50"
+              >
+                {saveStatus === 'saving' ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    保存中...
+                  </>
+                ) : saveStatus === 'success' ? (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    已保存
+                  </>
+                ) : saveStatus === 'error' ? (
+                  <>
+                    <AlertTriangle className="w-4 h-4 mr-2" />
+                    保存失败
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    保存设置
+                  </>
+                )}
+              </button>
+            )}
           </div>
 
           {renderContent()}
