@@ -487,6 +487,26 @@ const mockOrders: Order[] = [
       }
     ]
   },
+  {
+    id: '19',
+    customerId: '1',
+    orderNumber: 'ORD-2024-019',
+    amount: 6800,
+    paymentMethod: 'full',
+    status: 'completed',
+    orderDate: '2024-05-05',
+    salesPerson: 'Alice Chen',
+    products: [
+      {
+        id: '4',
+        name: '橘色美短',
+        breed: '美国短毛猫',
+        price: 6800,
+        quantity: 1,
+        image: 'https://images.pexels.com/photos/1404819/pexels-photo-1404819.jpeg'
+      }
+    ]
+  },
 
   // Bob Wang 的订单 (业绩第二)
   {
@@ -549,6 +569,26 @@ const mockOrders: Order[] = [
       }
     ]
   },
+  {
+    id: '20',
+    customerId: '3',
+    orderNumber: 'ORD-2024-020',
+    amount: 9500,
+    paymentMethod: 'full',
+    status: 'completed',
+    orderDate: '2024-05-08',
+    salesPerson: 'Bob Wang',
+    products: [
+      {
+        id: '6',
+        name: '蓝色俄罗斯蓝猫',
+        breed: '俄罗斯蓝猫',
+        price: 9500,
+        quantity: 1,
+        image: 'https://images.pexels.com/photos/1404819/pexels-photo-1404819.jpeg'
+      }
+    ]
+  },
 
   // Carol Li 的订单 (业绩第三)
   {
@@ -588,6 +628,26 @@ const mockOrders: Order[] = [
         price: 9500,
         quantity: 1,
         image: 'https://images.pexels.com/photos/1404819/pexels-photo-1404819.jpeg'
+      }
+    ]
+  },
+  {
+    id: '21',
+    customerId: '4',
+    orderNumber: 'ORD-2024-021',
+    amount: 12000,
+    paymentMethod: 'installment',
+    status: 'completed',
+    orderDate: '2024-05-10',
+    salesPerson: 'Carol Li',
+    products: [
+      {
+        id: '2',
+        name: '蓝双色布偶猫',
+        breed: '布偶猫',
+        price: 12000,
+        quantity: 1,
+        image: 'https://images.pexels.com/photos/1741205/pexels-photo-1741205.jpeg'
       }
     ]
   },
@@ -633,6 +693,26 @@ const mockOrders: Order[] = [
       }
     ]
   },
+  {
+    id: '22',
+    customerId: '6',
+    orderNumber: 'ORD-2024-022',
+    amount: 6800,
+    paymentMethod: 'full',
+    status: 'completed',
+    orderDate: '2024-05-12',
+    salesPerson: 'Emma Liu',
+    products: [
+      {
+        id: '4',
+        name: '橘色美短',
+        breed: '美国短毛猫',
+        price: 6800,
+        quantity: 1,
+        image: 'https://images.pexels.com/photos/1404819/pexels-photo-1404819.jpeg'
+      }
+    ]
+  },
 
   // Frank Zhou 的订单
   {
@@ -652,6 +732,26 @@ const mockOrders: Order[] = [
         price: 12000,
         quantity: 1,
         image: 'https://images.pexels.com/photos/1741205/pexels-photo-1741205.jpeg'
+      }
+    ]
+  },
+  {
+    id: '23',
+    customerId: '7',
+    orderNumber: 'ORD-2024-023',
+    amount: 7800,
+    paymentMethod: 'full',
+    status: 'completed',
+    orderDate: '2024-05-15',
+    salesPerson: 'Frank Zhou',
+    products: [
+      {
+        id: '8',
+        name: '蓝白英短',
+        breed: '英国短毛猫',
+        price: 7800,
+        quantity: 1,
+        image: 'https://images.pexels.com/photos/1543793/pexels-photo-1543793.jpeg'
       }
     ]
   },
@@ -762,108 +862,6 @@ const mockOrders: Order[] = [
         price: 13500,
         quantity: 1,
         image: 'https://images.pexels.com/photos/1741205/pexels-photo-1741205.jpeg'
-      }
-    ]
-  },
-
-  // 更多订单数据，增加业绩差异
-  {
-    id: '19',
-    customerId: '1',
-    orderNumber: 'ORD-2024-019',
-    amount: 6800,
-    paymentMethod: 'full',
-    status: 'completed',
-    orderDate: '2024-05-05',
-    salesPerson: 'Alice Chen',
-    products: [
-      {
-        id: '4',
-        name: '橘色美短',
-        breed: '美国短毛猫',
-        price: 6800,
-        quantity: 1,
-        image: 'https://images.pexels.com/photos/1404819/pexels-photo-1404819.jpeg'
-      }
-    ]
-  },
-  {
-    id: '20',
-    customerId: '3',
-    orderNumber: 'ORD-2024-020',
-    amount: 9500,
-    paymentMethod: 'full',
-    status: 'completed',
-    orderDate: '2024-05-08',
-    salesPerson: 'Bob Wang',
-    products: [
-      {
-        id: '6',
-        name: '蓝色俄罗斯蓝猫',
-        breed: '俄罗斯蓝猫',
-        price: 9500,
-        quantity: 1,
-        image: 'https://images.pexels.com/photos/1404819/pexels-photo-1404819.jpeg'
-      }
-    ]
-  },
-  {
-    id: '21',
-    customerId: '4',
-    orderNumber: 'ORD-2024-021',
-    amount: 12000,
-    paymentMethod: 'installment',
-    status: 'completed',
-    orderDate: '2024-05-10',
-    salesPerson: 'Carol Li',
-    products: [
-      {
-        id: '2',
-        name: '蓝双色布偶猫',
-        breed: '布偶猫',
-        price: 12000,
-        quantity: 1,
-        image: 'https://images.pexels.com/photos/1741205/pexels-photo-1741205.jpeg'
-      }
-    ]
-  },
-  {
-    id: '22',
-    customerId: '6',
-    orderNumber: 'ORD-2024-022',
-    amount: 6800,
-    paymentMethod: 'full',
-    status: 'completed',
-    orderDate: '2024-05-12',
-    salesPerson: 'Emma Liu',
-    products: [
-      {
-        id: '4',
-        name: '橘色美短',
-        breed: '美国短毛猫',
-        price: 6800,
-        quantity: 1,
-        image: 'https://images.pexels.com/photos/1404819/pexels-photo-1404819.jpeg'
-      }
-    ]
-  },
-  {
-    id: '23',
-    customerId: '7',
-    orderNumber: 'ORD-2024-023',
-    amount: 7800,
-    paymentMethod: 'full',
-    status: 'completed',
-    orderDate: '2024-05-15',
-    salesPerson: 'Frank Zhou',
-    products: [
-      {
-        id: '8',
-        name: '蓝白英短',
-        breed: '英国短毛猫',
-        price: 7800,
-        quantity: 1,
-        image: 'https://images.pexels.com/photos/1543793/pexels-photo-1543793.jpeg'
       }
     ]
   }
