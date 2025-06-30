@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { X, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { AttendanceRecord } from '../../types';
+import { useAuth } from '../../context/AuthContext';
+import { isCurrentTimeLate, isCurrentTimeEarlyLeave } from '../../utils/attendanceUtils';
 
 interface CheckInOutModalProps {
   isOpen: boolean;
@@ -17,10 +19,13 @@ const CheckInOutModal: React.FC<CheckInOutModalProps> = ({
   onCheckOut,
   todayRecord
 }) => {
+  const { businessHours } = useAuth();
   const [notes, setNotes] = useState('');
   const currentTime = new Date();
-  const isLate = currentTime.getHours() > 9 || (currentTime.getHours() === 9 && currentTime.getMinutes() > 0);
-  const isEarlyLeave = currentTime.getHours() < 17;
+  
+  // 使用营业时间设置判断迟到和早退
+  const isLate = isCurrentTimeLate(businessHours);
+  const isEarlyLeave = isCurrentTimeEarlyLeave(businessHours);
 
   const handleCheckIn = () => {
     onCheckIn();
@@ -71,6 +76,13 @@ const CheckInOutModal: React.FC<CheckInOutModalProps> = ({
             </div>
           </div>
 
+          {/* 营业时间提示 */}
+          <div className="bg-gray-50 rounded-lg p-3 mb-4">
+            <div className="text-sm text-gray-600 text-center">
+              营业时间：{businessHours.workStartTime} - {businessHours.workEndTime}
+            </div>
+          </div>
+
           {/* 状态提示 */}
           {!todayRecord ? (
             <div className={`p-4 rounded-lg mb-6 ${
@@ -87,7 +99,10 @@ const CheckInOutModal: React.FC<CheckInOutModalProps> = ({
                     {isLate ? '迟到签到' : '正常签到'}
                   </p>
                   <p className={`text-sm ${isLate ? 'text-yellow-700' : 'text-green-700'}`}>
-                    {isLate ? '标准上班时间为9:00' : '您准时到达'}
+                    {isLate 
+                      ? `标准上班时间为 ${businessHours.workStartTime}，迟到容忍时间 ${businessHours.lateThreshold} 分钟`
+                      : '您准时到达'
+                    }
                   </p>
                 </div>
               </div>
@@ -107,7 +122,10 @@ const CheckInOutModal: React.FC<CheckInOutModalProps> = ({
                     {isEarlyLeave ? '早退签退' : '正常签退'}
                   </p>
                   <p className={`text-sm ${isEarlyLeave ? 'text-orange-700' : 'text-blue-700'}`}>
-                    {isEarlyLeave ? '标准下班时间为17:00' : '您已完成今日工作'}
+                    {isEarlyLeave 
+                      ? `标准下班时间为 ${businessHours.workEndTime}，早退容忍时间 ${businessHours.earlyLeaveThreshold} 分钟`
+                      : '您已完成今日工作'
+                    }
                   </p>
                 </div>
               </div>

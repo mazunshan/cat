@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, AuthState } from '../types';
+import { User, AuthState, BusinessHours } from '../types';
 import { authenticateUser, getAllUsers, createUser, updateUserStatus, deleteUser } from '../lib/auth';
 import { testConnection } from '../lib/database';
 
@@ -18,6 +18,9 @@ interface AuthContextType extends AuthState {
   toggleUserStatus: (userId: string, isActive: boolean) => Promise<void>;
   removeUser: (userId: string) => Promise<void>;
   refreshUsers: () => Promise<void>;
+  // 营业时间设置
+  businessHours: BusinessHours;
+  updateBusinessHours: (hours: BusinessHours) => void;
 }
 
 interface SystemSettings {
@@ -130,6 +133,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     codeValidUntil: null
   });
 
+  // 默认营业时间设置
+  const [businessHours, setBusinessHours] = useState<BusinessHours>({
+    workStartTime: '09:00',
+    workEndTime: '18:00',
+    lateThreshold: 15, // 15分钟内算正常
+    earlyLeaveThreshold: 30, // 提前30分钟内算正常
+    workDays: [1, 2, 3, 4, 5] // 周一到周五
+  });
+
   const [loginStatus, setLoginStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [loginMessage, setLoginMessage] = useState<string>('');
 
@@ -175,6 +187,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateSystemSettings = (newSettings: Partial<SystemSettings>) => {
     setSystemSettings(prev => ({ ...prev, ...newSettings }));
   };
+
+  const updateBusinessHours = (hours: BusinessHours) => {
+    setBusinessHours(hours);
+    // 这里可以添加保存到数据库的逻辑
+    localStorage.setItem('businessHours', JSON.stringify(hours));
+  };
+
+  // 从本地存储加载营业时间设置
+  useEffect(() => {
+    const savedHours = localStorage.getItem('businessHours');
+    if (savedHours) {
+      try {
+        setBusinessHours(JSON.parse(savedHours));
+      } catch (error) {
+        console.error('Failed to parse business hours from localStorage:', error);
+      }
+    }
+  }, []);
 
   const generateVerificationCode = (): string => {
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -350,7 +380,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addUser,
       toggleUserStatus,
       removeUser,
-      refreshUsers
+      refreshUsers,
+      businessHours,
+      updateBusinessHours
     }}>
       {children}
     </AuthContext.Provider>

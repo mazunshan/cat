@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Customer, Order, Product, KnowledgeBase, AttendanceRecord, AfterSalesRecord, ServiceTemplate, CustomerFeedback, QuarantineVideo } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { calculateAttendanceStatus } from '../utils/attendanceUtils';
 
 // 统一的销售员名单 - 确保在整个应用中保持一致
 export const SALES_STAFF = [
@@ -23,6 +25,7 @@ const mockCustomers: Customer[] = [
     gender: 'female',
     phone: '13800138001',
     wechat: 'zhang_xiaomei',
+    
     address: '北京市朝阳区三里屯路123号',
     occupation: 'UI设计师',
     tags: ['高意向', '英短爱好者', '预算充足'],
@@ -1227,6 +1230,7 @@ export const useKnowledgeBase = () => {
 
 // 考勤数据钩子
 export const useAttendance = () => {
+  const { businessHours } = useAuth();
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>(globalAttendanceRecords);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -1245,9 +1249,18 @@ export const useAttendance = () => {
   };
 
   const addAttendance = async (attendanceData: Omit<AttendanceRecord, 'id' | 'createdAt' | 'updatedAt'>) => {
+    // 根据营业时间设置计算考勤状态
+    const status = calculateAttendanceStatus(
+      attendanceData.checkInTime,
+      attendanceData.checkOutTime,
+      attendanceData.date,
+      businessHours
+    );
+
     const newRecord: AttendanceRecord = {
       id: Date.now().toString(),
       ...attendanceData,
+      status,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -1268,9 +1281,18 @@ export const useAttendance = () => {
   };
 
   const updateAttendance = async (recordId: string, attendanceData: AttendanceRecord) => {
+    // 根据营业时间设置重新计算考勤状态
+    const status = calculateAttendanceStatus(
+      attendanceData.checkInTime,
+      attendanceData.checkOutTime,
+      attendanceData.date,
+      businessHours
+    );
+
     const updatedRecord: AttendanceRecord = {
       ...attendanceData,
       id: recordId,
+      status,
       updatedAt: new Date().toISOString()
     };
 
@@ -1284,6 +1306,32 @@ export const useAttendance = () => {
   useEffect(() => {
     fetchAttendance();
   }, []);
+
+  // 当营业时间设置变更时，重新计算所有考勤状态
+  useEffect(() => {
+    if (globalAttendanceRecords.length > 0) {
+      const updatedRecords = globalAttendanceRecords.map(record => {
+        const newStatus = calculateAttendanceStatus(
+          record.checkInTime,
+          record.checkOutTime,
+          record.date,
+          businessHours
+        );
+        
+        if (newStatus !== record.status) {
+          return {
+            ...record,
+            status: newStatus,
+            updatedAt: new Date().toISOString()
+          };
+        }
+        return record;
+      });
+      
+      globalAttendanceRecords = updatedRecords;
+      setAttendanceRecords([...globalAttendanceRecords]);
+    }
+  }, [businessHours]);
 
   return { 
     attendanceRecords, 

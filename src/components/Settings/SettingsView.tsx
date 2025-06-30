@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Users, Shield, Bell, Globe, RefreshCw, Trash2, AlertTriangle, CheckCircle, User, Key, Copy } from 'lucide-react';
+import { Save, Users, Shield, Bell, Globe, RefreshCw, Trash2, AlertTriangle, CheckCircle, User, Key, Copy, Clock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { BusinessHours } from '../../types';
+import { getWorkDayNames, formatTimeRange } from '../../utils/attendanceUtils';
 
 interface SystemSettings {
   general: {
@@ -51,7 +53,9 @@ const SettingsView: React.FC = () => {
     addUser,
     toggleUserStatus,
     removeUser,
-    refreshUsers
+    refreshUsers,
+    businessHours,
+    updateBusinessHours
   } = useAuth();
   
   const [activeTab, setActiveTab] = useState('general');
@@ -92,6 +96,9 @@ const SettingsView: React.FC = () => {
     }
   });
 
+  // 营业时间设置状态
+  const [tempBusinessHours, setTempBusinessHours] = useState<BusinessHours>(businessHours);
+
   const [newUser, setNewUser] = useState({
     username: '',
     email: '',
@@ -103,6 +110,7 @@ const SettingsView: React.FC = () => {
   const tabs = [
     { id: 'general', label: '基本设置', icon: Globe },
     { id: 'users', label: '用户管理', icon: Users },
+    { id: 'attendance', label: '考勤设置', icon: Clock },
     { id: 'security', label: '安全设置', icon: Shield },
     { id: 'notifications', label: '通知设置', icon: Bell }
   ];
@@ -118,6 +126,18 @@ const SettingsView: React.FC = () => {
     }));
   }, [systemSettings]);
 
+  // 同步营业时间设置
+  useEffect(() => {
+    setTempBusinessHours(businessHours);
+    setSettings(prev => ({
+      ...prev,
+      general: {
+        ...prev.general,
+        businessHours: formatTimeRange(businessHours.workStartTime, businessHours.workEndTime)
+      }
+    }));
+  }, [businessHours]);
+
   const handleSave = async () => {
     setSaveStatus('saving');
     try {
@@ -128,6 +148,11 @@ const SettingsView: React.FC = () => {
         codeGeneratedAt: systemSettings.codeGeneratedAt,
         codeValidUntil: systemSettings.codeValidUntil
       });
+
+      // 更新营业时间设置
+      if (activeTab === 'attendance') {
+        updateBusinessHours(tempBusinessHours);
+      }
       
       // 这里应该调用API保存设置到数据库
       await new Promise(resolve => setTimeout(resolve, 1000)); // 模拟API调用
@@ -204,6 +229,15 @@ const SettingsView: React.FC = () => {
     }
   };
 
+  const handleWorkDayToggle = (day: number) => {
+    setTempBusinessHours(prev => ({
+      ...prev,
+      workDays: prev.workDays.includes(day)
+        ? prev.workDays.filter(d => d !== day)
+        : [...prev.workDays, day].sort()
+    }));
+  };
+
   const renderGeneralSettings = () => (
     <div className="space-y-8">
       <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -275,13 +309,13 @@ const SettingsView: React.FC = () => {
             <input
               type="text"
               value={settings.general.businessHours}
-              onChange={(e) => setSettings(prev => ({
-                ...prev,
-                general: { ...prev.general, businessHours: e.target.value }
-              }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="09:00-18:00"
+              readOnly
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+              placeholder="在考勤设置中配置"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              请在"考勤设置"标签页中配置详细的营业时间
+            </p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -535,6 +569,152 @@ const SettingsView: React.FC = () => {
     </div>
   );
 
+  const renderAttendanceSettings = () => (
+    <div className="space-y-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-800 mb-6 flex items-center">
+          <Clock className="w-5 h-5 mr-2" />
+          考勤时间设置
+        </h3>
+        
+        <div className="space-y-6">
+          {/* 工作时间设置 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                上班时间
+              </label>
+              <input
+                type="time"
+                value={tempBusinessHours.workStartTime}
+                onChange={(e) => setTempBusinessHours(prev => ({
+                  ...prev,
+                  workStartTime: e.target.value
+                }))}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                下班时间
+              </label>
+              <input
+                type="time"
+                value={tempBusinessHours.workEndTime}
+                onChange={(e) => setTempBusinessHours(prev => ({
+                  ...prev,
+                  workEndTime: e.target.value
+                }))}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          {/* 容忍时间设置 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                迟到容忍时间（分钟）
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="60"
+                value={tempBusinessHours.lateThreshold}
+                onChange={(e) => setTempBusinessHours(prev => ({
+                  ...prev,
+                  lateThreshold: parseInt(e.target.value) || 0
+                }))}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                超过此时间将被标记为迟到
+              </p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                早退容忍时间（分钟）
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="120"
+                value={tempBusinessHours.earlyLeaveThreshold}
+                onChange={(e) => setTempBusinessHours(prev => ({
+                  ...prev,
+                  earlyLeaveThreshold: parseInt(e.target.value) || 0
+                }))}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                提前此时间内下班不算早退
+              </p>
+            </div>
+          </div>
+
+          {/* 工作日设置 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              工作日设置
+            </label>
+            <div className="grid grid-cols-7 gap-2">
+              {['周日', '周一', '周二', '周三', '周四', '周五', '周六'].map((day, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => handleWorkDayToggle(index)}
+                  className={`p-3 text-sm font-medium rounded-lg border transition-colors ${
+                    tempBusinessHours.workDays.includes(index)
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {day}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              选择需要考勤的工作日，当前选择：{getWorkDayNames(tempBusinessHours.workDays).join('、')}
+            </p>
+          </div>
+
+          {/* 预览设置 */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="font-medium text-blue-800 mb-3">考勤规则预览</h4>
+            <div className="space-y-2 text-sm text-blue-700">
+              <div className="flex justify-between">
+                <span>工作时间：</span>
+                <span className="font-medium">
+                  {formatTimeRange(tempBusinessHours.workStartTime, tempBusinessHours.workEndTime)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>工作日：</span>
+                <span className="font-medium">
+                  {getWorkDayNames(tempBusinessHours.workDays).join('、')}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>迟到标准：</span>
+                <span className="font-medium">
+                  超过 {tempBusinessHours.workStartTime} 后 {tempBusinessHours.lateThreshold} 分钟
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>早退标准：</span>
+                <span className="font-medium">
+                  {tempBusinessHours.workEndTime} 前 {tempBusinessHours.earlyLeaveThreshold} 分钟内
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderSecuritySettings = () => (
     <div className="space-y-6">
       <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -755,6 +935,8 @@ const SettingsView: React.FC = () => {
         return renderGeneralSettings();
       case 'users':
         return renderUserManagement();
+      case 'attendance':
+        return renderAttendanceSettings();
       case 'security':
         return renderSecuritySettings();
       case 'notifications':

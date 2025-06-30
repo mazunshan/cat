@@ -6,9 +6,10 @@ import AttendanceCalendar from './AttendanceCalendar';
 import AttendanceStats from './AttendanceStats';
 import CheckInOutModal from './CheckInOutModal';
 import { AttendanceRecord } from '../../types';
+import { isWorkDay } from '../../utils/attendanceUtils';
 
 const AttendanceView: React.FC = () => {
-  const { user } = useAuth();
+  const { user, businessHours } = useAuth();
   const { attendanceRecords = [], loading, error, addAttendance, updateAttendance } = useAttendance();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -59,20 +60,22 @@ const AttendanceView: React.FC = () => {
     return user ? user.name : userId.slice(0, 8);
   };
 
+  // 检查今天是否是工作日
+  const isTodayWorkDay = isWorkDay(new Date().toISOString().split('T')[0], businessHours);
+
   const handleCheckIn = async () => {
     if (!user) return;
     
     try {
       const now = new Date();
       const checkInTime = now.toISOString();
-      const isLate = now.getHours() > 9 || (now.getHours() === 9 && now.getMinutes() > 0);
       
       await addAttendance({
         userId: user.id,
         date: new Date().toISOString().split('T')[0],
         checkInTime,
-        status: isLate ? 'late' : 'present',
-        notes: isLate ? '迟到' : '正常签到'
+        status: 'present', // 状态会在 addAttendance 中根据营业时间设置自动计算
+        notes: ''
       });
     } catch (error) {
       console.error('签到失败:', error);
@@ -86,13 +89,11 @@ const AttendanceView: React.FC = () => {
     try {
       const now = new Date();
       const checkOutTime = now.toISOString();
-      const isEarlyLeave = now.getHours() < 17;
       
       await updateAttendance(myTodayRecord.id, {
         ...myTodayRecord,
         checkOutTime,
-        status: isEarlyLeave ? 'early_leave' : myTodayRecord.status,
-        notes: isEarlyLeave ? '早退' : myTodayRecord.notes
+        notes: myTodayRecord.notes
       });
     } catch (error) {
       console.error('签退失败:', error);
@@ -230,7 +231,12 @@ const AttendanceView: React.FC = () => {
           
           {/* 签到签退按钮 */}
           <div className="flex items-center space-x-2">
-            {!myTodayRecord ? (
+            {!isTodayWorkDay ? (
+              <div className="text-gray-600 font-medium flex items-center">
+                <Info className="w-4 h-4 mr-2" />
+                今日非工作日
+              </div>
+            ) : !myTodayRecord ? (
               <button
                 onClick={() => setShowCheckInModal(true)}
                 className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center"
@@ -252,6 +258,35 @@ const AttendanceView: React.FC = () => {
                 今日已完成
               </div>
             )}
+          </div>
+        </div>
+
+        {/* 营业时间信息 */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h3 className="text-md font-semibold text-blue-800 mb-2 flex items-center">
+            <Clock className="w-4 h-4 mr-2" />
+            营业时间信息
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-blue-600">工作时间</p>
+              <p className="font-medium text-blue-800">{businessHours.workStartTime} - {businessHours.workEndTime}</p>
+            </div>
+            <div>
+              <p className="text-sm text-blue-600">工作日</p>
+              <p className="font-medium text-blue-800">
+                {businessHours.workDays.map(day => {
+                  const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+                  return dayNames[day];
+                }).join('、')}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-blue-600">考勤规则</p>
+              <p className="font-medium text-blue-800">
+                迟到: 超过{businessHours.lateThreshold}分钟 | 早退: 提前{businessHours.earlyLeaveThreshold}分钟
+              </p>
+            </div>
           </div>
         </div>
 
@@ -318,13 +353,19 @@ const AttendanceView: React.FC = () => {
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Clock className="w-8 h-8 text-gray-400" />
               </div>
-              <p className="text-gray-600 mb-4">您今天还未签到</p>
-              <button
-                onClick={() => setShowCheckInModal(true)}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                立即签到
-              </button>
+              {isTodayWorkDay ? (
+                <>
+                  <p className="text-gray-600 mb-4">您今天还未签到</p>
+                  <button
+                    onClick={() => setShowCheckInModal(true)}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    立即签到
+                  </button>
+                </>
+              ) : (
+                <p className="text-gray-600">今日为非工作日，无需签到</p>
+              )}
             </div>
           )}
         </div>
@@ -434,7 +475,12 @@ const AttendanceView: React.FC = () => {
 
           {/* 签到签退按钮 */}
           <div className="flex items-center space-x-2">
-            {!myTodayRecord ? (
+            {!isTodayWorkDay ? (
+              <div className="text-gray-600 font-medium flex items-center">
+                <Info className="w-4 h-4 mr-2" />
+                今日非工作日
+              </div>
+            ) : !myTodayRecord ? (
               <button
                 onClick={() => setShowCheckInModal(true)}
                 className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center"
@@ -456,6 +502,35 @@ const AttendanceView: React.FC = () => {
                 今日已完成
               </div>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* 营业时间信息 */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h3 className="text-md font-semibold text-blue-800 mb-2 flex items-center">
+          <Clock className="w-4 h-4 mr-2" />
+          当前营业时间设置
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <p className="text-sm text-blue-600">工作时间</p>
+            <p className="font-medium text-blue-800">{businessHours.workStartTime} - {businessHours.workEndTime}</p>
+          </div>
+          <div>
+            <p className="text-sm text-blue-600">工作日</p>
+            <p className="font-medium text-blue-800">
+              {businessHours.workDays.map(day => {
+                const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+                return dayNames[day];
+              }).join('、')}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-blue-600">考勤规则</p>
+            <p className="font-medium text-blue-800">
+              迟到: 超过{businessHours.lateThreshold}分钟 | 早退: 提前{businessHours.earlyLeaveThreshold}分钟
+            </p>
           </div>
         </div>
       </div>
@@ -511,7 +586,7 @@ const AttendanceView: React.FC = () => {
         </div>
       </div>
 
-      {/* 考勤月历视图 */}
+      {/* 员工考勤表格 */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">员工考勤月历</h3>
         
@@ -555,12 +630,14 @@ const AttendanceView: React.FC = () => {
                   const date = new Date();
                   date.setDate(day);
                   const isToday = day === new Date().getDate();
+                  const dateString = date.toISOString().split('T')[0];
+                  const isWorkingDay = isWorkDay(dateString, businessHours);
                   
                   return (
                     <th 
                       key={day} 
                       className={`py-3 px-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200 ${
-                        isToday ? 'bg-blue-50' : 'bg-gray-50'
+                        isToday ? 'bg-blue-50' : isWorkingDay ? 'bg-gray-50' : 'bg-gray-100'
                       }`}
                     >
                       {day}
@@ -587,6 +664,7 @@ const AttendanceView: React.FC = () => {
                       date.setDate(day);
                       const dateString = date.toISOString().split('T')[0];
                       const record = userRecords.find(r => r.date === dateString);
+                      const isWorkingDay = isWorkDay(dateString, businessHours);
                       
                       let statusClass = 'bg-gray-100';
                       if (record) {
@@ -625,7 +703,7 @@ const AttendanceView: React.FC = () => {
                             >
                               {getStatusIcon(record.status)}
                             </div>
-                          ) : day <= new Date().getDate() ? (
+                          ) : day <= new Date().getDate() && isWorkingDay ? (
                             <div className="w-8 h-8 mx-auto rounded-md bg-gray-100 flex items-center justify-center">
                               -
                             </div>
@@ -657,6 +735,10 @@ const AttendanceView: React.FC = () => {
           <div className="flex items-center">
             <div className="w-4 h-4 bg-red-100 rounded mr-2"></div>
             <span className="text-gray-600">缺勤</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-gray-100 rounded mr-2"></div>
+            <span className="text-gray-600">非工作日</span>
           </div>
         </div>
       </div>

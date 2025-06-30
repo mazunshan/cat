@@ -126,6 +126,15 @@ export interface AttendanceRecord {
   updatedAt: string;
 }
 
+// 新增营业时间设置类型
+export interface BusinessHours {
+  workStartTime: string; // 上班时间，格式: "09:00"
+  workEndTime: string;   // 下班时间，格式: "18:00"
+  lateThreshold: number; // 迟到容忍时间（分钟）
+  earlyLeaveThreshold: number; // 早退容忍时间（分钟）
+  workDays: number[];    // 工作日，0=周日，1=周一...6=周六
+}
+
 // 新增售后服务相关类型
 export interface AfterSalesRecord {
   id: string;
