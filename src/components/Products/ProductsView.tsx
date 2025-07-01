@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
-import { Plus, Filter, Grid, List, AlertTriangle, Trash2 } from 'lucide-react';
+import { Plus, Filter, Grid, List, AlertTriangle, Trash2, Edit } from 'lucide-react';
 import ProductCard from './ProductCard';
 import ProductDetail from './ProductDetail';
 import AddProductModal from './AddProductModal';
+import EditProductModal from './EditProductModal';
 import { useProducts } from '../../hooks/useDatabase';
 import { useAuth } from '../../context/AuthContext';
 import { Product } from '../../types';
 
 const ProductsView: React.FC = () => {
   const { user } = useAuth();
-  const { products = [], loading, error, addProduct, deleteProduct } = useProducts();
+  const { products = [], loading, error, addProduct, updateProduct, deleteProduct } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [filterBreed, setFilterBreed] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
@@ -32,6 +35,36 @@ const ProductsView: React.FC = () => {
     } catch (error) {
       console.error('Failed to add product:', error);
       alert((error as Error).message || '添加产品失败，请重试');
+    }
+  };
+
+  const handleEditProduct = (product: Product) => {
+    // 只有管理员可以编辑产品
+    if (user?.role !== 'admin') {
+      alert('只有管理员可以编辑产品');
+      return;
+    }
+    
+    setEditingProduct(product);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateProduct = async (productId: string, productData: Omit<Product, 'id'>) => {
+    try {
+      await updateProduct(productId, productData);
+      setShowEditModal(false);
+      setEditingProduct(null);
+      
+      // 如果当前选中的产品被更新了，也要更新选中状态
+      if (selectedProduct?.id === productId) {
+        const updatedProduct = safeProducts.find(p => p.id === productId);
+        if (updatedProduct) {
+          setSelectedProduct(updatedProduct);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to update product:', error);
+      alert((error as Error).message || '更新产品失败，请重试');
     }
   };
 
@@ -172,18 +205,30 @@ const ProductsView: React.FC = () => {
                 product={product}
                 onClick={() => setSelectedProduct(product)}
               />
-              {/* 只有管理员可以删除产品 */}
+              {/* 管理员操作按钮 */}
               {user?.role === 'admin' && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteProduct(product);
-                  }}
-                  className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
-                  title="删除产品"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditProduct(product);
+                    }}
+                    className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+                    title="编辑产品"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteProduct(product);
+                    }}
+                    className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
+                    title="删除产品"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               )}
             </div>
           ))
@@ -222,6 +267,19 @@ const ProductsView: React.FC = () => {
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
           onSave={handleAddProduct}
+        />
+      )}
+
+      {/* Edit Product Modal - 只有管理员可以看到 */}
+      {user?.role === 'admin' && (
+        <EditProductModal
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingProduct(null);
+          }}
+          onSave={handleUpdateProduct}
+          product={editingProduct}
         />
       )}
 

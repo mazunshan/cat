@@ -1,18 +1,25 @@
 import React, { useState } from 'react';
-import { Plus, Filter, Download, Search, Eye, AlertTriangle } from 'lucide-react';
+import { Plus, Filter, Download, Search, Eye, AlertTriangle, Edit, Trash2 } from 'lucide-react';
 import InstallmentProgress from './InstallmentProgress';
 import AddOrderModal from './AddOrderModal';
+import EditOrderModal from './EditOrderModal';
 import { useOrders, useCustomers, useProducts } from '../../hooks/useDatabase';
+import { useAuth } from '../../context/AuthContext';
 import { Order } from '../../types';
 
 const OrdersView: React.FC = () => {
-  const { orders = [], loading: ordersLoading, error: ordersError, addOrder } = useOrders();
+  const { user } = useAuth();
+  const { orders = [], loading: ordersLoading, error: ordersError, addOrder, updateOrder, deleteOrder } = useOrders();
   const { customers = [], loading: customersLoading } = useCustomers();
   const { products = [], loading: productsLoading } = useProducts();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
 
   // 安全的数组操作
   const safeOrders = orders || [];
@@ -55,6 +62,65 @@ const OrdersView: React.FC = () => {
     } catch (error) {
       console.error('Failed to add order:', error);
       alert('添加订单失败，请重试');
+    }
+  };
+
+  const handleEditOrder = (order: Order) => {
+    // 检查权限
+    if (user?.role !== 'admin' && order.salesPerson !== user?.name) {
+      alert('您没有权限编辑此订单');
+      return;
+    }
+    
+    setEditingOrder(order);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateOrder = async (orderId: string, orderData: Partial<Order>) => {
+    try {
+      await updateOrder(orderId, orderData);
+      setShowEditModal(false);
+      setEditingOrder(null);
+      
+      // 如果当前选中的订单被更新了，也要更新选中状态
+      if (selectedOrder?.id === orderId) {
+        const updatedOrder = safeOrders.find(o => o.id === orderId);
+        if (updatedOrder) {
+          setSelectedOrder(updatedOrder);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to update order:', error);
+      alert((error as Error).message || '更新订单失败，请重试');
+    }
+  };
+
+  const handleDeleteOrder = (order: Order) => {
+    // 检查权限
+    if (user?.role !== 'admin' && order.salesPerson !== user?.name) {
+      alert('您没有权限删除此订单');
+      return;
+    }
+    
+    setOrderToDelete(order);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteOrder = async () => {
+    if (orderToDelete) {
+      try {
+        await deleteOrder(orderToDelete.id);
+        setShowDeleteConfirm(false);
+        setOrderToDelete(null);
+        
+        // 如果删除的是当前选中的订单，清除选择
+        if (selectedOrder?.id === orderToDelete.id) {
+          setSelectedOrder(null);
+        }
+      } catch (error) {
+        console.error('Failed to delete order:', error);
+        alert((error as Error).message || '删除订单失败，请重试');
+      }
     }
   };
 
@@ -207,7 +273,7 @@ const OrdersView: React.FC = () => {
               return (
                 <div
                   key={order.id}
-                  className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow cursor-pointer"
+                  className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow cursor-pointer group"
                   onClick={() => setSelectedOrder(order)}
                 >
                   <div className="flex items-center justify-between mb-4">
@@ -219,9 +285,28 @@ const OrdersView: React.FC = () => {
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                         {statusOptions.find(s => s.value === order.status)?.label}
                       </span>
-                      <button className="p-1 hover:bg-gray-100 rounded-lg">
-                        <Eye className="w-4 h-4 text-gray-500" />
-                      </button>
+                      <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditOrder(order);
+                          }}
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="编辑订单"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteOrder(order);
+                          }}
+                          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="删除订单"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -336,6 +421,26 @@ const OrdersView: React.FC = () => {
                       </div>
                     ))}
                   </div>
+                  
+                  {/* 操作按钮 */}
+                  <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                    <button
+                      onClick={() => handleEditOrder(selectedOrder)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                      disabled={user?.role !== 'admin' && selectedOrder.salesPerson !== user?.name}
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      编辑订单
+                    </button>
+                    <button
+                      onClick={() => handleDeleteOrder(selectedOrder)}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center"
+                      disabled={user?.role !== 'admin' && selectedOrder.salesPerson !== user?.name}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      删除订单
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -362,6 +467,63 @@ const OrdersView: React.FC = () => {
         customers={safeCustomers}
         products={safeProducts}
       />
+
+      {/* Edit Order Modal */}
+      <EditOrderModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditingOrder(null);
+        }}
+        onSave={handleUpdateOrder}
+        order={editingOrder}
+        customers={safeCustomers}
+        products={safeProducts}
+      />
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && orderToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">确认删除订单</h3>
+                <p className="text-sm text-gray-600">此操作无法撤销</p>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-gray-700">
+                您确定要删除订单 <span className="font-semibold">{orderToDelete.orderNumber}</span> 吗？
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                删除后，此订单将从系统中永久移除。
+              </p>
+            </div>
+
+            <div className="flex space-x-4">
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setOrderToDelete(null);
+                }}
+                className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={confirmDeleteOrder}
+                className="flex-1 bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors"
+              >
+                确认删除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

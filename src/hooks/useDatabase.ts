@@ -1078,6 +1078,7 @@ export const useCustomers = () => {
 
 // 订单数据钩子
 export const useOrders = () => {
+  const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>(globalOrders);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -1086,7 +1087,16 @@ export const useOrders = () => {
     setLoading(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 500));
-      setOrders([...globalOrders]);
+      
+      // 根据用户角色过滤订单
+      let filteredOrders = [...globalOrders];
+      
+      // 如果不是管理员，只显示自己的订单
+      if (user && user.role !== 'admin' && user.role === 'sales') {
+        filteredOrders = filteredOrders.filter(order => order.salesPerson === user.name);
+      }
+      
+      setOrders(filteredOrders);
       setError(null);
     } catch (err) {
       setError('获取订单数据失败');
@@ -1106,14 +1116,72 @@ export const useOrders = () => {
     };
 
     globalOrders = [newOrder, ...globalOrders];
-    setOrders([...globalOrders]);
+    
+    // 根据用户角色过滤订单
+    if (user && user.role !== 'admin' && user.role === 'sales') {
+      setOrders(globalOrders.filter(order => order.salesPerson === user.name));
+    } else {
+      setOrders([...globalOrders]);
+    }
+    
+    return newOrder;
+  };
+
+  const updateOrder = async (orderId: string, orderData: Partial<Order>) => {
+    // 检查权限
+    if (user && user.role !== 'admin') {
+      const orderToUpdate = globalOrders.find(o => o.id === orderId);
+      if (!orderToUpdate || orderToUpdate.salesPerson !== user.name) {
+        throw new Error('您没有权限修改此订单');
+      }
+    }
+    
+    const existingOrder = globalOrders.find(o => o.id === orderId);
+    if (!existingOrder) throw new Error('订单不存在');
+
+    const updatedOrder: Order = {
+      ...existingOrder,
+      ...orderData
+    };
+
+    globalOrders = globalOrders.map(order => 
+      order.id === orderId ? updatedOrder : order
+    );
+    
+    // 根据用户角色过滤订单
+    if (user && user.role !== 'admin' && user.role === 'sales') {
+      setOrders(globalOrders.filter(order => order.salesPerson === user.name));
+    } else {
+      setOrders([...globalOrders]);
+    }
+    
+    return updatedOrder;
+  };
+
+  const deleteOrder = async (orderId: string) => {
+    // 检查权限
+    if (user && user.role !== 'admin') {
+      const orderToDelete = globalOrders.find(o => o.id === orderId);
+      if (!orderToDelete || orderToDelete.salesPerson !== user.name) {
+        throw new Error('您没有权限删除此订单');
+      }
+    }
+    
+    globalOrders = globalOrders.filter(order => order.id !== orderId);
+    
+    // 根据用户角色过滤订单
+    if (user && user.role !== 'admin' && user.role === 'sales') {
+      setOrders(globalOrders.filter(order => order.salesPerson === user.name));
+    } else {
+      setOrders([...globalOrders]);
+    }
   };
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [user]);
 
-  return { orders, loading, error, addOrder, refetch: fetchOrders };
+  return { orders, loading, error, addOrder, updateOrder, deleteOrder, refetch: fetchOrders };
 };
 
 // 产品数据钩子
@@ -1146,6 +1214,23 @@ export const useProducts = () => {
     return newProduct;
   };
 
+  const updateProduct = async (productId: string, productData: Omit<Product, 'id'>) => {
+    const existingProduct = globalProducts.find(p => p.id === productId);
+    if (!existingProduct) throw new Error('产品不存在');
+
+    const updatedProduct: Product = {
+      ...existingProduct,
+      ...productData,
+      id: productId
+    };
+
+    globalProducts = globalProducts.map(product => 
+      product.id === productId ? updatedProduct : product
+    );
+    setProducts([...globalProducts]);
+    return updatedProduct;
+  };
+
   const deleteProduct = async (productId: string) => {
     globalProducts = globalProducts.filter(product => product.id !== productId);
     setProducts([...globalProducts]);
@@ -1155,7 +1240,7 @@ export const useProducts = () => {
     fetchProducts();
   }, []);
 
-  return { products, loading, error, addProduct, deleteProduct, refetch: fetchProducts };
+  return { products, loading, error, addProduct, updateProduct, deleteProduct, refetch: fetchProducts };
 };
 
 // 知识库数据钩子
