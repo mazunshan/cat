@@ -22,6 +22,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
           src={product.images[0]} 
           alt={product.name}
           className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/45201/kitty-cat-kitten-pet-45201.jpeg';
+          }}
         />
         
         {/* Video Badge */}

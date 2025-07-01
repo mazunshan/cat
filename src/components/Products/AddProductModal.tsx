@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { X, Upload, Plus, Play, Shield, Calendar, User, FileText, Clock } from 'lucide-react';
 import { Product, QuarantineVideo } from '../../types';
 
@@ -24,8 +24,11 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSa
   });
 
   const [newFeature, setNewFeature] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [videoUrl, setVideoUrl] = useState('');
+  
+  // Refs for file inputs
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+  const quarantineVideoInputRef = useRef<HTMLInputElement>(null);
   
   // 检疫视频相关状态
   const [quarantineVideoData, setQuarantineVideoData] = useState({
@@ -59,8 +62,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSa
       features: []
     });
     setNewFeature('');
-    setImageUrl('');
-    setVideoUrl('');
     setQuarantineVideoData({
       url: '',
       title: '',
@@ -88,13 +89,21 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSa
     }));
   };
 
-  const addImage = () => {
-    if (imageUrl.trim() && !formData.images.includes(imageUrl.trim())) {
+  // Handle image file selection
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFiles = Array.from(e.target.files);
+      const newImages = selectedFiles.map(file => URL.createObjectURL(file));
+      
       setFormData(prev => ({
         ...prev,
-        images: [...prev.images, imageUrl.trim()]
+        images: [...prev.images, ...newImages]
       }));
-      setImageUrl('');
+      
+      // Reset the input value to allow selecting the same file again
+      if (imageInputRef.current) {
+        imageInputRef.current.value = '';
+      }
     }
   };
 
@@ -103,15 +112,25 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSa
       ...prev,
       images: prev.images.filter(image => image !== imageToRemove)
     }));
+    // Revoke the object URL to avoid memory leaks
+    URL.revokeObjectURL(imageToRemove);
   };
 
-  const addVideo = () => {
-    if (videoUrl.trim() && !formData.videos.includes(videoUrl.trim())) {
+  // Handle video file selection
+  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFiles = Array.from(e.target.files);
+      const newVideos = selectedFiles.map(file => URL.createObjectURL(file));
+      
       setFormData(prev => ({
         ...prev,
-        videos: [...prev.videos, videoUrl.trim()]
+        videos: [...prev.videos, ...newVideos]
       }));
-      setVideoUrl('');
+      
+      // Reset the input value
+      if (videoInputRef.current) {
+        videoInputRef.current.value = '';
+      }
     }
   };
 
@@ -120,12 +139,32 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSa
       ...prev,
       videos: prev.videos.filter(video => video !== videoToRemove)
     }));
+    // Revoke the object URL
+    URL.revokeObjectURL(videoToRemove);
+  };
+
+  // Handle quarantine video file selection
+  const handleQuarantineVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const videoUrl = URL.createObjectURL(file);
+      
+      setQuarantineVideoData(prev => ({
+        ...prev,
+        url: videoUrl
+      }));
+      
+      // Reset the input value
+      if (quarantineVideoInputRef.current) {
+        quarantineVideoInputRef.current.value = '';
+      }
+    }
   };
 
   // 检疫视频相关函数
   const addQuarantineVideo = () => {
     if (!quarantineVideoData.url.trim() || !quarantineVideoData.title.trim()) {
-      alert('请填写检疫视频URL和标题');
+      alert('请选择检疫视频并填写标题');
       return;
     }
 
@@ -157,6 +196,11 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSa
   };
 
   const removeQuarantineVideo = (videoId: string) => {
+    const videoToRemove = formData.quarantineVideos.find(video => video.id === videoId);
+    if (videoToRemove) {
+      URL.revokeObjectURL(videoToRemove.url);
+    }
+    
     setFormData(prev => ({
       ...prev,
       quarantineVideos: prev.quarantineVideos.filter(video => video.id !== videoId)
@@ -307,26 +351,28 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSa
             />
           </div>
 
-          {/* 产品图片 */}
+          {/* 产品图片 - 使用本地文件选择 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               产品图片
             </label>
             <div className="flex space-x-2 mb-3">
               <input
-                type="url"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="输入图片URL"
+                type="file"
+                ref={imageInputRef}
+                onChange={handleImageSelect}
+                accept="image/*"
+                multiple
+                className="hidden"
+                id="product-image-input"
               />
-              <button
-                type="button"
-                onClick={addImage}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+              <label 
+                htmlFor="product-image-input"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 cursor-pointer hover:bg-gray-50 flex items-center justify-center"
               >
-                <Plus className="w-4 h-4" />
-              </button>
+                <Upload className="w-4 h-4 mr-2" />
+                选择图片文件
+              </label>
             </div>
             {formData.images.length > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -350,34 +396,35 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSa
             )}
           </div>
 
-          {/* 产品视频 */}
+          {/* 产品视频 - 使用本地文件选择 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               产品视频
             </label>
             <div className="flex space-x-2 mb-3">
               <input
-                type="url"
-                value={videoUrl}
-                onChange={(e) => setVideoUrl(e.target.value)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="输入视频URL"
+                type="file"
+                ref={videoInputRef}
+                onChange={handleVideoSelect}
+                accept="video/*"
+                multiple
+                className="hidden"
+                id="product-video-input"
               />
-              <button
-                type="button"
-                onClick={addVideo}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
+              <label 
+                htmlFor="product-video-input"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 cursor-pointer hover:bg-gray-50 flex items-center justify-center"
               >
-                <Play className="w-4 h-4 mr-1" />
-                添加
-              </button>
+                <Play className="w-4 h-4 mr-2" />
+                选择视频文件
+              </label>
             </div>
             {formData.videos.length > 0 && (
               <div className="space-y-2">
                 {formData.videos.map((video, index) => (
                   <div key={index} className="flex items-center bg-gray-50 rounded-lg p-3">
                     <Play className="w-5 h-5 text-green-600 mr-3" />
-                    <span className="flex-1 text-sm text-gray-700 truncate">{video}</span>
+                    <span className="flex-1 text-sm text-gray-700">视频 {index + 1}</span>
                     <button
                       type="button"
                       onClick={() => removeVideo(video)}
@@ -391,7 +438,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSa
             )}
           </div>
 
-          {/* 检疫视频部分 */}
+          {/* 检疫视频部分 - 使用本地文件选择 */}
           <div className="bg-green-50 border border-green-200 rounded-xl p-6">
             <div className="flex items-center mb-4">
               <Shield className="w-6 h-6 text-green-600 mr-2" />
@@ -402,15 +449,31 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSa
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  视频URL *
+                  检疫视频 *
                 </label>
-                <input
-                  type="url"
-                  value={quarantineVideoData.url}
-                  onChange={(e) => setQuarantineVideoData(prev => ({ ...prev, url: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="输入检疫视频URL"
-                />
+                <div className="flex items-center">
+                  <input
+                    type="file"
+                    ref={quarantineVideoInputRef}
+                    onChange={handleQuarantineVideoSelect}
+                    accept="video/*"
+                    className="hidden"
+                    id="quarantine-video-input"
+                  />
+                  <label 
+                    htmlFor="quarantine-video-input"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-700 cursor-pointer hover:bg-gray-50 flex items-center justify-center"
+                  >
+                    <Shield className="w-4 h-4 mr-2" />
+                    选择检疫视频
+                  </label>
+                </div>
+                {quarantineVideoData.url && (
+                  <div className="mt-2 text-sm text-green-600 flex items-center">
+                    <Play className="w-4 h-4 mr-1" />
+                    <span>已选择视频文件</span>
+                  </div>
+                )}
               </div>
               
               <div>
@@ -487,7 +550,8 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSa
             <button
               type="button"
               onClick={addQuarantineVideo}
-              className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+              disabled={!quarantineVideoData.url || !quarantineVideoData.title}
+              className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Shield className="w-4 h-4 mr-2" />
               添加检疫视频

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { X, Heart, Share2, Star, Play, Camera, Shield, Calendar, User, Clock, FileText } from 'lucide-react';
 import { Product, QuarantineVideo } from '../../types';
 
@@ -10,6 +10,7 @@ interface ProductDetailProps {
 const ProductDetail: React.FC<ProductDetailProps> = ({ product, onClose }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<'images' | 'videos' | 'quarantine'>('images');
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const getQuarantineStatusText = (status: QuarantineVideo['quarantineStatus']) => {
     const statusMap = {
@@ -43,6 +44,13 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onClose }) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const playVideo = (videoUrl: string) => {
+    if (videoRef.current) {
+      videoRef.current.src = videoUrl;
+      videoRef.current.play();
+    }
   };
 
   return (
@@ -110,7 +118,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onClose }) => {
               {/* Content based on active tab */}
               {activeTab === 'images' && (
                 <>
-                  {/* Main Image/Video */}
+                  {/* Main Image */}
                   <div className="relative rounded-xl overflow-hidden bg-gray-100">
                     {product.images.length > 0 ? (
                       <img 
@@ -159,21 +167,37 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onClose }) => {
 
               {activeTab === 'videos' && (
                 <div className="space-y-4">
+                  {/* Video Player */}
+                  <div className="bg-black rounded-lg overflow-hidden">
+                    <video 
+                      ref={videoRef}
+                      controls
+                      className="w-full h-80 object-contain"
+                      poster={product.images[0]}
+                    >
+                      您的浏览器不支持视频播放
+                    </video>
+                  </div>
+                  
+                  {/* Video List */}
                   {product.videos.length > 0 ? (
-                    product.videos.map((video, index) => (
-                      <div key={index} className="bg-gray-50 rounded-lg p-4">
-                        <div className="flex items-center">
-                          <Play className="w-5 h-5 text-blue-600 mr-3" />
-                          <div className="flex-1">
-                            <p className="font-medium text-gray-800">产品视频 {index + 1}</p>
-                            <p className="text-sm text-gray-600 truncate">{video}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {product.videos.map((video, index) => (
+                        <div 
+                          key={index} 
+                          className="bg-gray-50 rounded-lg p-4 cursor-pointer hover:bg-gray-100 transition-colors"
+                          onClick={() => playVideo(video)}
+                        >
+                          <div className="flex items-center">
+                            <Play className="w-5 h-5 text-blue-600 mr-3" />
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-800">产品视频 {index + 1}</p>
+                              <p className="text-sm text-gray-600 truncate">点击播放</p>
+                            </div>
                           </div>
-                          <button className="ml-2 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors">
-                            播放
-                          </button>
                         </div>
-                      </div>
-                    ))
+                      ))}
+                    </div>
                   ) : (
                     <div className="text-center py-12 text-gray-500">
                       <Play className="w-16 h-16 mx-auto mb-4 text-gray-300" />
@@ -185,56 +209,75 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onClose }) => {
 
               {activeTab === 'quarantine' && (
                 <div className="space-y-4">
+                  {/* Quarantine Video Player */}
+                  <div className="bg-black rounded-lg overflow-hidden">
+                    <video 
+                      ref={videoRef}
+                      controls
+                      className="w-full h-80 object-contain"
+                      poster={product.images[0]}
+                    >
+                      您的浏览器不支持视频播放
+                    </video>
+                  </div>
+                  
+                  {/* Quarantine Video List */}
                   {product.quarantineVideos && product.quarantineVideos.length > 0 ? (
-                    product.quarantineVideos.map((video) => (
-                      <div key={video.id} className="bg-green-50 border border-green-200 rounded-lg p-4">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center">
-                            <Shield className="w-5 h-5 text-green-600 mr-3" />
-                            <div>
-                              <h4 className="font-medium text-gray-800">{video.title}</h4>
-                              <span className={`inline-block mt-1 px-2 py-1 text-xs rounded-full ${getQuarantineStatusColor(video.quarantineStatus)}`}>
-                                {getQuarantineStatusText(video.quarantineStatus)}
-                              </span>
+                    <div className="space-y-3">
+                      {product.quarantineVideos.map((video) => (
+                        <div 
+                          key={video.id} 
+                          className="bg-green-50 border border-green-200 rounded-lg p-4 cursor-pointer hover:bg-green-100 transition-colors"
+                          onClick={() => playVideo(video.url)}
+                        >
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center">
+                              <Shield className="w-5 h-5 text-green-600 mr-3" />
+                              <div>
+                                <h4 className="font-medium text-gray-800">{video.title}</h4>
+                                <span className={`inline-block mt-1 px-2 py-1 text-xs rounded-full ${getQuarantineStatusColor(video.quarantineStatus)}`}>
+                                  {getQuarantineStatusText(video.quarantineStatus)}
+                                </span>
+                              </div>
                             </div>
+                            <button className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors">
+                              播放
+                            </button>
                           </div>
-                          <button className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors">
-                            播放
-                          </button>
+                          
+                          {video.description && (
+                            <p className="text-sm text-gray-700 mb-3">{video.description}</p>
+                          )}
+                          
+                          <div className="grid grid-cols-2 gap-4 text-xs text-gray-600">
+                            {video.recordedDate && (
+                              <div className="flex items-center">
+                                <Calendar className="w-3 h-3 mr-1" />
+                                录制: {new Date(video.recordedDate).toLocaleDateString('zh-CN')}
+                              </div>
+                            )}
+                            {video.veterinarian && (
+                              <div className="flex items-center">
+                                <User className="w-3 h-3 mr-1" />
+                                兽医: {video.veterinarian}
+                              </div>
+                            )}
+                            {video.duration && (
+                              <div className="flex items-center">
+                                <Clock className="w-3 h-3 mr-1" />
+                                时长: {formatDuration(video.duration)}
+                              </div>
+                            )}
+                            {video.fileSize && (
+                              <div className="flex items-center">
+                                <FileText className="w-3 h-3 mr-1" />
+                                大小: {formatFileSize(video.fileSize)}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        
-                        {video.description && (
-                          <p className="text-sm text-gray-700 mb-3">{video.description}</p>
-                        )}
-                        
-                        <div className="grid grid-cols-2 gap-4 text-xs text-gray-600">
-                          {video.recordedDate && (
-                            <div className="flex items-center">
-                              <Calendar className="w-3 h-3 mr-1" />
-                              录制: {new Date(video.recordedDate).toLocaleDateString('zh-CN')}
-                            </div>
-                          )}
-                          {video.veterinarian && (
-                            <div className="flex items-center">
-                              <User className="w-3 h-3 mr-1" />
-                              兽医: {video.veterinarian}
-                            </div>
-                          )}
-                          {video.duration && (
-                            <div className="flex items-center">
-                              <Clock className="w-3 h-3 mr-1" />
-                              时长: {formatDuration(video.duration)}
-                            </div>
-                          )}
-                          {video.fileSize && (
-                            <div className="flex items-center">
-                              <FileText className="w-3 h-3 mr-1" />
-                              大小: {formatFileSize(video.fileSize)}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))
+                      ))}
+                    </div>
                   ) : (
                     <div className="text-center py-12 text-gray-500">
                       <Shield className="w-16 h-16 mx-auto mb-4 text-gray-300" />
