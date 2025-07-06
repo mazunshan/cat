@@ -44,6 +44,22 @@ const CustomersView: React.FC = () => {
   const handleAddCustomer = async (customerData: Omit<Customer, 'id' | 'createdAt' | 'files' | 'orders'>) => {
     try {
       await addCustomer(customerData);
+      
+      // 如果有文件，为每个文件调用addCustomerFile
+      if ('files' in customerData && customerData.files && customerData.files.length > 0) {
+        // 获取新添加的客户ID
+        const newCustomers = await useCustomers().customers;
+        const newCustomer = newCustomers?.find(c => 
+          c.name === customerData.name && 
+          c.phone === customerData.phone
+        );
+        
+        if (newCustomer) {
+          for (const file of customerData.files) {
+            await addCustomerFile(newCustomer.id, file);
+          }
+        }
+      }
     } catch (error) {
       console.error('Failed to add customer:', error);
     }
