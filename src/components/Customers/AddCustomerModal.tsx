@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, Upload, Plus } from 'lucide-react';
+import { X, Plus, Camera, Video, FileText, MessageCircle } from 'lucide-react';
 import { Customer } from '../../types';
 import { SALES_STAFF } from '../../hooks/useDatabase';
+import CustomerFileUpload from './CustomerFileUpload';
 
 interface AddCustomerModalProps {
   isOpen: boolean;
@@ -22,11 +23,21 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, on
     assignedSales: SALES_STAFF[0] // 默认选择第一个销售员
   });
 
+  // 文件上传相关状态
+  const [showFileUpload, setShowFileUpload] = useState(false);
+  const [fileUploadType, setFileUploadType] = useState<'image' | 'video' | 'document' | 'communication'>('image');
+  const [customerFiles, setCustomerFiles] = useState<Array<Omit<CustomerFile, 'id' | 'uploadedAt'>>>([]);
   const [newTag, setNewTag] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    // 将客户数据和文件一起保存
+    onSave({
+      ...formData,
+      // 文件会在后续处理中添加到客户记录
+    });
+    
+    // 重置表单
     setFormData({
       name: '',
       gender: 'female',
@@ -38,6 +49,8 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, on
       notes: '',
       assignedSales: SALES_STAFF[0]
     });
+    setCustomerFiles([]);
+    setShowFileUpload(false);
     onClose();
   };
 
@@ -56,6 +69,14 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, on
       ...prev,
       tags: prev.tags.filter(tag => tag !== tagToRemove)
     }));
+  };
+
+  const handleFileUpload = (file: Omit<CustomerFile, 'id' | 'uploadedAt'>) => {
+    setCustomerFiles(prev => [...prev, file]);
+  };
+
+  const removeFile = (index: number) => {
+    setCustomerFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   if (!isOpen) return null;
@@ -129,6 +150,107 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, on
                 placeholder="请输入微信号"
               />
             </div>
+          </div>
+
+          {/* 客户文件上传 */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                客户文件
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowFileUpload(!showFileUpload)}
+                className="text-blue-600 hover:text-blue-800 flex items-center text-sm"
+              >
+                {showFileUpload ? '取消上传' : <><Plus className="w-4 h-4 mr-1" /> 添加文件</>}
+              </button>
+            </div>
+            
+            {/* 已添加的文件列表 */}
+            {customerFiles.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                {customerFiles.map((file, index) => (
+                  <div key={index} className="bg-white border border-gray-200 rounded-lg p-3 flex items-center">
+                    {file.type === 'image' && <Camera className="w-4 h-4 text-blue-500 mr-2" />}
+                    {file.type === 'video' && <Video className="w-4 h-4 text-green-500 mr-2" />}
+                    {file.type === 'document' && <FileText className="w-4 h-4 text-orange-500 mr-2" />}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800 truncate">{file.name}</p>
+                      {file.description && (
+                        <p className="text-xs text-gray-500 truncate">{file.description}</p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(index)}
+                      className="ml-2 text-red-500 hover:text-red-700"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* 文件上传区域 */}
+            {showFileUpload && (
+              <div className="mb-4">
+                <div className="flex space-x-2 mb-4">
+                  <button
+                    type="button"
+                    onClick={() => setFileUploadType('image')}
+                    className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center ${
+                      fileUploadType === 'image' ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    <Camera className="w-4 h-4 mr-2" />
+                    图片
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFileUploadType('video')}
+                    className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center ${
+                      fileUploadType === 'video' ? 'bg-green-100 text-green-700 border border-green-300' : 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    <Video className="w-4 h-4 mr-2" />
+                    视频
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFileUploadType('document')}
+                    className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center ${
+                      fileUploadType === 'document' ? 'bg-orange-100 text-orange-700 border border-orange-300' : 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    文档
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFileUploadType('communication')}
+                    className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center ${
+                      fileUploadType === 'communication' ? 'bg-purple-100 text-purple-700 border border-purple-300' : 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    沟通截图
+                  </button>
+                </div>
+                
+                <CustomerFileUpload 
+                  onFileUpload={handleFileUpload}
+                  fileType={fileUploadType}
+                  title={
+                    fileUploadType === 'image' ? '上传图片' : 
+                    fileUploadType === 'video' ? '上传视频' : 
+                    fileUploadType === 'document' ? '上传文档' : 
+                    '上传沟通截图'
+                  }
+                />
+              </div>
+            )}
           </div>
 
           <div>
