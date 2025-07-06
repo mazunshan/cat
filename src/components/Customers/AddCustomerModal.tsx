@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { X, Upload, Plus } from 'lucide-react';
-import { Customer, CustomerFile } from '../../types';
+import { Customer } from '../../types';
 import { SALES_STAFF } from '../../hooks/useDatabase';
-import CustomerFileUpload from './CustomerFileUpload';
 
 interface AddCustomerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (customer: Omit<Customer, 'id' | 'createdAt' | 'files' | 'orders'> & { files?: Omit<CustomerFile, 'id' | 'uploadedAt'>[] }) => void;
+  onSave: (customer: Omit<Customer, 'id' | 'createdAt' | 'files' | 'orders'>) => void;
 }
 
 const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, onSave }) => {
@@ -23,14 +22,11 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, on
     assignedSales: SALES_STAFF[0] // 默认选择第一个销售员
   });
 
-  const [customerFiles, setCustomerFiles] = useState<Omit<CustomerFile, 'id' | 'uploadedAt'>[]>([]);
   const [newTag, setNewTag] = useState('');
-  const [showFileUpload, setShowFileUpload] = useState(false);
-  const [fileUploadType, setFileUploadType] = useState<'image' | 'video' | 'document' | 'communication'>('image');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({...formData, files: customerFiles});
+    onSave(formData);
     setFormData({
       name: '',
       gender: 'female',
@@ -42,7 +38,6 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, on
       notes: '',
       assignedSales: SALES_STAFF[0]
     });
-    setCustomerFiles([]);
     onClose();
   };
 
@@ -62,13 +57,6 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, on
       tags: prev.tags.filter(tag => tag !== tagToRemove)
     }));
   };
-
-  const handleFileUpload = (file: Omit<CustomerFile, 'id' | 'uploadedAt'>) => {
-    setCustomerFiles(prev => [...prev, file]);
-    setShowFileUpload(false);
-  };
-
-  const removeFile = (index: number) => setCustomerFiles(prev => prev.filter((_, i) => i !== index));
 
   if (!isOpen) return null;
 
@@ -239,104 +227,6 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, on
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               placeholder="请输入客户备注信息"
             />
-          </div>
-
-          {/* 客户文件上传 */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                客户文件
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowFileUpload(!showFileUpload)}
-                className="text-blue-600 hover:text-blue-800 flex items-center text-sm"
-              >
-                {showFileUpload ? '取消上传' : <><Plus className="w-4 h-4 mr-1" /> 添加文件</>}
-              </button>
-            </div>
-
-            {/* 文件上传区域 */}
-            {showFileUpload && (
-              <div className="space-y-4 mb-4">
-                <div className="flex space-x-2 mb-4">
-                  <button
-                    type="button"
-                    onClick={() => setFileUploadType('image')}
-                    className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center ${
-                      fileUploadType === 'image' ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    图片
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFileUploadType('video')}
-                    className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center ${
-                      fileUploadType === 'video' ? 'bg-green-100 text-green-700 border border-green-300' : 'bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    视频
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFileUploadType('document')}
-                    className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center ${
-                      fileUploadType === 'document' ? 'bg-orange-100 text-orange-700 border border-orange-300' : 'bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    文档
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFileUploadType('communication')}
-                    className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center ${
-                      fileUploadType === 'communication' ? 'bg-purple-100 text-purple-700 border border-purple-300' : 'bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    沟通截图
-                  </button>
-                </div>
-                
-                <CustomerFileUpload 
-                  onFileUpload={handleFileUpload}
-                  fileType={fileUploadType}
-                  title={
-                    fileUploadType === 'image' ? '上传图片' : 
-                    fileUploadType === 'video' ? '上传视频' : 
-                    fileUploadType === 'document' ? '上传文档' : '上传沟通截图'
-                  }
-                />
-              </div>
-            )}
-
-            {/* 已上传文件列表 */}
-            {customerFiles.length > 0 && (
-              <div className="space-y-2 mb-4">
-                <p className="text-sm font-medium text-gray-700 mb-2">已上传文件：</p>
-                {customerFiles.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                    <div className="flex items-center">
-                      {file.type === 'image' && <Upload className="w-4 h-4 text-blue-500 mr-2" />}
-                      {file.type === 'video' && <Upload className="w-4 h-4 text-green-500 mr-2" />}
-                      {file.type === 'document' && <Upload className="w-4 h-4 text-orange-500 mr-2" />}
-                      <span className="text-sm text-gray-700">{file.name}</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeFile(index)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           <div className="flex space-x-4 pt-4">

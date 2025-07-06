@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Upload, Plus, Play, Shield, Calendar, User, FileText, Clock, Camera, MessageCircle } from 'lucide-react';
+import { X, Upload, Plus, Play, Shield, Calendar, User, FileText, Clock, Camera } from 'lucide-react';
 import { Product, QuarantineVideo } from '../../types';
 
 interface AddProductModalProps {
