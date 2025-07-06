@@ -271,6 +271,7 @@ const CustomersView: React.FC = () => {
         <CustomerDetail
           customer={selectedCustomer}
           onClose={() => setSelectedCustomer(null)}
+          onAddFile={handleAddCustomerFile}
         />
       )}
 
