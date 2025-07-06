@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Phone, MessageCircle, MapPin, Briefcase, Tag, FileText, Camera, Video, Calendar, Plus, Upload } from 'lucide-react';
 import { Customer } from '../../types';
 import CustomerFileUpload from './CustomerFileUpload';
+import CustomerFileUpload from './CustomerFileUpload';
 
 interface CustomerDetailProps {
   customer: Customer;
