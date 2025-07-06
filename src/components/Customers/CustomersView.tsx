@@ -4,11 +4,12 @@ import CustomerCard from './CustomerCard';
 import CustomerDetail from './CustomerDetail';
 import AddCustomerModal from './AddCustomerModal';
 import EditCustomerModal from './EditCustomerModal';
-import { useCustomers } from '../../hooks/useDatabase';
-import { Customer } from '../../types';
+import { useCustomers, useCustomerFiles } from '../../hooks/useDatabase';
+import { Customer, CustomerFile } from '../../types';
 
 const CustomersView: React.FC = () => {
   const { customers, loading, error, addCustomer, updateCustomer, deleteCustomer } = useCustomers();
+  const { addCustomerFile } = useCustomerFiles();
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [filterTag, setFilterTag] = useState<string>('all');
@@ -81,6 +82,23 @@ const CustomersView: React.FC = () => {
       } catch (error) {
         console.error('Failed to delete customer:', error);
       }
+    }
+  };
+
+  const handleAddCustomerFile = async (customerId: string, fileData: Omit<CustomerFile, 'id' | 'uploadedAt'>) => {
+    try {
+      const newFile = await addCustomerFile(customerId, fileData);
+      
+      // 更新选中的客户，以便立即显示新文件
+      if (selectedCustomer && selectedCustomer.id === customerId) {
+        setSelectedCustomer({
+          ...selectedCustomer,
+          files: [...selectedCustomer.files, newFile]
+        });
+      }
+    } catch (error) {
+      console.error('Failed to add customer file:', error);
+      alert('添加文件失败，请重试');
     }
   };
 
@@ -253,6 +271,7 @@ const CustomersView: React.FC = () => {
         <CustomerDetail
           customer={selectedCustomer}
           onClose={() => setSelectedCustomer(null)}
+          onAddFile={handleAddCustomerFile}
         />
       )}
 
