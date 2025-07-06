@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Upload, Plus, Play, Shield, Calendar, User, FileText, Clock } from 'lucide-react';
+import { X, Upload, Plus, Play, Shield, Calendar, User, FileText, Clock, Camera, MessageCircle } from 'lucide-react';
 import { Product, QuarantineVideo } from '../../types';
 
 interface EditProductModalProps {
@@ -30,6 +30,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const quarantineVideoInputRef = useRef<HTMLInputElement>(null);
+  const communicationImageInputRef = useRef<HTMLInputElement>(null);
   
   // 检疫视频相关状态
   const [quarantineVideoData, setQuarantineVideoData] = useState({
@@ -40,6 +41,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
     veterinarian: '',
     quarantineStatus: 'healthy' as QuarantineVideo['quarantineStatus']
   });
+
+  // 沟通截图相关状态
+  const [communicationImageUrl, setCommunicationImageUrl] = useState('');
 
   useEffect(() => {
     if (product) {
@@ -159,6 +163,21 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
       // Reset the input value
       if (quarantineVideoInputRef.current) {
         quarantineVideoInputRef.current.value = '';
+      }
+    }
+  };
+
+  // 处理沟通截图选择
+  const handleCommunicationImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const imageUrl = URL.createObjectURL(file);
+      
+      setCommunicationImageUrl(imageUrl);
+      
+      // 重置输入值
+      if (communicationImageInputRef.current) {
+        communicationImageInputRef.current.value = '';
       }
     }
   };
@@ -614,6 +633,52 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* 沟通记录截图 */}
+          <div className="bg-purple-50 border border-purple-200 rounded-xl p-6">
+            <div className="flex items-center mb-4">
+              <MessageCircle className="w-6 h-6 text-purple-600 mr-2" />
+              <h3 className="text-lg font-semibold text-purple-800">客户沟通记录</h3>
+            </div>
+            
+            <div className="mb-4">
+              <input
+                type="file"
+                ref={communicationImageInputRef}
+                onChange={handleCommunicationImageSelect}
+                accept="image/*"
+                className="hidden"
+                id="communication-image-input-edit"
+              />
+              <label 
+                htmlFor="communication-image-input-edit"
+                className="w-full flex items-center justify-center px-4 py-3 border border-purple-300 border-dashed rounded-lg text-purple-700 cursor-pointer hover:bg-purple-100 transition-colors"
+              >
+                <Camera className="w-5 h-5 mr-2" />
+                <span>上传客户沟通截图</span>
+              </label>
+            </div>
+            
+            {communicationImageUrl && (
+              <div className="relative mb-4">
+                <img 
+                  src={communicationImageUrl} 
+                  alt="客户沟通截图" 
+                  className="w-full max-h-60 object-contain rounded-lg border border-purple-200"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    URL.revokeObjectURL(communicationImageUrl);
+                    setCommunicationImageUrl('');
+                  }}
+                  className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
             )}
           </div>

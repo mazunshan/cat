@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Customer, Order, Product, KnowledgeBase, AttendanceRecord, AfterSalesRecord, ServiceTemplate, CustomerFeedback, QuarantineVideo } from '../types';
+import { Customer, Order, Product, KnowledgeBase, AttendanceRecord, AfterSalesRecord, ServiceTemplate, CustomerFeedback, QuarantineVideo, CustomerFile } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { calculateAttendanceStatus } from '../utils/attendanceUtils';
 
@@ -1074,6 +1074,63 @@ export const useCustomers = () => {
   }, []);
 
   return { customers, loading, error, addCustomer, updateCustomer, deleteCustomer, refetch: fetchCustomers };
+};
+
+// 客户文件钩子
+export const useCustomerFiles = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const addCustomerFile = async (customerId: string, fileData: Omit<CustomerFile, 'id' | 'uploadedAt'>) => {
+    setLoading(true);
+    try {
+      // 模拟API延迟
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const newFile: CustomerFile = {
+        id: Date.now().toString(),
+        ...fileData,
+        uploadedAt: new Date().toISOString()
+      };
+      
+      // 更新全局客户数据
+      const customerIndex = globalCustomers.findIndex(c => c.id === customerId);
+      if (customerIndex !== -1) {
+        globalCustomers[customerIndex].files.push(newFile);
+      }
+      
+      setError(null);
+      setLoading(false);
+      return newFile;
+    } catch (err) {
+      setError('添加客户文件失败');
+      setLoading(false);
+      throw err;
+    }
+  };
+
+  const deleteCustomerFile = async (customerId: string, fileId: string) => {
+    setLoading(true);
+    try {
+      // 模拟API延迟
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // 更新全局客户数据
+      const customerIndex = globalCustomers.findIndex(c => c.id === customerId);
+      if (customerIndex !== -1) {
+        globalCustomers[customerIndex].files = globalCustomers[customerIndex].files.filter(f => f.id !== fileId);
+      }
+      
+      setError(null);
+      setLoading(false);
+    } catch (err) {
+      setError('删除客户文件失败');
+      setLoading(false);
+      throw err;
+    }
+  };
+
+  return { loading, error, addCustomerFile, deleteCustomerFile };
 };
 
 // 订单数据钩子

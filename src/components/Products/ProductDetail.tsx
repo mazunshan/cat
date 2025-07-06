@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Heart, Share2, Star, Play, Camera, Shield, Calendar, User, Clock, FileText } from 'lucide-react';
+import { X, Heart, Share2, Star, Play, Camera, Shield, Calendar, User, Clock, FileText, MessageCircle } from 'lucide-react';
 import { Product, QuarantineVideo } from '../../types';
 
 interface ProductDetailProps {
@@ -112,6 +112,17 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onClose }) => {
                 >
                   <Shield className="w-4 h-4 inline mr-2" />
                   检疫视频 ({product.quarantineVideos?.length || 0})
+                </button>
+                <button
+                  onClick={() => setActiveTab('communication')}
+                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === 'communication'
+                      ? 'border-purple-500 text-purple-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <MessageCircle className="w-4 h-4 inline mr-2" />
+                  沟通记录
                 </button>
               </div>
 
@@ -285,6 +296,21 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onClose }) => {
                       <p className="text-sm mt-2">检疫视频用于展示猫咪的健康状况和检疫过程</p>
                     </div>
                   )}
+                </div>
+              )}
+              
+              {activeTab === 'communication' && (
+                <div className="space-y-4">
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-6 text-center">
+                    <MessageCircle className="w-12 h-12 mx-auto text-purple-400 mb-4" />
+                    <h3 className="text-lg font-medium text-purple-800 mb-2">客户沟通记录</h3>
+                    <p className="text-purple-600">
+                      这里可以查看与客户的沟通记录和截图，帮助您更好地了解客户需求和偏好。
+                    </p>
+                    <div className="mt-4 p-4 bg-white rounded-lg">
+                      <p className="text-gray-500 text-sm">暂无沟通记录</p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
