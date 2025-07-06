@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Filter, Download, AlertTriangle } from 'lucide-react';
+import { Plus, Filter, Download, AlertTriangle, Search } from 'lucide-react';
 import CustomerCard from './CustomerCard';
 import CustomerDetail from './CustomerDetail';
 import AddCustomerModal from './AddCustomerModal';
@@ -12,6 +12,7 @@ const CustomersView: React.FC = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [filterTag, setFilterTag] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -22,9 +23,22 @@ const CustomersView: React.FC = () => {
   
   const allTags = ['all', ...Array.from(new Set(safeCustomers.flatMap(c => c.tags || [])))];
 
-  const filteredCustomers = filterTag === 'all' 
-    ? safeCustomers 
-    : safeCustomers.filter(c => (c.tags || []).includes(filterTag));
+  const filteredCustomers = safeCustomers
+    .filter(c => {
+      // 标签筛选
+      const matchesTag = filterTag === 'all' || (c.tags || []).includes(filterTag);
+      
+      // 搜索筛选
+      const matchesSearch = searchTerm === '' || 
+        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.wechat?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.occupation?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.notes?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      return matchesTag && matchesSearch;
+    });
 
   const handleAddCustomer = async (customerData: Omit<Customer, 'id' | 'createdAt' | 'files' | 'orders'>) => {
     try {
@@ -145,6 +159,16 @@ const CustomersView: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-4">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="搜索客户姓名、电话..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
+            />
+          </div>
           <div className="flex items-center">
             <Filter className="w-4 h-4 mr-2 text-gray-500" />
             <select
