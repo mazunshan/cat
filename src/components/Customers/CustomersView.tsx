@@ -308,25 +308,25 @@ const CustomersView: React.FC = () => {
               </p>
               <p className="text-sm text-gray-500 mt-2">
                 删除客户将同时删除其相关的所有订单和文件记录。
-                placeholder="搜索客户姓名、电话..."
+              </p>
             </div>
 
             <div className="flex space-x-4">
               <button
                 onClick={() => {
-            <div className="flex items-center">
-              <Filter className="w-4 h-4 mr-2 text-gray-500" />
-              <select
-                value={filterTag}
-                onChange={(e) => setFilterTag(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  setShowDeleteConfirm(false);
+                  setCustomerToDelete(null);
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
               >
-                {allTags.map(tag => (
-                  <option key={tag} value={tag}>
-                    {tag === 'all' ? '全部标签' : tag}
-                  </option>
-                ))}
-              </select>
+                取消
+              </button>
+              <button
+                onClick={confirmDeleteCustomer}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                确认删除
+              </button>
             </div>
           </div>
         </div>
