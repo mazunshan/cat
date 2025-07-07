@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Phone, MessageCircle, MapPin, Briefcase, Tag, FileText, Camera, Video, Calendar } from 'lucide-react';
+import { X, Phone, MessageCircle, MapPin, Briefcase, Tag, FileText, Camera, Video, Calendar, Upload, Plus } from 'lucide-react';
 import { Customer, CustomerFile } from '../../types';
 
 interface CustomerDetailProps {
