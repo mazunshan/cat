@@ -290,13 +290,3 @@ export interface AuthState {
   isAuthenticated: boolean;
   verificationRequired: boolean;
 }
-
-export interface Announcement {
-  id: string;
-  title: string;
-  content: string;
-  visibleTo: 'sales' | 'after_sales' | 'all';
-  priority: 'normal' | 'important' | 'urgent';
-  createdBy: string;
-  createdAt: string;
-}
