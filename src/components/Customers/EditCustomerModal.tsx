@@ -27,10 +27,10 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
     address: '',
     occupation: '',
     // 客户类型
-    customerType: 'retail' as 'retail' | 'installment',
+    customerType: 'retail' as 'retail' | 'installment' | undefined,
     // 零售客户特有字段
-    orderDate: new Date().toISOString().split('T')[0],
-    salesPerson: SALES_STAFF[0],
+    orderDate: '',
+    salesPerson: '',
     catName: '',
     catBirthday: '',
     isMallMember: false,
@@ -59,15 +59,16 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
     repaymentDate: '',
     installmentPeriod: '',
     catCost: 0,
-    receivableAmount: 0,
-    paymentDestination: '',
+    collectionAmount: 0,
+    fundsDestination: '',
     installmentAmount: 0,
-    installmentCount: 6,
+    installmentCount: 0,
     signingMethod: '',
-    isFirstManualTransfer: false,
+    isFirstPaymentManual: false,
     hasESignContract: false,
     contractTotalPrice: 0,
     mallGrossProfit: 0,
+    grossProfit: 0,
     monthlyProfit: 0,
     breakEvenPeriod: 0,
     // 通用字段
@@ -76,12 +77,10 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
   });
 
   // 文件上传相关状态
-  const [fileType, setFileType] = useState<'image' | 'video' | 'document'>('image');
-  const [fileDescription, setFileDescription] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [newTag, setNewTag] = useState('');
   const [fileUploadType, setFileUploadType] = useState<'image' | 'video' | 'document'>('image');
-  const [files, setFiles] = useState<CustomerFile[]>([]);
+  const [fileDescription, setFileDescription] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (customer) {
@@ -130,15 +129,16 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
         repaymentDate: customer.repaymentDate || '',
         installmentPeriod: customer.installmentPeriod || '',
         catCost: customer.catCost || 0,
-        receivableAmount: customer.receivableAmount || 0,
-        paymentDestination: customer.paymentDestination || '',
+        collectionAmount: customer.collectionAmount || 0,
+        fundsDestination: customer.fundsDestination || '',
         installmentAmount: customer.installmentAmount || 0,
         installmentCount: customer.installmentCount || 6,
         signingMethod: customer.signingMethod || '',
-        isFirstManualTransfer: customer.isFirstManualTransfer || false,
+        isFirstPaymentManual: customer.isFirstPaymentManual || false,
         hasESignContract: customer.hasESignContract || false,
         contractTotalPrice: customer.contractTotalPrice || 0,
         mallGrossProfit: customer.mallGrossProfit || 0,
+        grossProfit: customer.grossProfit || 0,
         monthlyProfit: customer.monthlyProfit || 0,
         breakEvenPeriod: customer.breakEvenPeriod || 0,
         // 通用字段
@@ -196,10 +196,6 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
         });
       }
     }
-  };
-
-  const removeFile = (fileId: string) => {
-    setFiles(prev => prev.filter(file => file.id !== fileId));
   };
 
   const getFileTypeIcon = (type: string) => {
@@ -381,47 +377,73 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
           {/* File Upload Section */}
           <div className="border-t pt-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">文件管理</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+
+            <div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   文件类型
                 </label>
-                <select
-                  value={fileUploadType}
-                  onChange={(e) => setFileUploadType(e.target.value as 'image' | 'video' | 'document')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="image">图片</option>
-                  <option value="video">视频</option>
-                  <option value="document">文档</option>
-                </select>
+                <div className="flex items-center space-x-4">
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      checked={fileUploadType === 'image'}
+                      onChange={() => setFileUploadType('image')}
+                      className="form-radio h-4 w-4 text-blue-600"
+                    />
+                    <span className="ml-2">图片</span>
+                  </label>
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      checked={fileUploadType === 'video'}
+                      onChange={() => setFileUploadType('video')}
+                      className="form-radio h-4 w-4 text-blue-600"
+                    />
+                    <span className="ml-2">视频</span>
+                  </label>
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      checked={fileUploadType === 'document'}
+                      onChange={() => setFileUploadType('document')}
+                      className="form-radio h-4 w-4 text-blue-600"
+                    />
+                    <span className="ml-2">文档</span>
+                  </label>
+                </div>
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   文件描述
                 </label>
                 <input
                   type="text"
                   value={fileDescription}
                   onChange={(e) => setFileDescription(e.target.value)}
-                  placeholder="描述文件内容"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="请输入文件描述（可选）"
                 />
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  选择文件
-                </label>
+              <div className="mb-4">
                 <input
                   ref={fileInputRef}
                   type="file"
                   onChange={handleFileSelect}
-                  accept={fileUploadType === 'image' ? 'image/*' : fileUploadType === 'video' ? 'video/*' : '*'}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  accept={fileUploadType === 'image' ? 'image/*' : fileUploadType === 'video' ? 'video/*' : '*/*'}
+                  className="hidden"
+                  id="customer-file-input"
                 />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  选择{fileUploadType === 'image' ? '图片' : fileUploadType === 'video' ? '视频' : '文件'}
+                </button>
               </div>
             </div>
 
