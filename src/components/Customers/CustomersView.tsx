@@ -39,19 +39,6 @@ const CustomersView: React.FC = () => {
     
     return matchesTag && matchesSearch;
   });
-      const matchesTag = filterTag === 'all' || (c.tags || []).includes(filterTag);
-      
-      // 搜索筛选
-      const matchesSearch = searchTerm === '' || 
-        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.wechat?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.occupation?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.notes?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      return matchesTag && matchesSearch;
-    });
 
   const handleAddCustomer = async (customerData: Omit<Customer, 'id' | 'createdAt' | 'files' | 'orders'>) => {
     try {
