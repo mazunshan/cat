@@ -42,19 +42,6 @@ const CustomersView: React.FC = () => {
       
       return matchesTag && matchesSearch;
     });
-      const matchesTag = filterTag === 'all' || (c.tags || []).includes(filterTag);
-      
-      // 搜索筛选
-      const matchesSearch = searchTerm === '' || 
-        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.wechat?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.occupation?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.notes?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      return matchesTag && matchesSearch;
-    });
 
   const handleAddCustomer = async (customerData: Omit<Customer, 'id' | 'createdAt' | 'files' | 'orders'>) => {
     try {
@@ -97,23 +84,6 @@ const CustomersView: React.FC = () => {
       } catch (error) {
         console.error('Failed to delete customer:', error);
       }
-    }
-  };
-
-  const handleAddCustomerFile = async (customerId: string, fileData: Omit<CustomerFile, 'id' | 'uploadedAt'>) => {
-    try {
-      const newFile = await addCustomerFile(customerId, fileData);
-      
-      // 更新选中的客户，以便立即显示新文件
-      if (selectedCustomer && selectedCustomer.id === customerId) {
-        setSelectedCustomer({
-          ...selectedCustomer,
-          files: [...selectedCustomer.files, newFile]
-        });
-      }
-    } catch (error) {
-      console.error('Failed to add customer file:', error);
-      alert('添加文件失败，请重试');
     }
   };
 
@@ -219,16 +189,6 @@ const CustomersView: React.FC = () => {
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
             />
           </div>
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="搜索客户姓名、电话..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
-            />
-          </div>
           <div className="flex items-center">
             <Filter className="w-4 h-4 mr-2 text-gray-500" />
             <select
@@ -313,7 +273,6 @@ const CustomersView: React.FC = () => {
         <CustomerDetail
           customer={selectedCustomer}
           onClose={() => setSelectedCustomer(null)}
-          onAddFile={handleAddCustomerFile}
           onAddFile={handleAddCustomerFile}
         />
       )}
