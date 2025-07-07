@@ -14,6 +14,20 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
   const [fileDescription, setFileDescription] = React.useState('');
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  // 获取文件类型图标
+  const getFileTypeIcon = (type: string) => {
+    switch (type) {
+      case 'image':
+        return <Camera className="w-5 h-5 mr-2 text-blue-500" />;
+      case 'video':
+        return <Video className="w-5 h-5 mr-2 text-green-500" />;
+      case 'document':
+        return <FileText className="w-5 h-5 mr-2 text-gray-500" />;
+      default:
+        return <FileText className="w-5 h-5 mr-2 text-gray-500" />;
+    }
+  };
+
   // 计算利润率
   const calculateProfitRate = (profit?: number, sellingPrice?: number) => {
     if (!profit || !sellingPrice || sellingPrice === 0) return 0;
@@ -444,35 +458,61 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
                 {customer.files.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {customer.files.map((file) => (
-                      <div
-                        key={file.id}
-                        className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow"
-                      >
-                        <div className="flex items-center mb-3">
-                          {file.type === 'image' && <Camera className="w-5 h-5 mr-2 text-blue-500" />}
-                          {file.type === 'video' && <Video className="w-5 h-5 mr-2 text-green-500" />}
-                          {file.type === 'document' && <FileText className="w-5 h-5 mr-2 text-gray-500" />}
-                          <h4 className="font-medium text-gray-800">{file.name}</h4>
-                        </div>
-                        
-                        {file.type === 'image' && (
-                          <img 
-                            src={file.url} 
-                            alt={file.name}
-                            className="w-full h-32 object-cover rounded-lg mb-3"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/45201/kitty-cat-kitten-pet-45201.jpeg';
-                            }}
-                          />
-                        )}
-                        
-                        {file.description && (
-                          <p className="text-sm text-gray-600 mb-2">{file.description}</p>
-                        )}
-                        
-                        <div className="flex items-center text-xs text-gray-500">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {new Date(file.uploadedAt).toLocaleDateString('zh-CN')}
+                      <div key={file.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                        <div className="p-4">
+                          <div className="flex items-center mb-3">
+                            {getFileTypeIcon(file.type)}
+                            <h4 className="font-medium text-gray-800 truncate">{file.name}</h4>
+                          </div>
+                          
+                          {file.type === 'image' && (
+                            <div className="relative w-full h-40 bg-gray-100 rounded-lg mb-3 overflow-hidden">
+                              <img 
+                                src={file.url} 
+                                alt={file.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/45201/kitty-cat-kitten-pet-45201.jpeg';
+                                }}
+                              />
+                            </div>
+                          )}
+                          
+                          {file.type === 'video' && (
+                            <div className="relative w-full h-40 bg-gray-900 rounded-lg mb-3 overflow-hidden">
+                              <video 
+                                src={file.url}
+                                className="w-full h-full object-cover"
+                                controls
+                              />
+                            </div>
+                          )}
+                          
+                          {file.type === 'document' && (
+                            <div className="flex items-center justify-center w-full h-20 bg-gray-50 rounded-lg mb-3">
+                              <FileText className="w-8 h-8 text-gray-400" />
+                            </div>
+                          )}
+                          
+                          {file.description && (
+                            <p className="text-sm text-gray-600 mb-2">{file.description}</p>
+                          )}
+                          
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <span className="flex items-center">
+                              <Calendar className="w-4 h-4 mr-1" />
+                              {new Date(file.uploadedAt).toLocaleDateString('zh-CN')}
+                            </span>
+                            <a 
+                              href={file.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-blue-500 hover:text-blue-700"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              查看
+                            </a>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -480,7 +520,7 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
                 ) : (
                   <div className="text-center py-8 bg-gray-50 rounded-lg">
                     <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500">暂无客户文件</p>
+                    <p className="text-gray-500 font-medium">暂无客户文件</p>
                     <p className="text-sm text-gray-400 mt-1">点击"添加文件"上传客户相关文件</p>
                   </div>
                 )}
