@@ -80,6 +80,7 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
   const [fileDescription, setFileDescription] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [newTag, setNewTag] = useState('');
+  const [fileUploadType, setFileUploadType] = useState<'image' | 'video' | 'document'>('image');
   
   const [files, setFiles] = useState<CustomerFile[]>([]);
 
@@ -179,29 +180,6 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
     }));
   };
 
-  // 处理文件上传
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!customer || !onAddFile) return;
-    
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      const fileUrl = URL.createObjectURL(file);
-      
-      try {
-        await onAddFile(customer.id, {
-          name: file.name,
-          type: fileType,
-          url: fileUrl,
-          description: fileDescription
-        });
-        setFileDescription('');
-        if (fileInputRef.current) fileInputRef.current.value = '';
-      } catch (error) {
-        console.error('Failed to add file:', error);
-      }
-    }
-  };
-
   // 处理文件选择
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -238,13 +216,13 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
   const getFileTypeIcon = (type: string) => {
     switch (type) {
       case 'image':
-        return <Camera className="w-5 h-5 text-blue-500" />;
+        return <Upload className="w-5 h-5 text-blue-500" />;
       case 'video':
-        return <Video className="w-5 h-5 text-green-500" />;
+        return <Upload className="w-5 h-5 text-green-500" />;
       case 'document':
-        return <FileText className="w-5 h-5 text-gray-500" />;
+        return <Upload className="w-5 h-5 text-gray-500" />;
       default:
-        return <FileText className="w-5 h-5 text-gray-500" />;
+        return <Upload className="w-5 h-5 text-gray-500" />;
     }
   };
 
