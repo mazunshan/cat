@@ -268,8 +268,6 @@ const CustomersView: React.FC = () => {
           customer={selectedCustomer}
           onClose={() => setSelectedCustomer(null)}
           onAddFile={handleAddCustomerFile}
-          onAddFile={handleAddCustomerFile}
-          onAddFile={handleAddCustomerFile}
         />
       )}
 
@@ -283,6 +281,7 @@ const CustomersView: React.FC = () => {
       {/* Edit Customer Modal */}
       <EditCustomerModal
         isOpen={showEditModal}
+        onAddFile={handleAddCustomerFile}
         onClose={() => {
           setShowEditModal(false);
           setEditingCustomer(null);
