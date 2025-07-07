@@ -457,66 +457,48 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
                 {/* 文件列表 */}
                 {customer.files.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {customer.files.map((file, index) => (
-                      <div key={file.id || index} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                    {customer.files.map((file) => (
+                      <div key={file.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
                         <div className="p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center flex-1 min-w-0">
-                              {getFileTypeIcon(file.type)}
-                              <h4 className="font-medium text-gray-800 truncate">{file.name}</h4>
-                            </div>
-                            <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
-                              file.type === 'image' ? 'bg-blue-100 text-blue-600' : 
-                              file.type === 'video' ? 'bg-green-100 text-green-600' : 
-                              'bg-gray-100 text-gray-600'
-                            }`}>
-                              {file.type === 'image' ? '图片' : 
-                               file.type === 'video' ? '视频' : '文档'}
-                            </span>
+                          <div className="flex items-center mb-3">
+                            {getFileTypeIcon(file.type)}
+                            <h4 className="font-medium text-gray-800 truncate">{file.name}</h4>
                           </div>
                           
-                          <div className="mb-3">
-                            {file.type === 'image' && (
-                              <div className="relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden">
-                                <img 
-                                  src={file.url} 
-                                  alt={file.name || '客户图片'}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/45201/kitty-cat-kitten-pet-45201.jpeg';
-                                  }}
-                                />
-                              </div>
-                            )}
-                            
-                            {file.type === 'video' && (
-                              <div className="relative w-full h-40 bg-gray-900 rounded-lg overflow-hidden">
-                                <video 
-                                  src={file.url}
-                                  className="w-full h-full object-contain"
-                                  controls
-                                  preload="metadata"
-                                />
-                              </div>
-                            )}
-                            
-                            {file.type === 'document' && (
-                              <div className="flex flex-col items-center justify-center w-full h-40 bg-gray-50 rounded-lg">
-                                <FileText className="w-12 h-12 text-gray-400 mb-2" />
-                                <p className="text-sm text-gray-500 text-center px-2 truncate max-w-full">
-                                  {file.name || '文档文件'}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                          
-                          {file.description && (
-                            <div className="mb-3">
-                              <p className="text-sm text-gray-600 line-clamp-2">{file.description}</p>
+                          {file.type === 'image' && (
+                            <div className="relative w-full h-40 bg-gray-100 rounded-lg mb-3 overflow-hidden">
+                              <img 
+                                src={file.url} 
+                                alt={file.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/45201/kitty-cat-kitten-pet-45201.jpeg';
+                                }}
+                              />
                             </div>
                           )}
                           
-                          <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-100">
+                          {file.type === 'video' && (
+                            <div className="relative w-full h-40 bg-gray-900 rounded-lg mb-3 overflow-hidden">
+                              <video 
+                                src={file.url}
+                                className="w-full h-full object-cover"
+                                controls
+                              />
+                            </div>
+                          )}
+                          
+                          {file.type === 'document' && (
+                            <div className="flex items-center justify-center w-full h-20 bg-gray-50 rounded-lg mb-3">
+                              <FileText className="w-8 h-8 text-gray-400" />
+                            </div>
+                          )}
+                          
+                          {file.description && (
+                            <p className="text-sm text-gray-600 mb-2">{file.description}</p>
+                          )}
+                          
+                          <div className="flex items-center justify-between text-xs text-gray-500">
                             <span className="flex items-center">
                               <Calendar className="w-4 h-4 mr-1" />
                               {new Date(file.uploadedAt).toLocaleDateString('zh-CN')}
@@ -525,10 +507,9 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
                               href={file.url} 
                               target="_blank" 
                               rel="noopener noreferrer" 
-                              className="text-blue-500 hover:text-blue-700 flex items-center"
+                              className="text-blue-500 hover:text-blue-700"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <Eye className="w-3 h-3 mr-1" />
                               查看
                             </a>
                           </div>
@@ -537,17 +518,10 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12 bg-gray-50 rounded-lg">
-                    <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-600 font-medium mb-2">暂无客户文件</p>
-                    <p className="text-sm text-gray-500 mb-4">点击"添加文件"上传客户相关文件</p>
-                    <button
-                      onClick={() => setShowFileUpload(true)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm inline-flex items-center"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      添加文件
-                    </button>
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500 font-medium">暂无客户文件</p>
+                    <p className="text-sm text-gray-400 mt-1">点击"添加文件"上传客户相关文件</p>
                   </div>
                 )}
             </div>
