@@ -285,6 +285,17 @@ export interface ChartData {
   color?: string;
 }
 
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  visible_to: 'sales' | 'after_sales' | 'all';
+  priority: 'normal' | 'important' | 'urgent';
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;

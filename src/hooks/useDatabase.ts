@@ -1013,6 +1013,38 @@ let globalKnowledgeBase: KnowledgeBase[] = [];
 let globalAttendanceRecords: AttendanceRecord[] = [];
 let globalAfterSalesRecords = [...mockAfterSalesRecords];
 let globalServiceTemplates = [...mockServiceTemplates];
+let globalAnnouncements: Announcement[] = [
+  {
+    id: '1',
+    title: '系统更新通知',
+    content: '系统将于本周六凌晨2点-4点进行例行维护，期间系统将暂停使用。请各位同事提前做好工作安排。',
+    visible_to: 'all',
+    priority: 'important',
+    created_by: '00000000-0000-0000-0000-000000000001',
+    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+  },
+  {
+    id: '2',
+    title: '销售人员培训通知',
+    content: '下周三下午2点将在会议室举行新品种介绍培训，请所有销售人员准时参加。',
+    visible_to: 'sales',
+    priority: 'normal',
+    created_by: '00000000-0000-0000-0000-000000000001',
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+  },
+  {
+    id: '3',
+    title: '售后服务流程更新',
+    content: '售后服务流程已更新，请所有售后专员查看最新的服务手册，并按照新流程执行工作。\n\n重点变更：\n1. 回访时间调整为购买后3天、7天、30天\n2. 新增满意度调查环节\n3. 健康咨询需在2小时内响应',
+    visible_to: 'after_sales',
+    priority: 'urgent',
+    created_by: '00000000-0000-0000-0000-000000000001',
+    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+  }
+];
 
 // 客户文件管理钩子
 export const useCustomerFiles = () => {
@@ -1583,5 +1615,138 @@ export const useServiceTemplates = () => {
     loading, 
     error, 
     refetch: fetchServiceTemplates 
+  };
+};
+
+// 公告数据钩子
+export const useAnnouncements = () => {
+  const { user } = useAuth();
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchAnnouncements = async () => {
+    setLoading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // 根据用户角色过滤公告
+      let filteredAnnouncements = [...globalAnnouncements];
+      
+      if (user) {
+        if (user.role === 'sales') {
+          filteredAnnouncements = filteredAnnouncements.filter(
+            a => a.visible_to === 'sales' || a.visible_to === 'all'
+          );
+        } else if (user.role === 'after_sales') {
+          filteredAnnouncements = filteredAnnouncements.filter(
+            a => a.visible_to === 'after_sales' || a.visible_to === 'all'
+          );
+        }
+        // 管理员可以看到所有公告
+      }
+      
+      setAnnouncements(filteredAnnouncements);
+      setError(null);
+    } catch (err) {
+      setError('获取公告数据失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addAnnouncement = async (announcementData: Omit<Announcement, 'id' | 'created_at' | 'updated_at' | 'created_by'>) => {
+    if (!user) throw new Error('用户未登录');
+    
+    const newAnnouncement: Announcement = {
+      id: Date.now().toString(),
+      ...announcementData,
+      created_by: user.id,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    globalAnnouncements = [newAnnouncement, ...globalAnnouncements];
+    
+    // 根据用户角色过滤公告
+    let filteredAnnouncements = [...globalAnnouncements];
+    if (user.role === 'sales') {
+      filteredAnnouncements = filteredAnnouncements.filter(
+        a => a.visible_to === 'sales' || a.visible_to === 'all'
+      );
+    } else if (user.role === 'after_sales') {
+      filteredAnnouncements = filteredAnnouncements.filter(
+        a => a.visible_to === 'after_sales' || a.visible_to === 'all'
+      );
+    }
+    
+    setAnnouncements(filteredAnnouncements);
+    return newAnnouncement;
+  };
+
+  const updateAnnouncement = async (announcementId: string, announcementData: Partial<Omit<Announcement, 'id' | 'created_at' | 'updated_at' | 'created_by'>>) => {
+    if (!user || user.role !== 'admin') throw new Error('只有管理员可以更新公告');
+    
+    const existingAnnouncement = globalAnnouncements.find(a => a.id === announcementId);
+    if (!existingAnnouncement) throw new Error('公告不存在');
+
+    const updatedAnnouncement: Announcement = {
+      ...existingAnnouncement,
+      ...announcementData,
+      updated_at: new Date().toISOString()
+    };
+
+    globalAnnouncements = globalAnnouncements.map(announcement => 
+      announcement.id === announcementId ? updatedAnnouncement : announcement
+    );
+    
+    // 根据用户角色过滤公告
+    let filteredAnnouncements = [...globalAnnouncements];
+    if (user.role === 'sales') {
+      filteredAnnouncements = filteredAnnouncements.filter(
+        a => a.visible_to === 'sales' || a.visible_to === 'all'
+      );
+    } else if (user.role === 'after_sales') {
+      filteredAnnouncements = filteredAnnouncements.filter(
+        a => a.visible_to === 'after_sales' || a.visible_to === 'all'
+      );
+    }
+    
+    setAnnouncements(filteredAnnouncements);
+    return updatedAnnouncement;
+  };
+
+  const deleteAnnouncement = async (announcementId: string) => {
+    if (!user || user.role !== 'admin') throw new Error('只有管理员可以删除公告');
+    
+    globalAnnouncements = globalAnnouncements.filter(announcement => announcement.id !== announcementId);
+    
+    // 根据用户角色过滤公告
+    let filteredAnnouncements = [...globalAnnouncements];
+    if (user.role === 'sales') {
+      filteredAnnouncements = filteredAnnouncements.filter(
+        a => a.visible_to === 'sales' || a.visible_to === 'all'
+      );
+    } else if (user.role === 'after_sales') {
+      filteredAnnouncements = filteredAnnouncements.filter(
+        a => a.visible_to === 'after_sales' || a.visible_to === 'all'
+      );
+    }
+    
+    setAnnouncements(filteredAnnouncements);
+  };
+
+  useEffect(() => {
+    fetchAnnouncements();
+  }, [user]);
+
+  return { 
+    announcements, 
+    loading, 
+    error, 
+    addAnnouncement, 
+    updateAnnouncement, 
+    deleteAnnouncement, 
+    refetch: fetchAnnouncements 
   };
 };

@@ -13,6 +13,8 @@ import SettingsView from './components/Settings/SettingsView';
 import AfterSalesView from './components/AfterSales/AfterSalesView';
 import AttendanceView from './components/Attendance/AttendanceView';
 import SalesPerformanceView from './components/Dashboard/SalesPerformanceView';
+import AnnouncementView from './components/Announcements/AnnouncementView';
+import AnnouncementBanner from './components/Announcements/AnnouncementBanner';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, user, loginStatus, loginMessage, clearLoginMessage } = useAuth();
@@ -32,7 +34,8 @@ const AppContent: React.FC = () => {
       attendance: '考勤管理',
       analytics: '销售业绩排名',
       settings: '系统设置',
-      after_sales: '售后服务'
+      after_sales: '售后服务',
+      announcements: '公告管理'
     };
     return titles[tab as keyof typeof titles] || '仪表盘';
   };
@@ -57,6 +60,8 @@ const AppContent: React.FC = () => {
         return <SettingsView />;
       case 'after_sales':
         return <AfterSalesView />;
+      case 'announcements':
+        return <AnnouncementView />;
       default:
         return <DashboardView />;
     }
@@ -70,6 +75,7 @@ const AppContent: React.FC = () => {
         <Header title={getTabTitle(activeTab)} />
         
         <main className="flex-1 overflow-y-auto p-6">
+          {activeTab !== 'announcements' && <AnnouncementBanner />}
           {renderContent()}
         </main>
       </div>
