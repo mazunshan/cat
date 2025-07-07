@@ -283,7 +283,6 @@ const CustomersView: React.FC = () => {
       {/* Edit Customer Modal */}
       <EditCustomerModal
         isOpen={showEditModal}
-        onAddFile={handleAddCustomerFile}
         onClose={() => {
           setShowEditModal(false);
           setEditingCustomer(null);
