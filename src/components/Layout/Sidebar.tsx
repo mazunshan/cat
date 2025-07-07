@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   Home, Users, ShoppingBag, Package, BookOpen, 
-  BarChart3, Settings, LogOut, HeadphonesIcon, Clock, Trophy, Megaphone
+  BarChart3, Settings, LogOut, HeadphonesIcon, Trophy, Megaphone
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -21,7 +21,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
       { id: 'orders', label: '订单管理', icon: ShoppingBag, roles: ['admin', 'sales', 'after_sales'] },
       { id: 'products', label: '产品管理', icon: Package, roles: ['admin', 'sales'] },
       { id: 'knowledge', label: '知识库', icon: BookOpen, roles: ['admin', 'sales', 'after_sales'] },
-      { id: 'attendance', label: '考勤打卡', icon: Clock, roles: ['admin', 'sales', 'after_sales'] },
       { id: 'announcements', label: '公告管理', icon: Megaphone, roles: ['admin', 'sales', 'after_sales'] }
     ];
 

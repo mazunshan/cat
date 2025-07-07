@@ -11,7 +11,6 @@ import ProductsView from './components/Products/ProductsView';
 import KnowledgeView from './components/Knowledge/KnowledgeView';
 import SettingsView from './components/Settings/SettingsView';
 import AfterSalesView from './components/AfterSales/AfterSalesView';
-import AttendanceView from './components/Attendance/AttendanceView';
 import SalesPerformanceView from './components/Dashboard/SalesPerformanceView';
 import AnnouncementView from './components/Announcements/AnnouncementView';
 import AnnouncementBanner from './components/Announcements/AnnouncementBanner';
@@ -31,7 +30,6 @@ const AppContent: React.FC = () => {
       orders: '订单管理',
       products: '产品管理',
       knowledge: '知识库',
-      attendance: '考勤管理',
       analytics: '销售业绩排名',
       settings: '系统设置',
       after_sales: '售后服务',
@@ -52,8 +50,6 @@ const AppContent: React.FC = () => {
         return <ProductsView />;
       case 'knowledge':
         return <KnowledgeView />;
-      case 'attendance':
-        return <AttendanceView />;
       case 'analytics':
         return <SalesPerformanceView />;
       case 'settings':
