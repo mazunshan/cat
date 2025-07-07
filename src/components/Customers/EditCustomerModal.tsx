@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Plus, Upload } from 'lucide-react';
 import { Customer, CustomerFile } from '../../types';
-import { SALES_STAFF } from '../../hooks/useDatabase'; 
+import { SALES_STAFF } from '../../hooks/useDatabase';
 
 interface EditCustomerModalProps {
   isOpen: boolean;
@@ -80,6 +80,7 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
   const [newTag, setNewTag] = useState('');
   const [fileUploadType, setFileUploadType] = useState<'image' | 'video' | 'document'>('image');
   const [fileDescription, setFileDescription] = useState('');
+  const [showFileUpload, setShowFileUpload] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -201,13 +202,13 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
   const getFileTypeIcon = (type: string) => {
     switch (type) {
       case 'image':
-        return <Upload className="w-5 h-5 text-blue-500" />;
+        return <Upload className="w-4 h-4 text-blue-500" />;
       case 'video':
-        return <Upload className="w-5 h-5 text-green-500" />;
+        return <Upload className="w-4 h-4 text-green-500" />;
       case 'document':
-        return <Upload className="w-5 h-5 text-gray-500" />;
+        return <Upload className="w-4 h-4 text-gray-500" />;
       default:
-        return <Upload className="w-5 h-5 text-gray-500" />;
+        return <Upload className="w-4 h-4 text-gray-500" />;
     }
   };
 
@@ -375,102 +376,117 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
           </div>
 
           {/* File Upload Section */}
-          <div className="border-t pt-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">文件管理</h3>
-
-            <div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  文件类型
-                </label>
-                <div className="flex items-center space-x-4">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      checked={fileUploadType === 'image'}
-                      onChange={() => setFileUploadType('image')}
-                      className="form-radio h-4 w-4 text-blue-600"
-                    />
-                    <span className="ml-2">图片</span>
-                  </label>
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      checked={fileUploadType === 'video'}
-                      onChange={() => setFileUploadType('video')}
-                      className="form-radio h-4 w-4 text-blue-600"
-                    />
-                    <span className="ml-2">视频</span>
-                  </label>
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      checked={fileUploadType === 'document'}
-                      onChange={() => setFileUploadType('document')}
-                      className="form-radio h-4 w-4 text-blue-600"
-                    />
-                    <span className="ml-2">文档</span>
-                  </label>
-                </div>
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  文件描述
-                </label>
-                <input
-                  type="text"
-                  value={fileDescription}
-                  onChange={(e) => setFileDescription(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="请输入文件描述（可选）"
-                />
-              </div>
-              
-              <div className="mb-4">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  onChange={handleFileSelect}
-                  accept={fileUploadType === 'image' ? 'image/*' : fileUploadType === 'video' ? 'video/*' : '*/*'}
-                  className="hidden"
-                  id="customer-file-input"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  选择{fileUploadType === 'image' ? '图片' : fileUploadType === 'video' ? '视频' : '文件'}
-                </button>
-              </div>
+          <div className="border-t pt-6 space-y-4">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">文件上传</h3>
+            
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-medium text-gray-800">客户文件</h4>
+              <button
+                type="button"
+                onClick={() => setShowFileUpload(!showFileUpload)}
+                className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center"
+              >
+                <Plus className="w-3 h-3 mr-1" />
+                添加文件
+              </button>
             </div>
-
-            {/* Display existing files */}
-            {customer?.files && customer.files.length > 0 && (
-              <div>
-                <h4 className="text-md font-medium text-gray-700 mb-2">已上传文件</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {customer.files.map((file) => (
-                    <div key={file.id} className="border border-gray-200 rounded-lg p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        {getFileTypeIcon(file.type)}
-                        <button
-                          type="button"
-                          onClick={() => removeFile(file.id)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <p className="text-sm font-medium text-gray-800 truncate">{file.name}</p>
-                      {file.description && (
-                        <p className="text-xs text-gray-600 mt-1">{file.description}</p>
-                      )}
+            
+            {/* 文件上传表单 */}
+            {showFileUpload && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      文件类型
+                    </label>
+                    <div className="flex items-center space-x-4">
+                      <label className="inline-flex items-center">
+                        <input
+                          type="radio"
+                          checked={fileUploadType === 'image'}
+                          onChange={() => setFileUploadType('image')}
+                          className="form-radio h-4 w-4 text-blue-600"
+                        />
+                        <span className="ml-2">图片</span>
+                      </label>
+                      <label className="inline-flex items-center">
+                        <input
+                          type="radio"
+                          checked={fileUploadType === 'video'}
+                          onChange={() => setFileUploadType('video')}
+                          className="form-radio h-4 w-4 text-blue-600"
+                        />
+                        <span className="ml-2">视频</span>
+                      </label>
+                      <label className="inline-flex items-center">
+                        <input
+                          type="radio"
+                          checked={fileUploadType === 'document'}
+                          onChange={() => setFileUploadType('document')}
+                          className="form-radio h-4 w-4 text-blue-600"
+                        />
+                        <span className="ml-2">文档</span>
+                      </label>
                     </div>
-                  ))}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      文件描述
+                    </label>
+                    <input
+                      type="text"
+                      value={fileDescription}
+                      onChange={(e) => setFileDescription(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="请输入文件描述（可选）"
+                    />
+                  </div>
+                  
+                  <div className="flex space-x-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      onChange={handleFileSelect}
+                      accept={fileUploadType === 'image' ? 'image/*' : fileUploadType === 'video' ? 'video/*' : '*/*'}
+                      className="hidden"
+                      id="customer-detail-file-input"
+                    />
+                    <label 
+                      htmlFor="customer-detail-file-input"
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 cursor-pointer hover:bg-gray-50 flex items-center justify-center"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      选择{fileUploadType === 'image' ? '图片' : fileUploadType === 'video' ? '视频' : '文件'}
+                    </label>
+                  </div>
                 </div>
+              </div>
+            )}
+            
+            {/* 文件列表 */}
+            {customer?.files && customer.files.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {customer.files.map((file) => (
+                  <div
+                    key={file.id}
+                    className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-center mb-3">
+                      {getFileTypeIcon(file.type)}
+                      <h4 className="font-medium text-gray-800 ml-2">{file.name}</h4>
+                    </div>
+                    
+                    {file.description && (
+                      <p className="text-sm text-gray-600 mb-2">{file.description}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 bg-gray-50 rounded-lg">
+                <p className="text-gray-500">暂无客户文件</p>
+                <p className="text-sm text-gray-400 mt-1">点击"添加文件"上传客户相关文件</p>
               </div>
             )}
           </div>
