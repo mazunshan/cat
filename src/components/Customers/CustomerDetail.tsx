@@ -137,61 +137,6 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
 
             {/* Files */}
             <div>
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-800">客户文件</h3>
-                  <button
-                    onClick={() => setShowFileUpload(!showFileUpload)}
-                    className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center"
-                  >
-                    <Plus className="w-3 h-3 mr-1" />
-                    添加文件
-                  </button>
-                </div>
-                
-                {/* 文件上传表单 */}
-                {showFileUpload && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                    <div className="space-y-3">
-                      <div className="flex space-x-2">
-                        <select
-                          value={fileUploadType}
-                          onChange={(e) => setFileUploadType(e.target.value as 'image' | 'video' | 'document')}
-                          className="w-40 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value="image">图片</option>
-                          <option value="video">检疫视频</option>
-                          <option value="document">聊天记录</option>
-                        </select>
-                        <input
-                          type="text"
-                          value={fileDescription}
-                          onChange={(e) => setFileDescription(e.target.value)}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="文件描述（可选）"
-                        />
-                      </div>
-                      
-                      <div className="flex space-x-2">
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          onChange={handleFileSelect}
-                          className="hidden"
-                          accept={fileUploadType === 'image' ? 'image/*' : fileUploadType === 'video' ? 'video/*' : '*/*'}
-                          id="customer-detail-file-input"
-                        />
-                        <label 
-                          htmlFor="customer-detail-file-input"
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 cursor-pointer hover:bg-gray-50 flex items-center justify-center"
-                        >
-                          <Upload className="w-4 h-4 mr-2" />
-                          选择{fileUploadType === 'image' ? '图片' : fileUploadType === 'video' ? '视频' : '文件'}
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                )}
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-800">客户文件</h3>
                   <button
@@ -291,8 +236,6 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
                     <p className="text-sm text-gray-400 mt-1">点击"添加文件"上传客户相关文件</p>
                   </div>
                 )}
-                </div>
-              </div>
             </div>
 
             {/* Orders */}
