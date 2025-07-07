@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Customer, Order, Product, KnowledgeBase, AttendanceRecord, AfterSalesRecord, ServiceTemplate, CustomerFeedback, QuarantineVideo } from '../types';
+import { Customer, Order, Product, KnowledgeBase, AttendanceRecord, AfterSalesRecord, ServiceTemplate, CustomerFeedback, QuarantineVideo, CustomerFile } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { calculateAttendanceStatus } from '../utils/attendanceUtils';
 
@@ -1014,6 +1014,64 @@ let globalAttendanceRecords: AttendanceRecord[] = [];
 let globalAfterSalesRecords = [...mockAfterSalesRecords];
 let globalServiceTemplates = [...mockServiceTemplates];
 
+// 客户文件管理钩子
+export const useCustomerFiles = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const addCustomerFile = async (customerId: string, fileData: Omit<CustomerFile, 'id' | 'uploadedAt'>) => {
+    setLoading(true);
+    try {
+      const newFile: CustomerFile = {
+        id: Date.now().toString(),
+        ...fileData,
+        uploadedAt: new Date().toISOString()
+      };
+
+      // 更新全局客户数据中的文件
+      globalCustomers = globalCustomers.map(customer => 
+        customer.id === customerId 
+          ? { ...customer, files: [...customer.files, newFile] }
+          : customer
+      );
+
+      setError(null);
+      return newFile;
+    } catch (err) {
+      setError('添加文件失败');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteCustomerFile = async (customerId: string, fileId: string) => {
+    setLoading(true);
+    try {
+      // 从全局客户数据中删除文件
+      globalCustomers = globalCustomers.map(customer => 
+        customer.id === customerId 
+          ? { ...customer, files: customer.files.filter(file => file.id !== fileId) }
+          : customer
+      );
+
+      setError(null);
+    } catch (err) {
+      setError('删除文件失败');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { 
+    loading, 
+    error, 
+    addCustomerFile, 
+    deleteCustomerFile 
+  };
+};
+
 // 客户数据钩子
 export const useCustomers = () => {
   const [customers, setCustomers] = useState<Customer[]>(globalCustomers);
@@ -1525,63 +1583,5 @@ export const useServiceTemplates = () => {
     loading, 
     error, 
     refetch: fetchServiceTemplates 
-  };
-};
-
-// 客户文件管理钩子
-export const useCustomerFiles = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const addCustomerFile = async (customerId: string, fileData: Omit<any, 'id' | 'uploadedAt'>) => {
-    setLoading(true);
-    try {
-      const newFile = {
-        id: Date.now().toString(),
-        ...fileData,
-        uploadedAt: new Date().toISOString()
-      };
-
-      // 更新全局客户数据中的文件
-      globalCustomers = globalCustomers.map(customer => 
-        customer.id === customerId 
-          ? { ...customer, files: [...customer.files, newFile] }
-          : customer
-      );
-
-      setError(null);
-      return newFile;
-    } catch (err) {
-      setError('添加文件失败');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteCustomerFile = async (customerId: string, fileId: string) => {
-    setLoading(true);
-    try {
-      // 从全局客户数据中删除文件
-      globalCustomers = globalCustomers.map(customer => 
-        customer.id === customerId 
-          ? { ...customer, files: customer.files.filter(file => file.id !== fileId) }
-          : customer
-      );
-
-      setError(null);
-    } catch (err) {
-      setError('删除文件失败');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return { 
-    loading, 
-    error, 
-    addCustomerFile, 
-    deleteCustomerFile 
   };
 };
