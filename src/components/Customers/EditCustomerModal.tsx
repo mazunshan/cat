@@ -1278,7 +1278,7 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
                 className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 cursor-pointer hover:bg-gray-50 flex items-center justify-center"
               >
                 <Upload className="w-4 h-4 mr-2" />
-                选择{fileUploadType === 'image' ? '图片' : fileUploadType === 'video' ? '视频' : '文件'}
+                选择{fileUploadType === 'image' ? '图片' : fileUploadType === 'video' ? '视频' : '文档'}
               </label>
             </div>
             
