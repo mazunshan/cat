@@ -4,12 +4,11 @@ import CustomerCard from './CustomerCard';
 import CustomerDetail from './CustomerDetail';
 import AddCustomerModal from './AddCustomerModal';
 import EditCustomerModal from './EditCustomerModal';
-import { useCustomers, useCustomerFiles } from '../../hooks/useDatabase';
+import { useCustomers, useCustomerFiles } from '../../hooks/useDatabase'; 
 import { Customer, CustomerFile } from '../../types';
 
 const CustomersView: React.FC = () => {
   const { customers, loading, error, addCustomer, updateCustomer, deleteCustomer } = useCustomers();
-  const { addCustomerFile } = useCustomerFiles();
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [filterTag, setFilterTag] = useState<string>('all');
@@ -268,6 +267,7 @@ const CustomersView: React.FC = () => {
         <CustomerDetail
           customer={selectedCustomer}
           onClose={() => setSelectedCustomer(null)}
+          onAddFile={handleAddCustomerFile}
           onAddFile={handleAddCustomerFile}
         />
       )}
