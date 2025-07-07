@@ -14,6 +14,7 @@ export interface Customer {
   gender: 'male' | 'female';
   phone: string;
   wechat: string;
+  customerType?: 'retail' | 'installment';
   address: string;
   occupation: string;
   tags: string[];
@@ -22,6 +23,50 @@ export interface Customer {
   assignedSales: string;
   files: CustomerFile[];
   orders: Order[];
+  
+  // 零售客户字段
+  orderDate?: string;
+  catName?: string;
+  catBirthday?: string;
+  isMallMember?: boolean;
+  catBreed?: string;
+  catGender?: 'male' | 'female';
+  supplyChain?: string;
+  supplyChainDeposit?: number;
+  totalAmount?: number;
+  paymentMethod?: 'full_payment' | 'shipping_balance' | 'cash_on_delivery';
+  customerDeposit?: number;
+  depositDestination?: string;
+  shippingDate?: string;
+  shippingVideo?: string;
+  balance?: number;
+  balancePaid?: boolean;
+  balanceConfirmMethod?: string;
+  sellingPrice?: number;
+  cost?: number;
+  shippingFee?: number;
+  profit?: number;
+  profitRate?: number;
+  
+  // 分期客户字段
+  contractName?: string;
+  relationship?: string;
+  isInGroup?: boolean;
+  repaymentDate?: string;
+  installmentPeriod?: string;
+  catCost?: number;
+  collectionAmount?: number;
+  fundsDestination?: string;
+  installmentAmount?: number;
+  installmentCount?: number;
+  signingMethod?: string;
+  isFirstPaymentManual?: boolean;
+  hasESignContract?: boolean;
+  contractTotalPrice?: number;
+  mallGrossProfit?: number;
+  grossProfit?: number;
+  monthlyProfit?: number;
+  breakEvenPeriod?: number;
 }
 
 export interface CustomerFile {
