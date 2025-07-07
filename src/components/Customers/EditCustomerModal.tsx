@@ -80,6 +80,9 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
   const [fileDescription, setFileDescription] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [newTag, setNewTag] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [fileUploadType, setFileUploadType] = useState<'image' | 'video' | 'document'>('image');
+  const [fileDescription, setFileDescription] = useState('');
   const [fileUploadType, setFileUploadType] = useState<'image' | 'video' | 'document'>('image');
   
   const [files, setFiles] = useState<CustomerFile[]>([]);
@@ -125,36 +128,6 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
         profit: customer.profit || 0,
         profitRate: customer.profitRate || 0,
         // 分期客户特有字段
-        contractName: customer.contractName || '',
-        relationship: customer.relationship || '',
-        isInGroup: customer.isInGroup || false,
-        repaymentDate: customer.repaymentDate || '',
-        installmentPeriod: customer.installmentPeriod || '',
-        catCost: customer.catCost || 0,
-        receivableAmount: customer.receivableAmount || 0,
-        paymentDestination: customer.paymentDestination || '',
-        installmentAmount: customer.installmentAmount || 0,
-        installmentCount: customer.installmentCount || 6,
-        signingMethod: customer.signingMethod || '',
-        isFirstManualTransfer: customer.isFirstManualTransfer || false,
-        hasESignContract: customer.hasESignContract || false,
-        contractTotalPrice: customer.contractTotalPrice || 0,
-        mallGrossProfit: customer.mallGrossProfit || 0,
-        monthlyProfit: customer.monthlyProfit || 0,
-        breakEvenPeriod: customer.breakEvenPeriod || 0,
-        // 通用字段
-        tags: [...customer.tags],
-        notes: customer.notes
-      });
-    } else {
-      // 重置表单
-      setFormData({
-        ...formData,
-        customerType: 'retail'
-      });
-    }
-  }, [customer]);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (customer) {
@@ -180,20 +153,30 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
     }));
   };
 
-  // 处理文件选择
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const selectedFiles = Array.from(e.target.files);
-      
-      selectedFiles.forEach(file => {
-        const fileUrl = URL.createObjectURL(file);
-        const newFile: CustomerFile = {
-          id: Date.now().toString() + Math.random().toString(36).substring(2),
-          name: file.name,
-          type: fileUploadType,
-          url: fileUrl,
-          description: fileDescription,
-          uploadedAt: new Date().toISOString()
+      const file = selectedFiles[0];
+      const fileUrl = URL.createObjectURL(file);
+
+      if (customer) {
+        try {
+          onAddFile(customer.id, {
+            name: file.name,
+            type: fileUploadType,
+            url: fileUrl,
+            description: fileDescription
+          });
+          
+          // 重置表单
+          setFileDescription('');
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
+        } catch (error) {
+          console.error('Failed to add file:', error);
+          alert('添加文件失败，请重试');
+        }
         };
         
         setFiles(prev => [...prev, newFile]);
