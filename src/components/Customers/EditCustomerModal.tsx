@@ -1,39 +1,45 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, Upload } from 'lucide-react';
 import { Customer, CustomerFile } from '../../types';
-import { SALES_STAFF } from '../../hooks/useDatabase';
+import { SALES_STAFF } from '../../hooks/useDatabase'; 
 
 interface EditCustomerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (customerId: string, customerData: Omit<Customer, 'id' | 'createdAt' | 'files' | 'orders'>) => void;
-  onAddFile: (customerId: string, fileData: Omit<CustomerFile, 'id' | 'uploadedAt'>) => Promise<void>;
+  onAddFile?: (customerId: string, fileData: Omit<CustomerFile, 'id' | 'uploadedAt'>) => Promise<void>;
   customer: Customer | null;
 }
 
-const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, onSave, onAddFile, customer }) => {
+const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  onSave, 
+  onAddFile,
+  customer 
+}) => {
   const [formData, setFormData] = useState({
+    // 基本信息
     name: '',
     gender: 'female' as 'male' | 'female',
     phone: '',
     wechat: '',
     address: '',
     occupation: '',
-    tags: [] as string[],
-    notes: '',
-    customerType: 'retail' as 'retail' | 'installment' | undefined,
-    // 零售客户字段
-    orderDate: '',
-    salesPerson: '',
+    // 客户类型
+    customerType: 'retail' as 'retail' | 'installment',
+    // 零售客户特有字段
+    orderDate: new Date().toISOString().split('T')[0],
+    salesPerson: SALES_STAFF[0],
     catName: '',
     catBirthday: '',
     isMallMember: false,
     catBreed: '',
-    catGender: 'female' as 'male' | 'female' | undefined,
+    catGender: 'female' as 'male' | 'female',
     supplyChain: '',
     supplyChainDeposit: 0,
     totalAmount: 0,
-    paymentMethod: 'full_payment' as 'full_payment' | 'shipping_balance' | 'cash_on_delivery' | undefined,
+    paymentMethod: 'full' as 'full' | 'cod' | 'balance',
     customerDeposit: 0,
     depositDestination: '',
     shippingDate: '',
@@ -46,53 +52,66 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
     shippingFee: 0,
     profit: 0,
     profitRate: 0,
-    // 分期客户字段
+    // 分期客户特有字段
     contractName: '',
     relationship: '',
     isInGroup: false,
     repaymentDate: '',
     installmentPeriod: '',
     catCost: 0,
-    collectionAmount: 0,
-    fundsDestination: '',
+    receivableAmount: 0,
+    paymentDestination: '',
     installmentAmount: 0,
-    installmentCount: 0,
+    installmentCount: 6,
     signingMethod: '',
-    isFirstPaymentManual: false,
+    isFirstManualTransfer: false,
     hasESignContract: false,
     contractTotalPrice: 0,
     mallGrossProfit: 0,
-    grossProfit: 0,
     monthlyProfit: 0,
-    breakEvenPeriod: 0
+    breakEvenPeriod: 0,
+    // 通用字段
+    tags: [] as string[],
+    notes: ''
   });
 
+  // 文件上传相关状态
+  const [fileType, setFileType] = useState<'image' | 'video' | 'document'>('image');
+  const [fileDescription, setFileDescription] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [newTag, setNewTag] = useState('');
+  const [fileUploadType, setFileUploadType] = useState<'image' | 'video' | 'document'>('image');
+  
+  const [files, setFiles] = useState<CustomerFile[]>([]);
 
   useEffect(() => {
     if (customer) {
+      // 设置基本信息
+      const customerType = customer.customerType || 'retail';
+      
+      // 根据客户类型设置不同的初始表单数据
       setFormData({
+        // 基本信息
         name: customer.name,
         gender: customer.gender,
         phone: customer.phone,
-        wechat: customer.wechat || '',
-        address: customer.address || '',
-        occupation: customer.occupation || '',
-        tags: [...(customer.tags || [])],
-        notes: customer.notes || '',
-        customerType: customer.customerType,
-        // 零售客户字段
-        orderDate: customer.orderDate || '',
-        salesPerson: customer.salesPerson || '',
+        wechat: customer.wechat,
+        address: customer.address,
+        occupation: customer.occupation,
+        // 客户类型 - 默认为零售客户
+        customerType: customer.customerType || 'retail',
+        // 零售客户特有字段
+        orderDate: customer.orderDate || new Date().toISOString().split('T')[0],
+        salesPerson: customer.salesPerson || SALES_STAFF[0],
         catName: customer.catName || '',
         catBirthday: customer.catBirthday || '',
         isMallMember: customer.isMallMember || false,
         catBreed: customer.catBreed || '',
-        catGender: customer.catGender,
+        catGender: customer.catGender || 'female',
         supplyChain: customer.supplyChain || '',
         supplyChainDeposit: customer.supplyChainDeposit || 0,
         totalAmount: customer.totalAmount || 0,
-        paymentMethod: customer.paymentMethod,
+        paymentMethod: customer.paymentMethod || 'full',
         customerDeposit: customer.customerDeposit || 0,
         depositDestination: customer.depositDestination || '',
         shippingDate: customer.shippingDate || '',
@@ -105,25 +124,33 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
         shippingFee: customer.shippingFee || 0,
         profit: customer.profit || 0,
         profitRate: customer.profitRate || 0,
-        // 分期客户字段
+        // 分期客户特有字段
         contractName: customer.contractName || '',
         relationship: customer.relationship || '',
         isInGroup: customer.isInGroup || false,
         repaymentDate: customer.repaymentDate || '',
         installmentPeriod: customer.installmentPeriod || '',
         catCost: customer.catCost || 0,
-        collectionAmount: customer.collectionAmount || 0,
-        fundsDestination: customer.fundsDestination || '',
+        receivableAmount: customer.receivableAmount || 0,
+        paymentDestination: customer.paymentDestination || '',
         installmentAmount: customer.installmentAmount || 0,
-        installmentCount: customer.installmentCount || 0,
+        installmentCount: customer.installmentCount || 6,
         signingMethod: customer.signingMethod || '',
-        isFirstPaymentManual: customer.isFirstPaymentManual || false,
+        isFirstManualTransfer: customer.isFirstManualTransfer || false,
         hasESignContract: customer.hasESignContract || false,
         contractTotalPrice: customer.contractTotalPrice || 0,
         mallGrossProfit: customer.mallGrossProfit || 0,
-        grossProfit: customer.grossProfit || 0,
         monthlyProfit: customer.monthlyProfit || 0,
-        breakEvenPeriod: customer.breakEvenPeriod || 0
+        breakEvenPeriod: customer.breakEvenPeriod || 0,
+        // 通用字段
+        tags: [...customer.tags],
+        notes: customer.notes
+      });
+    } else {
+      // 重置表单
+      setFormData({
+        ...formData,
+        customerType: 'retail'
       });
     }
   }, [customer]);
@@ -153,11 +180,57 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
     }));
   };
 
+  // 处理文件选择
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFiles = Array.from(e.target.files);
+      
+      selectedFiles.forEach(file => {
+        const fileUrl = URL.createObjectURL(file);
+        const newFile: CustomerFile = {
+          id: Date.now().toString() + Math.random().toString(36).substring(2),
+          name: file.name,
+          type: fileUploadType,
+          url: fileUrl,
+          description: fileDescription,
+          uploadedAt: new Date().toISOString()
+        };
+        
+        setFiles(prev => [...prev, newFile]);
+      });
+      
+      // 重置文件输入
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      setFileDescription('');
+    }
+  };
+
+  // 删除已选择的文件
+  const removeFile = (fileId: string) => {
+    setFiles(prev => prev.filter(file => file.id !== fileId));
+  };
+
+  // 获取文件类型图标
+  const getFileTypeIcon = (type: string) => {
+    switch (type) {
+      case 'image':
+        return <Upload className="w-5 h-5 text-blue-500" />;
+      case 'video':
+        return <Upload className="w-5 h-5 text-green-500" />;
+      case 'document':
+        return <Upload className="w-5 h-5 text-gray-500" />;
+      default:
+        return <Upload className="w-5 h-5 text-gray-500" />;
+    }
+  };
+
   if (!isOpen || !customer) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-auto">
+      <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-gray-800">编辑客户信息</h2>
           <button
@@ -169,6 +242,33 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+          {/* 客户类型选择 */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <h3 className="text-md font-semibold text-blue-800 mb-3">客户类型</h3>
+            <div className="flex space-x-4">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  checked={formData.customerType === 'retail'}
+                  onChange={() => setFormData(prev => ({ ...prev, customerType: 'retail' }))}
+                  className="mr-2"
+                />
+                <span className="text-gray-700">零售客户</span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  checked={formData.customerType === 'installment'}
+                  onChange={() => setFormData(prev => ({ ...prev, customerType: 'installment' }))}
+                  className="mr-2"
+                />
+                <span className="text-gray-700">分期客户</span>
+              </label>
+            </div>
+          </div>
+          
+          {/* 基本信息 */}
+          <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">基本信息</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -226,72 +326,39 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              地址
-            </label>
-            <input
-              type="text"
-              value={formData.address}
-              onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="请输入详细地址"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                地址
+              </label>
+              <input
+                type="text"
+                value={formData.address}
+                onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="请输入详细地址"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                职业
+              </label>
+              <input
+                type="text"
+                value={formData.occupation}
+                onChange={(e) => setFormData(prev => ({ ...prev, occupation: e.target.value }))}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="请输入职业"
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              职业
-            </label>
-            <input
-              type="text"
-              value={formData.occupation}
-              onChange={(e) => setFormData(prev => ({ ...prev, occupation: e.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="请输入职业"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              客户类型
-            </label>
-            <select
-              value={formData.customerType || ''}
-              onChange={(e) => setFormData(prev => ({ 
-                ...prev, 
-                customerType: e.target.value ? e.target.value as 'retail' | 'installment' : undefined 
-              }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">请选择客户类型</option>
-              <option value="retail">零售客户</option>
-              <option value="installment">分期客户</option>
-            </select>
-          </div>
-
-          {/* 根据客户类型显示不同的字段 */}
-          {formData.customerType === 'retail' && (
-            <div className="border border-gray-200 rounded-lg p-4 space-y-4">
-              <h3 className="font-medium text-gray-800">零售客户信息</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    销售员
-                  </label>
-                  <select
-                    value={formData.salesPerson}
-                    onChange={(e) => setFormData(prev => ({ ...prev, salesPerson: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">请选择销售员</option>
-                    {SALES_STAFF.map(staff => (
-                      <option key={staff} value={staff}>{staff}</option>
-                    ))}
-                  </select>
-                </div>
-                
+          {/* 销售信息 - 根据客户类型显示不同字段 */}
+          {formData.customerType === 'retail' ? (
+            <>
+              <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mt-6">零售客户信息</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     订单日期
@@ -300,8 +367,25 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
                     type="date"
                     value={formData.orderDate}
                     onChange={(e) => setFormData(prev => ({ ...prev, orderDate: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    销售员
+                  </label>
+                  <select
+                    value={formData.salesPerson}
+                    onChange={(e) => setFormData(prev => ({ ...prev, salesPerson: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    {SALES_STAFF.map(salesperson => (
+                      <option key={salesperson} value={salesperson}>
+                        {salesperson}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 
                 <div>
@@ -312,7 +396,7 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
                     type="text"
                     value={formData.catName}
                     onChange={(e) => setFormData(prev => ({ ...prev, catName: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="请输入猫咪姓名"
                   />
                 </div>
@@ -325,22 +409,8 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
                     type="date"
                     value={formData.catBirthday}
                     onChange={(e) => setFormData(prev => ({ ...prev, catBirthday: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    商城会员
-                  </label>
-                  <select
-                    value={formData.isMallMember ? 'yes' : 'no'}
-                    onChange={(e) => setFormData(prev => ({ ...prev, isMallMember: e.target.value === 'yes' }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="no">否</option>
-                    <option value="yes">是</option>
-                  </select>
                 </div>
                 
                 <div>
@@ -351,7 +421,7 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
                     type="text"
                     value={formData.catBreed}
                     onChange={(e) => setFormData(prev => ({ ...prev, catBreed: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="请输入猫咪品种"
                   />
                 </div>
@@ -361,20 +431,30 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
                     猫咪性别
                   </label>
                   <select
-                    value={formData.catGender || ''}
-                    onChange={(e) => setFormData(prev => ({ 
-                      ...prev, 
-                      catGender: e.target.value ? e.target.value as 'male' | 'female' : undefined 
-                    }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    value={formData.catGender}
+                    onChange={(e) => setFormData(prev => ({ ...prev, catGender: e.target.value as 'male' | 'female' }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="">请选择</option>
-                    <option value="male">弟弟</option>
                     <option value="female">妹妹</option>
+                    <option value="male">弟弟</option>
                   </select>
                 </div>
                 
-                {/* 更多零售客户字段 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    是否商城会员
+                  </label>
+                  <div className="flex items-center mt-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.isMallMember}
+                      onChange={(e) => setFormData(prev => ({ ...prev, isMallMember: e.target.checked }))}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <span className="ml-2 text-gray-700">是商城会员</span>
+                  </div>
+                </div>
+                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     供应链
@@ -383,64 +463,282 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
                     type="text"
                     value={formData.supplyChain}
                     onChange={(e) => setFormData(prev => ({ ...prev, supplyChain: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="请输入供应链"
                   />
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    供应链定金
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.supplyChainDeposit}
-                    onChange={(e) => setFormData(prev => ({ ...prev, supplyChainDeposit: Number(e.target.value) }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="0"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    全款额度
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.totalAmount}
-                    onChange={(e) => setFormData(prev => ({ ...prev, totalAmount: Number(e.target.value) }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="0"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    付款方式
-                  </label>
-                  <select
-                    value={formData.paymentMethod || ''}
-                    onChange={(e) => setFormData(prev => ({ 
-                      ...prev, 
-                      paymentMethod: e.target.value ? e.target.value as 'full_payment' | 'shipping_balance' | 'cash_on_delivery' : undefined 
-                    }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">请选择</option>
-                    <option value="full_payment">全款</option>
-                    <option value="shipping_balance">发货补尾款</option>
-                    <option value="cash_on_delivery">货到付款</option>
-                  </select>
+              </div>
+              
+              {/* 付款信息 */}
+              <div className="bg-gray-50 rounded-lg p-4 mt-4">
+                <h4 className="font-medium text-gray-800 mb-3">付款信息</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      供应链定金
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.supplyChainDeposit}
+                      onChange={(e) => setFormData(prev => ({ ...prev, supplyChainDeposit: Number(e.target.value) }))}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      全款额度
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.totalAmount}
+                      onChange={(e) => {
+                        const totalAmount = Number(e.target.value);
+                        const cost = formData.cost;
+                        const shippingFee = formData.shippingFee;
+                        const profit = totalAmount - cost - shippingFee;
+                        const profitRate = cost > 0 ? (profit / cost) * 100 : 0;
+                        
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          totalAmount,
+                          profit,
+                          profitRate
+                        }));
+                      }}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      付款方式
+                    </label>
+                    <select
+                      value={formData.paymentMethod}
+                      onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as 'full' | 'cod' | 'balance' }))}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="full">全款</option>
+                      <option value="balance">发货补尾款</option>
+                      <option value="cod">货到付款</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      客户定金
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.customerDeposit}
+                      onChange={(e) => setFormData(prev => ({ ...prev, customerDeposit: Number(e.target.value) }))}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      定金去向
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.depositDestination}
+                      onChange={(e) => setFormData(prev => ({ ...prev, depositDestination: e.target.value }))}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="请输入定金去向"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      发货时间
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.shippingDate}
+                      onChange={(e) => setFormData(prev => ({ ...prev, shippingDate: e.target.value }))}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  
+                  {formData.paymentMethod !== 'full' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          尾款
+                        </label>
+                        <input
+                          type="number"
+                          value={formData.balance}
+                          onChange={(e) => setFormData(prev => ({ ...prev, balance: Number(e.target.value) }))}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="0"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          是否补齐
+                        </label>
+                        <div className="flex items-center mt-2">
+                          <input
+                            type="checkbox"
+                            checked={formData.balancePaid}
+                            onChange={(e) => setFormData(prev => ({ ...prev, balancePaid: e.target.checked }))}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                          <span className="ml-2 text-gray-700">已补齐</span>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          尾款确认方式
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.balanceConfirmMethod}
+                          onChange={(e) => setFormData(prev => ({ ...prev, balanceConfirmMethod: e.target.value }))}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="请输入确认方式"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
-            </div>
-          )}
-
-          {formData.customerType === 'installment' && (
-            <div className="border border-gray-200 rounded-lg p-4 space-y-4">
-              <h3 className="font-medium text-gray-800">分期客户信息</h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* 财务信息 */}
+              <div className="bg-gray-50 rounded-lg p-4 mt-4">
+                <h4 className="font-medium text-gray-800 mb-3">财务信息</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      卖价
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.sellingPrice}
+                      onChange={(e) => {
+                        const sellingPrice = Number(e.target.value);
+                        const cost = formData.cost;
+                        const shippingFee = formData.shippingFee;
+                        const profit = sellingPrice - cost - shippingFee;
+                        const profitRate = cost > 0 ? (profit / cost) * 100 : 0;
+                        
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          sellingPrice,
+                          profit,
+                          profitRate
+                        }));
+                      }}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      成本
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.cost}
+                      onChange={(e) => {
+                        const cost = Number(e.target.value);
+                        const sellingPrice = formData.sellingPrice;
+                        const shippingFee = formData.shippingFee;
+                        const profit = sellingPrice - cost - shippingFee;
+                        const profitRate = cost > 0 ? (profit / cost) * 100 : 0;
+                        
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          cost,
+                          profit,
+                          profitRate
+                        }));
+                      }}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      运费
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.shippingFee}
+                      onChange={(e) => {
+                        const shippingFee = Number(e.target.value);
+                        const sellingPrice = formData.sellingPrice;
+                        const cost = formData.cost;
+                        const profit = sellingPrice - cost - shippingFee;
+                        const profitRate = cost > 0 ? (profit / cost) * 100 : 0;
+                        
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          shippingFee,
+                          profit,
+                          profitRate
+                        }));
+                      }}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      利润
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.profit}
+                      readOnly
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      利润率
+                    </label>
+                    <div className="flex items-center">
+                      <input
+                        type="number"
+                        value={formData.profitRate.toFixed(2)}
+                        readOnly
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                      />
+                      <span className="ml-2">%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mt-6">分期客户信息</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    订单日期
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.orderDate}
+                    onChange={(e) => setFormData(prev => ({ ...prev, orderDate: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     销售员
@@ -448,13 +746,27 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
                   <select
                     value={formData.salesPerson}
                     onChange={(e) => setFormData(prev => ({ ...prev, salesPerson: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="">请选择销售员</option>
-                    {SALES_STAFF.map(staff => (
-                      <option key={staff} value={staff}>{staff}</option>
+                    {SALES_STAFF.map(salesperson => (
+                      <option key={salesperson} value={salesperson}>
+                        {salesperson}
+                      </option>
                     ))}
                   </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    猫咪姓名
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.catName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, catName: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="请输入猫咪姓名"
+                  />
                 </div>
                 
                 <div>
@@ -465,8 +777,8 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
                     type="text"
                     value={formData.contractName}
                     onChange={(e) => setFormData(prev => ({ ...prev, contractName: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="请输入签约姓名"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="请输入签约人姓名"
                   />
                 </div>
                 
@@ -478,26 +790,11 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
                     type="text"
                     value={formData.relationship}
                     onChange={(e) => setFormData(prev => ({ ...prev, relationship: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="请输入关系"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="请输入与签约人关系"
                   />
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    是否拉群
-                  </label>
-                  <select
-                    value={formData.isInGroup ? 'yes' : 'no'}
-                    onChange={(e) => setFormData(prev => ({ ...prev, isInGroup: e.target.value === 'yes' }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="no">否</option>
-                    <option value="yes">是</option>
-                  </select>
-                </div>
-                
-                {/* 更多分期客户字段 */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     猫咪品种
@@ -506,7 +803,7 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
                     type="text"
                     value={formData.catBreed}
                     onChange={(e) => setFormData(prev => ({ ...prev, catBreed: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="请输入猫咪品种"
                   />
                 </div>
@@ -516,48 +813,372 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
                     猫咪性别
                   </label>
                   <select
-                    value={formData.catGender || ''}
-                    onChange={(e) => setFormData(prev => ({ 
-                      ...prev, 
-                      catGender: e.target.value ? e.target.value as 'male' | 'female' : undefined 
-                    }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    value={formData.catGender}
+                    onChange={(e) => setFormData(prev => ({ ...prev, catGender: e.target.value as 'male' | 'female' }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="">请选择</option>
-                    <option value="male">弟弟</option>
                     <option value="female">妹妹</option>
+                    <option value="male">弟弟</option>
                   </select>
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    分期金额
+                    是否拉群
+                  </label>
+                  <div className="flex items-center mt-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.isInGroup}
+                      onChange={(e) => setFormData(prev => ({ ...prev, isInGroup: e.target.checked }))}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <span className="ml-2 text-gray-700">已拉群</span>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    猫咪生日
                   </label>
                   <input
-                    type="number"
-                    value={formData.installmentAmount}
-                    onChange={(e) => setFormData(prev => ({ ...prev, installmentAmount: Number(e.target.value) }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="0"
+                    type="date"
+                    value={formData.catBirthday}
+                    onChange={(e) => setFormData(prev => ({ ...prev, catBirthday: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    分期数
+                    供应链
                   </label>
                   <input
-                    type="number"
-                    value={formData.installmentCount}
-                    onChange={(e) => setFormData(prev => ({ ...prev, installmentCount: Number(e.target.value) }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="0"
+                    type="text"
+                    value={formData.supplyChain}
+                    onChange={(e) => setFormData(prev => ({ ...prev, supplyChain: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="请输入供应链"
                   />
                 </div>
               </div>
-            </div>
+              
+              {/* 分期付款信息 */}
+              <div className="bg-gray-50 rounded-lg p-4 mt-4">
+                <h4 className="font-medium text-gray-800 mb-3">分期付款信息</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      还款时间
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.repaymentDate}
+                      onChange={(e) => setFormData(prev => ({ ...prev, repaymentDate: e.target.value }))}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="例如：每月15日"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      分期时间范围
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.installmentPeriod}
+                      onChange={(e) => setFormData(prev => ({ ...prev, installmentPeriod: e.target.value }))}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="例如：2024.5-2024.11"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      猫咪成本
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.catCost}
+                      onChange={(e) => {
+                        const catCost = Number(e.target.value);
+                        const contractTotalPrice = formData.contractTotalPrice;
+                        const shippingFee = formData.shippingFee;
+                        const mallGrossProfit = contractTotalPrice - catCost - shippingFee;
+                        const profitRate = catCost > 0 ? (mallGrossProfit / catCost) * 100 : 0;
+                        const monthlyProfit = formData.installmentCount > 0 ? mallGrossProfit / formData.installmentCount : 0;
+                        const breakEvenPeriod = mallGrossProfit > 0 ? Math.ceil(catCost / monthlyProfit) : 0;
+                        
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          catCost,
+                          mallGrossProfit,
+                          profitRate,
+                          monthlyProfit,
+                          breakEvenPeriod
+                        }));
+                      }}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      收款额度
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.receivableAmount}
+                      onChange={(e) => setFormData(prev => ({ ...prev, receivableAmount: Number(e.target.value) }))}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      款项去向
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.paymentDestination}
+                      onChange={(e) => setFormData(prev => ({ ...prev, paymentDestination: e.target.value }))}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="请输入款项去向"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      分期金额
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.installmentAmount}
+                      onChange={(e) => setFormData(prev => ({ ...prev, installmentAmount: Number(e.target.value) }))}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      分期数
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.installmentCount}
+                      onChange={(e) => {
+                        const installmentCount = Number(e.target.value);
+                        const mallGrossProfit = formData.mallGrossProfit;
+                        const monthlyProfit = installmentCount > 0 ? mallGrossProfit / installmentCount : 0;
+                        const catCost = formData.catCost;
+                        const breakEvenPeriod = monthlyProfit > 0 ? Math.ceil(catCost / monthlyProfit) : 0;
+                        
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          installmentCount,
+                          monthlyProfit,
+                          breakEvenPeriod
+                        }));
+                      }}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="6"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      运费
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.shippingFee}
+                      onChange={(e) => {
+                        const shippingFee = Number(e.target.value);
+                        const contractTotalPrice = formData.contractTotalPrice;
+                        const catCost = formData.catCost;
+                        const mallGrossProfit = contractTotalPrice - catCost - shippingFee;
+                        const profitRate = catCost > 0 ? (mallGrossProfit / catCost) * 100 : 0;
+                        const installmentCount = formData.installmentCount;
+                        const monthlyProfit = installmentCount > 0 ? mallGrossProfit / installmentCount : 0;
+                        const breakEvenPeriod = monthlyProfit > 0 ? Math.ceil(catCost / monthlyProfit) : 0;
+                        
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          shippingFee,
+                          mallGrossProfit,
+                          profitRate,
+                          monthlyProfit,
+                          breakEvenPeriod
+                        }));
+                      }}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      签约方式
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.signingMethod}
+                      onChange={(e) => setFormData(prev => ({ ...prev, signingMethod: e.target.value }))}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="请输入签约方式"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      第一期是否手动转
+                    </label>
+                    <div className="flex items-center mt-2">
+                      <input
+                        type="checkbox"
+                        checked={formData.isFirstManualTransfer}
+                        onChange={(e) => setFormData(prev => ({ ...prev, isFirstManualTransfer: e.target.checked }))}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <span className="ml-2 text-gray-700">是</span>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      e签宝合同
+                    </label>
+                    <div className="flex items-center mt-2">
+                      <input
+                        type="checkbox"
+                        checked={formData.hasESignContract}
+                        onChange={(e) => setFormData(prev => ({ ...prev, hasESignContract: e.target.checked }))}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <span className="ml-2 text-gray-700">已签</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* 财务信息 */}
+              <div className="bg-gray-50 rounded-lg p-4 mt-4">
+                <h4 className="font-medium text-gray-800 mb-3">财务信息</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      合约总价
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.contractTotalPrice}
+                      onChange={(e) => {
+                        const contractTotalPrice = Number(e.target.value);
+                        const catCost = formData.catCost;
+                        const shippingFee = formData.shippingFee;
+                        const mallGrossProfit = contractTotalPrice - catCost - shippingFee;
+                        const profitRate = catCost > 0 ? (mallGrossProfit / catCost) * 100 : 0;
+                        const installmentCount = formData.installmentCount;
+                        const monthlyProfit = installmentCount > 0 ? mallGrossProfit / installmentCount : 0;
+                        const breakEvenPeriod = monthlyProfit > 0 ? Math.ceil(catCost / monthlyProfit) : 0;
+                        
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          contractTotalPrice,
+                          mallGrossProfit,
+                          profitRate,
+                          monthlyProfit,
+                          breakEvenPeriod
+                        }));
+                      }}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      商城毛利
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.mallGrossProfit}
+                      readOnly
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      成本
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.catCost}
+                      readOnly
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      毛利润
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.mallGrossProfit}
+                      readOnly
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      利润率
+                    </label>
+                    <div className="flex items-center">
+                      <input
+                        type="number"
+                        value={formData.profitRate.toFixed(2)}
+                        readOnly
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                      />
+                      <span className="ml-2">%</span>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      月毛利
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.monthlyProfit.toFixed(2)}
+                      readOnly
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      回本期
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.breakEvenPeriod}
+                      readOnly
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                    />
+                  </div>
+                </div>
+              </div>
+            </>
           )}
 
+          {/* 客户标签 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               客户标签
@@ -600,6 +1221,78 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
             )}
           </div>
 
+          {/* 文件上传部分 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              客户文件上传
+            </label>
+            <div className="space-y-4">
+              <div className="flex space-x-2">
+                <select
+                  value={fileUploadType}
+                  onChange={(e) => setFileUploadType(e.target.value as 'image' | 'video' | 'document')}
+                  className="w-40 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="image">图片</option>
+                  <option value="video">检疫视频</option>
+                  <option value="document">聊天记录</option>
+                </select>
+                <input
+                  type="text"
+                  value={fileDescription}
+                  onChange={(e) => setFileDescription(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="文件描述（可选）"
+                />
+              </div>
+              
+              <div className="flex space-x-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  accept={fileUploadType === 'image' ? 'image/*' : fileUploadType === 'video' ? 'video/*' : '*/*'}
+                  id="edit-customer-file-input"
+                />
+                <label 
+                  htmlFor="edit-customer-file-input"
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 cursor-pointer hover:bg-gray-50 flex items-center justify-center"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  选择{fileUploadType === 'image' ? '图片' : fileUploadType === 'video' ? '视频' : '文件'}
+                </label>
+              </div>
+              
+              {/* 已选择的文件列表 */}
+              {files.length > 0 && (
+                <div className="space-y-2 mt-3">
+                  <p className="text-sm font-medium text-gray-700">已选择的文件：</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {files.map((file) => (
+                      <div key={file.id} className="flex items-center bg-gray-50 rounded-lg p-3 group">
+                        {getFileTypeIcon(file.type)}
+                        <div className="ml-3 flex-1 overflow-hidden">
+                          <p className="text-sm font-medium text-gray-800 truncate">{file.name}</p>
+                          {file.description && (
+                            <p className="text-xs text-gray-500 truncate">{file.description}</p>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeFile(file.id)}
+                          className="ml-2 p-1 text-red-600 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               备注
@@ -613,24 +1306,57 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
             />
           </div>
 
-          {/* 文件上传部分 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              添加文件
-            </label>
-            <div className="text-sm text-gray-500">
-              已上传 {customer?.files.length || 0} 个文件，可在客户详情中查看
-              <button
-                type="button"
-                onClick={() => alert('请先保存客户信息，然后在客户详情页添加文件')}
-                className="ml-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center float-right"
-              >
-                <Plus className="w-3 h-3 mr-1" />
+          {/* 文件上传 */}
+          {onAddFile && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 添加文件
-              </button>
+              </label>
+              <div className="space-y-3">
+                <div className="flex space-x-2">
+                  <select
+                    value={fileType}
+                    onChange={(e) => setFileType(e.target.value as 'image' | 'video' | 'document')}
+                    className="w-40 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="image">图片</option>
+                    <option value="video">检疫视频</option>
+                    <option value="document">聊天记录</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={fileDescription}
+                    onChange={(e) => setFileDescription(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="文件描述（可选）"
+                  />
+                </div>
+                
+                <div className="flex space-x-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    accept={fileType === 'image' ? 'image/*' : fileType === 'video' ? 'video/*' : '*/*'}
+                    id="edit-customer-file-input"
+                  />
+                  <label 
+                    htmlFor="edit-customer-file-input"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 cursor-pointer hover:bg-gray-50 flex items-center justify-center"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    选择{fileType === 'image' ? '图片' : fileType === 'video' ? '视频' : '文件'}
+                  </label>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                上传的文件将立即添加到客户文件中
+              </p>
             </div>
-          </div>
+          )}
 
+          {/* 操作按钮 */}
           <div className="flex space-x-4 pt-4">
             <button
               type="button"
