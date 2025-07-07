@@ -81,11 +81,7 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [newTag, setNewTag] = useState('');
   
-  // 文件上传相关状态
   const [files, setFiles] = useState<CustomerFile[]>([]);
-  const [fileUploadType, setFileUploadType] = useState<'image' | 'video' | 'document'>('image');
-  const [fileDescription, setFileDescription] = useState('');
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (customer) {
