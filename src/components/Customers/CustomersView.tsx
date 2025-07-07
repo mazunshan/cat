@@ -8,12 +8,10 @@ import { useCustomers, useCustomerFiles } from '../../hooks/useDatabase';
 import { Customer, CustomerFile } from '../../types';
 
 const CustomersView: React.FC = () => {
-  const { customers, loading, error, addCustomer, updateCustomer, deleteCustomer } = useCustomers();
   const { addCustomerFile } = useCustomerFiles();
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [filterTag, setFilterTag] = useState<string>('all');
-  const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -310,25 +308,25 @@ const CustomersView: React.FC = () => {
               </p>
               <p className="text-sm text-gray-500 mt-2">
                 删除客户将同时删除其相关的所有订单和文件记录。
-              </p>
+                placeholder="搜索客户姓名、电话..."
             </div>
 
             <div className="flex space-x-4">
               <button
                 onClick={() => {
-                  setShowDeleteConfirm(false);
-                  setCustomerToDelete(null);
-                }}
-                className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+            <div className="flex items-center">
+              <Filter className="w-4 h-4 mr-2 text-gray-500" />
+              <select
+                value={filterTag}
+                onChange={(e) => setFilterTag(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                取消
-              </button>
-              <button
-                onClick={confirmDeleteCustomer}
-                className="flex-1 bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors"
-              >
-                确认删除
-              </button>
+                {allTags.map(tag => (
+                  <option key={tag} value={tag}>
+                    {tag === 'all' ? '全部标签' : tag}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
