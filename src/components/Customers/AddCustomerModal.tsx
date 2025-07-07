@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Upload, Plus, Camera, Video, FileText } from 'lucide-react';
+import { X, Plus, Upload } from 'lucide-react';
 import { Customer } from '../../types';
 import { SALES_STAFF } from '../../hooks/useDatabase'; 
 import { CustomerFile } from '../../types';
@@ -1212,6 +1212,21 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, on
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="请输入备注信息"
             />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              添加文件
+            </label>
+            <div className="text-sm text-gray-500">
+              请先保存客户信息，然后在客户详情页添加文件
+              <button
+                type="button"
+                onClick={() => alert('请先保存客户信息，然后在客户详情页添加文件')}
+                className="ml-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center float-right"
+              >
+                <Plus className="w-3 h-3 mr-1" />
+                添加文件
+              </button>
+            </div>
           </div>
 
           <div className="flex space-x-4 pt-4">
