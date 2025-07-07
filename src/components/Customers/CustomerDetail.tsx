@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Phone, MessageCircle, MapPin, Briefcase, Tag, FileText, Camera, Video, Calendar, Upload, Plus, User, DollarSign, Truck, CreditCard, Percent, Clock, FileCheck, Building, ShoppingBag, Calendar as CalendarIcon, Users } from 'lucide-react';
+import { X, Phone, MessageCircle, MapPin, Briefcase, Tag, FileText, Camera, Video, Calendar, Upload, Plus, User, DollarSign, Truck, CreditCard, Percent, Clock, FileCheck, Building } from 'lucide-react';
 import { Customer, CustomerFile } from '../../types';
 
 interface CustomerDetailProps {
@@ -13,13 +13,6 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
   const [fileUploadType, setFileUploadType] = React.useState<'image' | 'video' | 'document'>('image');
   const [fileDescription, setFileDescription] = React.useState('');
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  // 获取客户类型标签
-  const getCustomerTypeLabel = () => {
-    if (customer.customerType === 'retail') return '零售客户';
-    if (customer.customerType === 'installment') return '分期客户';
-    return '客户';
-  };
   
   // 计算利润率
   const calculateProfitRate = (profit?: number, sellingPrice?: number) => {
@@ -66,18 +59,7 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
             </div>
             <div className="ml-4">
               <h2 className="text-2xl font-bold text-gray-800">{customer.name}</h2>
-              <div className="flex items-center">
-                <span className="text-gray-600 mr-2">{getCustomerTypeLabel()}</span>
-                <span className={`px-2 py-0.5 text-xs rounded-full ${
-                  customer.customerType === 'retail' ? 'bg-blue-100 text-blue-600' : 
-                  customer.customerType === 'installment' ? 'bg-green-100 text-green-600' : 
-                  'bg-gray-100 text-gray-600'
-                }`}>
-                  {customer.customerType === 'retail' ? '零售' : 
-                   customer.customerType === 'installment' ? '分期' : 
-                   '未分类'}
-                </span>
-              </div>
+              <p className="text-gray-600">客户详情</p>
             </div>
           </div>
           <button
@@ -101,7 +83,6 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
                     <p className="font-medium">{customer.phone}</p>
                   </div>
                 </div>
-                
                 <div className="flex items-center">
                   <MessageCircle className="w-5 h-5 mr-3 text-gray-400" />
                   <div>
@@ -109,7 +90,6 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
                     <p className="font-medium">{customer.wechat}</p>
                   </div>
                 </div>
-                
                 <div className="flex items-center">
                   <MapPin className="w-5 h-5 mr-3 text-gray-400" />
                   <div>
@@ -117,28 +97,11 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
                     <p className="font-medium">{customer.address}</p>
                   </div>
                 </div>
-                
                 <div className="flex items-center">
                   <Briefcase className="w-5 h-5 mr-3 text-gray-400" />
                   <div>
                     <p className="text-sm text-gray-600">职业</p>
                     <p className="font-medium">{customer.occupation}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center">
-                  <Users className="w-5 h-5 mr-3 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-600">销售员</p>
-                    <p className="font-medium">{customer.salesPerson || '未分配'}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center">
-                  <CalendarIcon className="w-5 h-5 mr-3 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-600">创建时间</p>
-                    <p className="font-medium">{new Date(customer.createdAt).toLocaleDateString('zh-CN')}</p>
                   </div>
                 </div>
               </div>
@@ -147,10 +110,7 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
             {/* 客户类型信息 */}
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                <span className="flex items-center">
-                  <ShoppingBag className="w-5 h-5 mr-2 text-gray-600" />
-                  {customer.customerType === 'installment' ? '分期客户信息' : '零售客户信息'}
-                </span>
+                {customer.customerType === 'installment' ? '分期客户信息' : '零售客户信息'}
               </h3>
               
               {customer.customerType === 'retail' ? (
@@ -199,7 +159,7 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
                   <div>
                     <p className="text-sm text-gray-600">付款方式</p>
                     <p className="font-medium">
-                      {customer.paymentMethod === 'full_payment' ? '全款' : 
+                      {customer.paymentMethod === 'full' ? '全款' : 
                        customer.paymentMethod === 'shipping_balance' ? '发货补尾款' : 
                        customer.paymentMethod === 'cash_on_delivery' ? '货到付款' : '未设置'}
                     </p>
@@ -231,10 +191,7 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
                   
                   {/* 财务信息 */}
                   <div className="md:col-span-3 mt-4 pt-4 border-t border-gray-200">
-                    <h4 className="font-medium text-gray-800 mb-3 flex items-center">
-                      <DollarSign className="w-4 h-4 mr-2 text-gray-600" />
-                      财务信息
-                    </h4>
+                    <h4 className="font-medium text-gray-800 mb-3">财务信息</h4>
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                       <div>
                         <p className="text-sm text-gray-600">卖价</p>
@@ -352,10 +309,7 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
                   
                   {/* 财务信息 */}
                   <div className="md:col-span-3 mt-4 pt-4 border-t border-gray-200">
-                    <h4 className="font-medium text-gray-800 mb-3 flex items-center">
-                      <DollarSign className="w-4 h-4 mr-2 text-gray-600" />
-                      财务信息
-                    </h4>
+                    <h4 className="font-medium text-gray-800 mb-3">财务信息</h4>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div>
                         <p className="text-sm text-gray-600">合约总价</p>
@@ -399,7 +353,7 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
             {/* Tags */}
             {customer.tags.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                   <Tag className="w-5 h-5 mr-2" />
                   标签
                 </h3>
@@ -419,7 +373,7 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
             {/* Notes */}
             {customer.notes && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                   <FileText className="w-5 h-5 mr-2" />
                   备注
                 </h3>
@@ -431,7 +385,7 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
 
             {/* Files */}
             <div className="border border-gray-200 rounded-xl p-6">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-800">客户文件</h3>
                   <button
                     onClick={() => setShowFileUpload(!showFileUpload)}
@@ -534,7 +488,7 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
 
             {/* Orders */}
             <div className="border border-gray-200 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center"><ShoppingBag className="w-5 h-5 mr-2" />订单历史</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">订单历史</h3>
               {customer.orders.length > 0 ? (
                 <div className="space-y-4">
                   {customer.orders.map((order) => (
