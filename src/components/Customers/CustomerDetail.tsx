@@ -1,17 +1,50 @@
 import React from 'react';
-import { X, Phone, MessageCircle, MapPin, Briefcase, Tag, FileText, Camera, Video, Calendar, CreditCard } from 'lucide-react';
+import { X, Phone, MessageCircle, MapPin, Briefcase, Tag, FileText, Camera, Video, Calendar, Upload, Plus, User, DollarSign, Truck, CreditCard, Percent, Clock, FileCheck, Building } from 'lucide-react';
 import { Customer, CustomerFile } from '../../types';
 
 interface CustomerDetailProps {
   customer: Customer;
   onClose: () => void;
+  onAddFile: (customerId: string, fileData: Omit<CustomerFile, 'id' | 'uploadedAt'>) => Promise<void>;
 }
 
-const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose }) => {
+const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAddFile }) => {
+  const [showFileUpload, setShowFileUpload] = React.useState(false);
+  const [fileUploadType, setFileUploadType] = React.useState<'image' | 'video' | 'document'>('image');
+  const [fileDescription, setFileDescription] = React.useState('');
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  
   // 计算利润率
   const calculateProfitRate = (profit?: number, sellingPrice?: number) => {
     if (!profit || !sellingPrice || sellingPrice === 0) return 0;
     return ((profit / sellingPrice) * 100).toFixed(2);
+  };
+
+  // 处理文件选择
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const fileUrl = URL.createObjectURL(file);
+      
+      try {
+        await onAddFile(customer.id, {
+          name: file.name,
+          type: fileUploadType,
+          url: fileUrl,
+          description: fileDescription
+        });
+        
+        // 重置表单
+        setFileDescription('');
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        setShowFileUpload(false);
+      } catch (error) {
+        console.error('Failed to add file:', error);
+        alert('添加文件失败，请重试');
+      }
+    }
   };
 
   return (
@@ -352,7 +385,60 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose }) =>
 
             {/* Files */}
             <div className="border border-gray-200 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">客户文件</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800">客户文件</h3>
+                  <button
+                    onClick={() => setShowFileUpload(!showFileUpload)}
+                    className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center"
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    添加文件
+                  </button>
+                </div>
+                
+                {/* 文件上传表单 */}
+                {showFileUpload && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <div className="space-y-3">
+                      <div className="flex space-x-2">
+                        <select
+                          value={fileUploadType}
+                          onChange={(e) => setFileUploadType(e.target.value as 'image' | 'video' | 'document')}
+                          className="w-40 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="image">图片</option>
+                          <option value="video">检疫视频</option>
+                          <option value="document">聊天记录</option>
+                        </select>
+                        <input
+                          type="text"
+                          value={fileDescription}
+                          onChange={(e) => setFileDescription(e.target.value)}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="文件描述（可选）"
+                        />
+                      </div>
+                      
+                      <div className="flex space-x-2">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          onChange={handleFileSelect}
+                          className="hidden"
+                          accept={fileUploadType === 'image' ? 'image/*' : fileUploadType === 'video' ? 'video/*' : '*/*'}
+                          id="customer-detail-file-input"
+                        />
+                        <label 
+                          htmlFor="customer-detail-file-input"
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 cursor-pointer hover:bg-gray-50 flex items-center justify-center"
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          选择{fileUploadType === 'image' ? '图片' : fileUploadType === 'video' ? '视频' : '文件'}
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 {/* 文件列表 */}
                 {customer.files.length > 0 ? (
