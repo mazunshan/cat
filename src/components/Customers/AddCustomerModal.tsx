@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Upload, Plus, Camera, Video, FileText } from 'lucide-react';
 import { Customer } from '../../types';
-import { SALES_STAFF } from '../../hooks/useDatabase';
+import { SALES_STAFF } from '../../hooks/useDatabase'; 
 import { CustomerFile } from '../../types';
 
 interface AddCustomerModalProps {
@@ -12,6 +12,7 @@ interface AddCustomerModalProps {
 
 const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, onSave }) => {
   const [formData, setFormData] = useState({
+    // 基本信息
     customerType: 'retail' as 'retail' | 'installment',
     name: '',
     gender: 'female' as 'male' | 'female',
@@ -19,6 +20,51 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, on
     wechat: '',
     address: '',
     occupation: '',
+    // 客户类型
+    customerType: 'retail' as 'retail' | 'installment',
+    // 零售客户特有字段
+    orderDate: new Date().toISOString().split('T')[0],
+    salesPerson: SALES_STAFF[0],
+    catName: '',
+    catBirthday: '',
+    isMallMember: false,
+    catBreed: '',
+    catGender: 'female' as 'male' | 'female',
+    supplyChain: '',
+    supplyChainDeposit: 0,
+    totalAmount: 0,
+    paymentMethod: 'full' as 'full' | 'cod' | 'balance',
+    customerDeposit: 0,
+    depositDestination: '',
+    shippingDate: '',
+    shippingVideo: '',
+    balance: 0,
+    balancePaid: false,
+    balanceConfirmMethod: '',
+    sellingPrice: 0,
+    cost: 0,
+    shippingFee: 0,
+    profit: 0,
+    profitRate: 0,
+    // 分期客户特有字段
+    contractName: '',
+    relationship: '',
+    isInGroup: false,
+    repaymentDate: '',
+    installmentPeriod: '',
+    catCost: 0,
+    receivableAmount: 0,
+    paymentDestination: '',
+    installmentAmount: 0,
+    installmentCount: 6,
+    signingMethod: '',
+    isFirstManualTransfer: false,
+    hasESignContract: false,
+    contractTotalPrice: 0,
+    mallGrossProfit: 0,
+    monthlyProfit: 0,
+    breakEvenPeriod: 0,
+    // 通用字段
     tags: [] as string[],
     notes: '',
     assignedSales: SALES_STAFF[0], // 默认选择第一个销售员
@@ -70,7 +116,6 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, on
 
   // 文件上传相关状态
   const [files, setFiles] = useState<CustomerFile[]>([]);
-  const [fileUploadType, setFileUploadType] = useState<'image' | 'video' | 'document'>('image');
   const [fileDescription, setFileDescription] = useState('');
   
   const [newTag, setNewTag] = useState('');
@@ -101,7 +146,10 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, on
       });
     }
     
-    setFormData({
+    
+    // 重置表单
+    const resetForm = {
+      // 基本信息
       customerType: 'retail',
       name: '',
       gender: 'female',
@@ -109,6 +157,51 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, on
       wechat: '',
       address: '',
       occupation: '',
+      // 客户类型
+      customerType: 'retail',
+      // 零售客户特有字段
+      orderDate: new Date().toISOString().split('T')[0],
+      salesPerson: SALES_STAFF[0],
+      catName: '',
+      catBirthday: '',
+      isMallMember: false,
+      catBreed: '',
+      catGender: 'female',
+      supplyChain: '',
+      supplyChainDeposit: 0,
+      totalAmount: 0,
+      paymentMethod: 'full',
+      customerDeposit: 0,
+      depositDestination: '',
+      shippingDate: '',
+      shippingVideo: '',
+      balance: 0,
+      balancePaid: false,
+      balanceConfirmMethod: '',
+      sellingPrice: 0,
+      cost: 0,
+      shippingFee: 0,
+      profit: 0,
+      profitRate: 0,
+      // 分期客户特有字段
+      contractName: '',
+      relationship: '',
+      isInGroup: false,
+      repaymentDate: '',
+      installmentPeriod: '',
+      catCost: 0,
+      receivableAmount: 0,
+      paymentDestination: '',
+      installmentAmount: 0,
+      installmentCount: 6,
+      signingMethod: '',
+      isFirstManualTransfer: false,
+      hasESignContract: false,
+      contractTotalPrice: 0,
+      mallGrossProfit: 0,
+      monthlyProfit: 0,
+      breakEvenPeriod: 0,
+      // 通用字段
       tags: [],
       notes: '',
       assignedSales: SALES_STAFF[0],
@@ -155,8 +248,9 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, on
       mallGrossProfit: 0,
       grossProfit: 0,
       monthlyProfit: 0,
-      breakEvenPeriod: 0
-    });
+    };
+    
+    setFormData(resetForm);
     onClose();
   };
 
@@ -264,8 +358,8 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, on
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-auto">
+      <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-gray-800">新增客户</h2>
           <button
@@ -277,6 +371,33 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, on
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+          {/* 客户类型选择 */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <h3 className="text-md font-semibold text-blue-800 mb-3">客户类型</h3>
+            <div className="flex space-x-4">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  checked={formData.customerType === 'retail'}
+                  onChange={() => setFormData(prev => ({ ...prev, customerType: 'retail' }))}
+                  className="mr-2"
+                />
+                <span className="text-gray-700">零售客户</span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  checked={formData.customerType === 'installment'}
+                  onChange={() => setFormData(prev => ({ ...prev, customerType: 'installment' }))}
+                  className="mr-2"
+                />
+                <span className="text-gray-700">分期客户</span>
+              </label>
+            </div>
+          </div>
+          
+          {/* 基本信息 */}
+          <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">基本信息</h3>
           {/* 客户类型选择 */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1042,127 +1163,6 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, on
             </>
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              地址
-            </label>
-            <input
-              type="text"
-              value={formData.address}
-              onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="请输入详细地址"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              职业
-            </label>
-            <input
-              type="text"
-              value={formData.occupation}
-              onChange={(e) => setFormData(prev => ({ ...prev, occupation: e.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="请输入职业"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              分配销售
-            </label>
-            <select
-              value={formData.assignedSales}
-              onChange={(e) => setFormData(prev => ({ ...prev, assignedSales: e.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              {SALES_STAFF.map(salesperson => (
-                <option key={salesperson} value={salesperson}>
-                  {salesperson}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              客户标签
-            </label>
-            <div className="flex space-x-2 mb-3">
-              <input
-                type="text"
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="输入标签"
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-              />
-              <button
-                type="button"
-                onClick={addTag}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-            {formData.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {formData.tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm flex items-center"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(tag)}
-                      className="ml-2 text-blue-400 hover:text-blue-600"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              备注
-            </label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              placeholder="请输入客户备注信息"
-            />
-          </div>
-
-          {/* 文件上传部分 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              客户文件上传
-            </label>
-            <div className="space-y-4">
-              <div className="flex space-x-2">
-                <select
-                  value={fileUploadType}
-                  onChange={(e) => setFileUploadType(e.target.value as 'image' | 'video' | 'document')}
-                  className="w-40 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="image">图片</option>
-                  <option value="video">检疫视频</option>
-                  <option value="document">聊天记录</option>
-                </select>
-                <input
-                  type="text"
-                  value={fileDescription}
-                  onChange={(e) => setFileDescription(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="文件描述（可选）"
-                />
               </div>
               
               <div className="flex space-x-2">

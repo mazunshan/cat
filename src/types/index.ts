@@ -17,10 +17,54 @@ export interface Customer {
   customerType?: 'retail' | 'installment';
   address: string;
   occupation: string;
+  // 客户类型
+  customerType?: 'retail' | 'installment';
+  // 零售客户特有字段
+  orderDate?: string;
+  salesPerson?: string;
+  catName?: string;
+  catBirthday?: string;
+  isMallMember?: boolean;
+  catBreed?: string;
+  catGender?: 'male' | 'female';
+  supplyChain?: string;
+  supplyChainDeposit?: number;
+  totalAmount?: number;
+  paymentMethod?: 'full' | 'cod' | 'balance';
+  customerDeposit?: number;
+  depositDestination?: string;
+  shippingDate?: string;
+  shippingVideo?: string;
+  balance?: number;
+  balancePaid?: boolean;
+  balanceConfirmMethod?: string;
+  sellingPrice?: number;
+  cost?: number;
+  shippingFee?: number;
+  profit?: number;
+  profitRate?: number;
+  // 分期客户特有字段
+  contractName?: string;
+  relationship?: string;
+  isInGroup?: boolean;
+  repaymentDate?: string;
+  installmentPeriod?: string;
+  catCost?: number;
+  receivableAmount?: number;
+  paymentDestination?: string;
+  installmentAmount?: number;
+  installmentCount?: number;
+  signingMethod?: string;
+  isFirstManualTransfer?: boolean;
+  hasESignContract?: boolean;
+  contractTotalPrice?: number;
+  mallGrossProfit?: number;
+  monthlyProfit?: number;
+  breakEvenPeriod?: number;
+  // 通用字段
   tags: string[];
   notes: string;
   createdAt: string;
-  assignedSales: string;
   files: CustomerFile[];
   orders: Order[];
   

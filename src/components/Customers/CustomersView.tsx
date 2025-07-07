@@ -4,7 +4,7 @@ import CustomerCard from './CustomerCard';
 import CustomerDetail from './CustomerDetail';
 import AddCustomerModal from './AddCustomerModal';
 import EditCustomerModal from './EditCustomerModal';
-import { useCustomers, useCustomerFiles } from '../../hooks/useDatabase'; 
+import { useCustomers, useCustomerFiles, SALES_STAFF } from '../../hooks/useDatabase';
 import { Customer, CustomerFile } from '../../types';
 
 const CustomersView: React.FC = () => {
@@ -18,8 +18,8 @@ const CustomersView: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
 
-  // 确保customers是数组，如果为undefined则使用空数组
-  const safeCustomers = customers || [];
+  // 安全的数组操作
+  const safeCustomers = Array.isArray(customers) ? customers : [];
   
   const allTags = ['all', ...Array.from(new Set(safeCustomers.flatMap(c => c.tags || [])))];
 
@@ -267,6 +267,7 @@ const CustomersView: React.FC = () => {
         <CustomerDetail
           customer={selectedCustomer}
           onClose={() => setSelectedCustomer(null)}
+          onAddFile={handleAddCustomerFile}
           onAddFile={handleAddCustomerFile}
           onAddFile={handleAddCustomerFile}
         />
