@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Customer, Order, Product, KnowledgeBase, AttendanceRecord, AfterSalesRecord, ServiceTemplate, CustomerFeedback, QuarantineVideo, CustomerFile } from '../types';
+import { Customer, Order, Product, KnowledgeBase, AttendanceRecord, AfterSalesRecord, ServiceTemplate, CustomerFeedback, QuarantineVideo, CustomerFile, Announcement } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { calculateAttendanceStatus } from '../utils/attendanceUtils';
 
@@ -1013,6 +1013,91 @@ let globalKnowledgeBase: KnowledgeBase[] = [];
 let globalAttendanceRecords: AttendanceRecord[] = [];
 let globalAfterSalesRecords = [...mockAfterSalesRecords];
 let globalServiceTemplates = [...mockServiceTemplates];
+let globalAnnouncements: Announcement[] = [
+  {
+    id: '1',
+    title: '系统更新通知',
+    content: '系统将于本周六凌晨2点-4点进行例行维护，期间系统将暂停使用。请各位同事提前做好工作安排。',
+    visibleTo: 'all',
+    priority: 'important',
+    createdBy: '00000000-0000-0000-0000-000000000001',
+    createdAt: '2024-05-10T08:00:00Z'
+  },
+  {
+    id: '2',
+    title: '销售人员培训通知',
+    content: '下周三下午2点将在会议室举行新品种介绍培训，请所有销售人员准时参加。',
+    visibleTo: 'sales',
+    priority: 'normal',
+    createdBy: '00000000-0000-0000-0000-000000000001',
+    createdAt: '2024-05-12T10:30:00Z'
+  },
+  {
+    id: '3',
+    title: '售后服务流程更新',
+    content: '售后服务流程已更新，请所有售后专员查看最新的服务手册，并按照新流程执行工作。\n\n重点变更：\n1. 回访时间调整为购买后3天、7天、30天\n2. 新增满意度调查环节\n3. 健康咨询需在2小时内响应',
+    visibleTo: 'after_sales',
+    priority: 'urgent',
+    createdBy: '00000000-0000-0000-0000-000000000001',
+    createdAt: '2024-05-15T14:15:00Z'
+  }
+];
+
+// 公告数据钩子
+export const useAnnouncements = () => {
+  const { user } = useAuth();
+  const [announcements, setAnnouncements] = useState<Announcement[]>(globalAnnouncements);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchAnnouncements = async () => {
+    setLoading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setAnnouncements([...globalAnnouncements]);
+      setError(null);
+    } catch (err) {
+      setError('获取公告数据失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addAnnouncement = async (announcementData: Omit<Announcement, 'id' | 'createdAt'>) => {
+    const newAnnouncement: Announcement = {
+      id: Date.now().toString(),
+      ...announcementData,
+      createdAt: new Date().toISOString()
+    };
+
+    globalAnnouncements = [newAnnouncement, ...globalAnnouncements];
+    setAnnouncements([...globalAnnouncements]);
+    return newAnnouncement;
+  };
+
+  const deleteAnnouncement = async (announcementId: string) => {
+    // 检查权限
+    if (user?.role !== 'admin') {
+      throw new Error('只有管理员可以删除公告');
+    }
+    
+    globalAnnouncements = globalAnnouncements.filter(announcement => announcement.id !== announcementId);
+    setAnnouncements([...globalAnnouncements]);
+  };
+
+  useEffect(() => {
+    fetchAnnouncements();
+  }, []);
+
+  return { 
+    announcements, 
+    loading, 
+    error, 
+    addAnnouncement, 
+    deleteAnnouncement, 
+    refetch: fetchAnnouncements 
+  };
+};
 
 // 客户文件管理钩子
 export const useCustomerFiles = () => {
