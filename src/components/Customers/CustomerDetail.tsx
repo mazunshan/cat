@@ -1,11 +1,11 @@
 import React from 'react';
-import { X, Phone, MessageCircle, MapPin, Briefcase, Tag, FileText, Camera, Video, Calendar, Upload, Plus, User, DollarSign, Truck, CreditCard, Percent, Clock, FileCheck, Building } from 'lucide-react';
+import { X, Phone, MessageCircle, MapPin, Briefcase, Tag, FileText, Camera, Video, Calendar, Upload, Plus, CreditCard } from 'lucide-react';
 import { Customer, CustomerFile } from '../../types';
 
 interface CustomerDetailProps {
   customer: Customer;
   onClose: () => void;
-  onAddFile: (customerId: string, fileData: Omit<CustomerFile, 'id' | 'uploadedAt'>) => Promise<void>;
+  onAddFile: (customerId: string, fileData: Omit<CustomerFile, 'id' | 'uploadedAt'>) => Promise<any>;
 }
 
 const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAddFile }) => {
@@ -23,12 +23,12 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
   // 处理文件选择
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      const fileUrl = URL.createObjectURL(file);
-      
+      const selectedFile = e.target.files[0];
+      const fileUrl = URL.createObjectURL(selectedFile);
+
       try {
         await onAddFile(customer.id, {
-          name: file.name,
+          name: selectedFile.name,
           type: fileUploadType,
           url: fileUrl,
           description: fileDescription
@@ -458,12 +458,28 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
                         {file.type === 'image' && (
                           <img 
                             src={file.url} 
-                            alt={file.name}
+                            alt={file.name || '客户图片'}
                             className="w-full h-32 object-cover rounded-lg mb-3"
                             onError={(e) => {
                               (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/45201/kitty-cat-kitten-pet-45201.jpeg';
                             }}
                           />
+                        )}
+                        
+                        {file.type === 'video' && (
+                          <video 
+                            src={file.url}
+                            controls
+                            className="w-full h-32 object-cover rounded-lg mb-3"
+                          >
+                            您的浏览器不支持视频播放
+                          </video>
+                        )}
+                        
+                        {file.type === 'document' && (
+                          <div className="w-full h-32 flex items-center justify-center bg-gray-100 rounded-lg mb-3">
+                            <FileText className="w-10 h-10 text-gray-400" />
+                          </div>
                         )}
                         
                         {file.description && (
