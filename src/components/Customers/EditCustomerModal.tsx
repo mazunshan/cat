@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, Plus, Camera, Video, FileText, Upload } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Plus, Upload } from 'lucide-react';
 import { Customer, CustomerFile } from '../../types';
 import { SALES_STAFF } from '../../hooks/useDatabase'; 
 
@@ -7,10 +7,17 @@ interface EditCustomerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (customerId: string, customerData: Omit<Customer, 'id' | 'createdAt' | 'files' | 'orders'>) => void;
+  onAddFile?: (customerId: string, fileData: Omit<CustomerFile, 'id' | 'uploadedAt'>) => Promise<void>;
   customer: Customer | null;
 }
 
-const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, onSave, customer }) => {
+const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  onSave, 
+  onAddFile,
+  customer 
+}) => {
   const [formData, setFormData] = useState({
     // 基本信息
     name: '',
@@ -68,6 +75,10 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
     notes: ''
   });
 
+  // 文件上传相关状态
+  const [fileType, setFileType] = useState<'image' | 'video' | 'document'>('image');
+  const [fileDescription, setFileDescription] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [newTag, setNewTag] = useState('');
   
   // 文件上传相关状态
@@ -78,6 +89,10 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
 
   useEffect(() => {
     if (customer) {
+      // 设置基本信息
+      const customerType = customer.customerType || 'retail';
+      
+      // 根据客户类型设置不同的初始表单数据
       setFormData({
         // 基本信息
         name: customer.name,
@@ -166,6 +181,29 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
       ...prev,
       tags: prev.tags.filter(tag => tag !== tagToRemove)
     }));
+  };
+
+  // 处理文件上传
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!customer || !onAddFile) return;
+    
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const fileUrl = URL.createObjectURL(file);
+      
+      try {
+        await onAddFile(customer.id, {
+          name: file.name,
+          type: fileType,
+          url: fileUrl,
+          description: fileDescription
+        });
+        setFileDescription('');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      } catch (error) {
+        console.error('Failed to add file:', error);
+      }
+    }
   };
 
   // 处理文件选择
@@ -1293,6 +1331,56 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
               placeholder="请输入客户备注信息"
             />
           </div>
+
+          {/* 文件上传 */}
+          {onAddFile && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                添加文件
+              </label>
+              <div className="space-y-3">
+                <div className="flex space-x-2">
+                  <select
+                    value={fileType}
+                    onChange={(e) => setFileType(e.target.value as 'image' | 'video' | 'document')}
+                    className="w-40 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="image">图片</option>
+                    <option value="video">检疫视频</option>
+                    <option value="document">聊天记录</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={fileDescription}
+                    onChange={(e) => setFileDescription(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="文件描述（可选）"
+                  />
+                </div>
+                
+                <div className="flex space-x-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    accept={fileType === 'image' ? 'image/*' : fileType === 'video' ? 'video/*' : '*/*'}
+                    id="edit-customer-file-input"
+                  />
+                  <label 
+                    htmlFor="edit-customer-file-input"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 cursor-pointer hover:bg-gray-50 flex items-center justify-center"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    选择{fileType === 'image' ? '图片' : fileType === 'video' ? '视频' : '文件'}
+                  </label>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                上传的文件将立即添加到客户文件中
+              </p>
+            </div>
+          )}
 
           {/* 操作按钮 */}
           <div className="flex space-x-4 pt-4">
