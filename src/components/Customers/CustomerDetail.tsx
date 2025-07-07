@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Phone, MessageCircle, MapPin, Briefcase, Tag, FileText, Camera, Video, Calendar, Upload, Plus, User, DollarSign, Truck, CreditCard, Percent, Clock, FileCheck, Building, Eye } from 'lucide-react';
+import { X, Phone, MessageCircle, MapPin, Briefcase, Tag, FileText, Camera, Video, Calendar, Upload, Plus, User, DollarSign, Truck, CreditCard, Percent, Clock, FileCheck, Building } from 'lucide-react';
 import { Customer, CustomerFile } from '../../types';
 
 interface CustomerDetailProps {
@@ -458,15 +458,15 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
                 {customer.files.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {customer.files.map((file) => (
-                      <div key={file.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow h-full flex flex-col">
+                      <div key={file.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
                         <div className="p-4">
                           <div className="flex items-center mb-3">
                             {getFileTypeIcon(file.type)}
-                            <h4 className="font-medium text-gray-800 truncate flex-1">{file.name}</h4>
+                            <h4 className="font-medium text-gray-800 truncate">{file.name}</h4>
                           </div>
                           
                           {file.type === 'image' && (
-                            <div className="relative w-full h-48 bg-gray-100 rounded-lg mb-3 overflow-hidden">
+                            <div className="relative w-full h-40 bg-gray-100 rounded-lg mb-3 overflow-hidden">
                               <img 
                                 src={file.url} 
                                 alt={file.name}
@@ -479,31 +479,26 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
                           )}
                           
                           {file.type === 'video' && (
-                            <div className="relative w-full h-48 bg-gray-900 rounded-lg mb-3 overflow-hidden">
+                            <div className="relative w-full h-40 bg-gray-900 rounded-lg mb-3 overflow-hidden">
                               <video 
                                 src={file.url}
-                                className="w-full h-full object-contain"
+                                className="w-full h-full object-cover"
                                 controls
                               />
                             </div>
                           )}
                           
                           {file.type === 'document' && (
-                            <div className="flex flex-col items-center justify-center w-full h-48 bg-gray-50 rounded-lg mb-3">
-                              <FileText className="w-16 h-16 text-gray-400 mb-2" />
-                              <p className="text-sm text-gray-500 text-center px-4 break-all">
-                                {file.name.length > 30 ? `${file.name.substring(0, 30)}...` : file.name}
-                              </p>
+                            <div className="flex items-center justify-center w-full h-20 bg-gray-50 rounded-lg mb-3">
+                              <FileText className="w-8 h-8 text-gray-400" />
                             </div>
                           )}
                           
-                          <div className="flex-1">
-                            {file.description && (
-                              <p className="text-sm text-gray-600 mb-2">{file.description}</p>
-                            )}
-                          </div>
+                          {file.description && (
+                            <p className="text-sm text-gray-600 mb-2">{file.description}</p>
+                          )}
                           
-                          <div className="flex items-center justify-between text-xs text-gray-500 mt-2 pt-2 border-t border-gray-100">
+                          <div className="flex items-center justify-between text-xs text-gray-500">
                             <span className="flex items-center">
                               <Calendar className="w-4 h-4 mr-1" />
                               {new Date(file.uploadedAt).toLocaleDateString('zh-CN')}
@@ -512,10 +507,9 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
                               href={file.url} 
                               target="_blank" 
                               rel="noopener noreferrer" 
-                              className="text-blue-500 hover:text-blue-700 flex items-center"
+                              className="text-blue-500 hover:text-blue-700"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <Eye className="w-3 h-3 mr-1" />
                               查看
                             </a>
                           </div>
@@ -524,7 +518,7 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12 bg-gray-50 rounded-lg">
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
                     <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                     <p className="text-gray-500 font-medium">暂无客户文件</p>
                     <p className="text-sm text-gray-400 mt-1">点击"添加文件"上传客户相关文件</p>
