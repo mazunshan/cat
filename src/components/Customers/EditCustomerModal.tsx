@@ -857,15 +857,18 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      还款时间
+                      还款时间 *
                     </label>
-                    <input
-                      type="text"
-                      value={formData.repaymentDate}
-                      onChange={(e) => setFormData(prev => ({ ...prev, repaymentDate: e.target.value }))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="例如：每月15日"
-                    />
+                    <div className="relative">
+                      <input
+                        type="date"
+                        required={formData.customerType === 'installment'}
+                        value={formData.repaymentDate}
+                        onChange={(e) => setFormData(prev => ({ ...prev, repaymentDate: e.target.value }))}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">选择每月还款日期</p>
+                    </div>
                   </div>
                   
                   <div>
@@ -874,6 +877,7 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
                     </label>
                     <input
                       type="text"
+                      required={formData.customerType === 'installment'}
                       value={formData.installmentPeriod}
                       onChange={(e) => setFormData(prev => ({ ...prev, installmentPeriod: e.target.value }))}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
