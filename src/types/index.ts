@@ -15,9 +15,10 @@ export interface Customer {
   phone: string;
   wechat: string;
   customerType?: 'retail' | 'installment';
-  customerType?: 'retail' | 'installment';
   address: string;
   occupation: string;
+  // 客户类型
+  customerType?: 'retail' | 'installment';
   // 零售客户特有字段
   orderDate?: string;
   salesPerson?: string;
