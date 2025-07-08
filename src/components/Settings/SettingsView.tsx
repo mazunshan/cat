@@ -67,7 +67,6 @@ const SettingsView: React.FC = () => {
     removeTeam,
     assignUserToTeam,
     refreshUsers,
-    refreshUsers,
     businessHours,
     updateBusinessHours
   } = useAuth();
