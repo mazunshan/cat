@@ -1006,9 +1006,9 @@ const mockServiceTemplates: ServiceTemplate[] = [
 ];
 
 // 模拟销售业绩数据
-const generateSalesPerformanceData = (users: User[]): SalesPerformance[] => {
+const generateSalesPerformanceData = (): SalesPerformance[] => {
   const performances: SalesPerformance[] = [];
-  const salesStaff = users.filter(user => user.role === 'sales');
+  const salesStaff = mockUsers.filter(user => user.role === 'sales');
   
   // 生成过去90天的数据
   for (let i = 90; i >= 0; i--) {
@@ -1043,8 +1043,7 @@ const generateSalesPerformanceData = (users: User[]): SalesPerformance[] => {
   return performances;
 };
 
-// 延迟初始化销售业绩数据
-let globalSalesPerformance: SalesPerformance[] = [];
+const globalSalesPerformance = generateSalesPerformanceData();
 
 // 全局状态管理 - 确保数据一致性
 let globalCustomers = [...mockCustomers];
@@ -1794,26 +1793,14 @@ export const useAnnouncements = () => {
 
 // 销售业绩数据钩子
 export const useSalesPerformance = () => {
-  const { user, teams, users } = useAuth();
+  const { user, teams } = useAuth();
   const [salesPerformance, setSalesPerformance] = useState<SalesPerformance[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 初始化销售业绩数据
-  useEffect(() => {
-    if (users.length > 0 && globalSalesPerformance.length === 0) {
-      globalSalesPerformance = generateSalesPerformanceData(users);
-    }
-  }, [users]);
-
   const fetchSalesPerformance = async (startDate?: string, endDate?: string) => {
     setLoading(true);
     try {
-      // 确保销售业绩数据已初始化
-      if (globalSalesPerformance.length === 0 && users.length > 0) {
-        globalSalesPerformance = generateSalesPerformanceData(users);
-      }
-      
       await new Promise(resolve => setTimeout(resolve, 500));
       
       // 过滤日期范围
@@ -1941,7 +1928,7 @@ export const useSalesPerformance = () => {
 
   useEffect(() => {
     fetchSalesPerformance();
-  }, [user, users]);
+  }, [user]);
 
   return {
     salesPerformance,
