@@ -897,19 +897,17 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, on
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    分期数
+                    分期数 *
                   </label>
-                  <select
-                    value={formData.installmentCount}
-                    onChange={(e) => setFormData(prev => ({ ...prev, installmentCount: parseInt(e.target.value) || 6 }))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="3">3期</option>
-                    <option value="6">6期</option>
-                    <option value="12">12期</option>
-                    <option value="24">24期</option>
-                    <option value="36">36期</option>
-                  </select>
+                  <input
+                    type="number"
+                    min="1"
+                    value={formData.installmentCount || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, installmentCount: e.target.value ? parseInt(e.target.value) : undefined }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="请输入分期数"
+                    required={formData.customerType === 'installment'}
+                  />
                 </div>
                 
                 <div>
