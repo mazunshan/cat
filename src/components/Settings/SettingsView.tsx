@@ -66,7 +66,6 @@ const SettingsView: React.FC = () => {
     updateTeam,
     removeTeam,
     assignUserToTeam,
-    refreshUsers,
     businessHours,
     updateBusinessHours
   } = useAuth();
@@ -144,7 +143,7 @@ const SettingsView: React.FC = () => {
     { id: 'general', label: '基本设置', icon: Globe },
     { id: 'users', label: '用户管理', icon: Users },
     { id: 'teams', label: '团队管理', icon: UsersRound },
-    { id: 'attendance', label: '考勤设置', icon: Clock },
+    { id: 'teams', label: '团队管理', icon: UsersRound },
     { id: 'security', label: '安全设置', icon: Shield },
     { id: 'notifications', label: '通知设置', icon: Bell }
   ];
@@ -182,11 +181,6 @@ const SettingsView: React.FC = () => {
         codeGeneratedAt: systemSettings.codeGeneratedAt,
         codeValidUntil: systemSettings.codeValidUntil
       });
-
-      // 更新营业时间设置
-      if (activeTab === 'attendance') {
-        updateBusinessHours(tempBusinessHours);
-      }
       
       // 这里应该调用API保存设置到数据库
       await new Promise(resolve => setTimeout(resolve, 1000)); // 模拟API调用
@@ -1374,10 +1368,10 @@ const SettingsView: React.FC = () => {
         return renderGeneralSettings();
       case 'teams':
         return renderTeamManagement();
+      case 'teams':
+        return renderTeamManagement();
       case 'users':
         return renderUserManagement();
-      case 'attendance':
-        return renderAttendanceSettings();
       case 'security':
         return renderSecuritySettings();
       case 'notifications':
