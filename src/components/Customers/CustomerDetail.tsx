@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Phone, MessageCircle, MapPin, Briefcase, Tag, FileText, Camera, Video, Calendar, Upload, Plus, User, DollarSign, Truck, CreditCard, Percent, Clock, FileCheck, Building } from 'lucide-react';
 import { Customer, CustomerFile } from '../../types';
+import { format, addDays, isAfter, isBefore } from 'date-fns';
 
 interface CustomerDetailProps {
   customer: Customer;
@@ -33,6 +34,43 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
     if (!profit || !sellingPrice || sellingPrice === 0) return 0;
     return ((profit / sellingPrice) * 100).toFixed(2);
   };
+  
+  // 计算分期客户的还款状态
+  const getInstallmentStatus = () => {
+    if (customer.customerType !== 'installment' || !customer.repaymentDate) {
+      return null;
+    }
+    
+    // 解析还款日期（例如："每月15号" => 15）
+    const dayOfMonth = parseInt(customer.repaymentDate.replace(/[^0-9]/g, ''));
+    if (isNaN(dayOfMonth)) return null;
+    
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
+    // 创建本月的还款日期
+    const paymentDate = new Date(currentYear, currentMonth, dayOfMonth);
+    
+    // 如果今天已经过了本月还款日，则计算下个月的还款日
+    if (isAfter(today, paymentDate)) {
+      paymentDate.setMonth(paymentDate.getMonth() + 1);
+    }
+    
+    // 计算距离还款日的天数
+    const daysUntilPayment = Math.ceil((paymentDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // 判断状态
+    if (daysUntilPayment <= 3 && daysUntilPayment >= 0) {
+      return { status: 'pending', text: '待催款', days: daysUntilPayment };
+    } else if (daysUntilPayment < 0) {
+      return { status: 'overdue', text: '逾期', days: Math.abs(daysUntilPayment) };
+    } else {
+      return { status: 'normal', text: '还款正常', days: daysUntilPayment };
+    }
+  };
+
+  const installmentStatus = getInstallmentStatus();
 
   // 处理文件选择
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,6 +121,62 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
             <X className="w-6 h-6 text-gray-600" />
           </button>
         </div>
+        
+        {/* 分期客户还款状态 */}
+        {customer.customerType === 'installment' && installmentStatus && (
+          <div className={`mx-6 mt-4 p-4 rounded-lg ${
+            installmentStatus.status === 'normal' ? 'bg-green-50 border border-green-200' :
+            installmentStatus.status === 'pending' ? 'bg-yellow-50 border border-yellow-200' :
+            'bg-red-50 border border-red-200'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Clock className={`w-5 h-5 mr-2 ${
+                  installmentStatus.status === 'normal' ? 'text-green-600' :
+                  installmentStatus.status === 'pending' ? 'text-yellow-600' :
+                  'text-red-600'
+                }`} />
+                <h3 className={`font-medium ${
+                  installmentStatus.status === 'normal' ? 'text-green-800' :
+                  installmentStatus.status === 'pending' ? 'text-yellow-800' :
+                  'text-red-800'
+                }`}>
+                  还款状态: {installmentStatus.text}
+                </h3>
+              </div>
+              
+              {installmentStatus.status !== 'normal' && (
+                <div className={`text-sm ${
+                  installmentStatus.status === 'pending' ? 'text-yellow-700' : 'text-red-700'
+                }`}>
+                  {installmentStatus.status === 'pending' 
+                    ? `距离还款日还有 ${installmentStatus.days} 天` 
+                    : `已逾期 ${installmentStatus.days} 天`}
+                </div>
+              )}
+            </div>
+            
+            {/* 分期还款勾选框 */}
+            {customer.installmentCount && customer.installmentCount > 0 && (
+              <div className="mt-4 grid grid-cols-3 md:grid-cols-6 gap-2">
+                {Array.from({ length: customer.installmentCount }, (_, i) => (
+                  <div key={i} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id={`payment-${i+1}`}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      // 这里应该连接到实际的还款记录
+                      disabled
+                    />
+                    <label htmlFor={`payment-${i+1}`} className="ml-2 text-sm text-gray-700">
+                      第{i+1}期
+                    </label>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
           <div className="p-6 space-y-6">
@@ -90,6 +184,16 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onClose, onAd
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">基本信息</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center">
+                  <User className="w-5 h-5 mr-3 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-600">客户类型</p>
+                    <p className="font-medium">
+                      {customer.customerType === 'retail' ? '零售客户' : 
+                       customer.customerType === 'installment' ? '分期客户' : '未设置'}
+                    </p>
+                  </div>
+                </div>
                 <div className="flex items-center">
                   <Phone className="w-5 h-5 mr-3 text-gray-400" />
                   <div>

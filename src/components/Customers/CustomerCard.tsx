@@ -1,6 +1,7 @@
 import React from 'react';
 import { Phone, MessageCircle, MapPin, Briefcase, Tag, Edit, Trash2 } from 'lucide-react';
 import { Customer } from '../../types';
+import { format, addDays, isAfter, isBefore } from 'date-fns';
 
 interface CustomerCardProps {
   customer: Customer;
@@ -10,6 +11,43 @@ interface CustomerCardProps {
 }
 
 const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onClick, onEdit, onDelete }) => {
+  // 计算分期客户的还款状态
+  const getInstallmentStatus = () => {
+    if (customer.customerType !== 'installment' || !customer.repaymentDate) {
+      return null;
+    }
+    
+    // 解析还款日期（例如："每月15号" => 15）
+    const dayOfMonth = parseInt(customer.repaymentDate.replace(/[^0-9]/g, ''));
+    if (isNaN(dayOfMonth)) return null;
+    
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
+    // 创建本月的还款日期
+    const paymentDate = new Date(currentYear, currentMonth, dayOfMonth);
+    
+    // 如果今天已经过了本月还款日，则计算下个月的还款日
+    if (isAfter(today, paymentDate)) {
+      paymentDate.setMonth(paymentDate.getMonth() + 1);
+    }
+    
+    // 计算距离还款日的天数
+    const daysUntilPayment = Math.ceil((paymentDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // 判断状态
+    if (daysUntilPayment <= 3 && daysUntilPayment >= 0) {
+      return { status: 'pending', text: '待催款', days: daysUntilPayment };
+    } else if (daysUntilPayment < 0) {
+      return { status: 'overdue', text: '逾期', days: Math.abs(daysUntilPayment) };
+    } else {
+      return { status: 'normal', text: '还款正常', days: daysUntilPayment };
+    }
+  };
+
+  const installmentStatus = getInstallmentStatus();
+
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     onEdit(customer);
@@ -24,7 +62,21 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onClick, onEdit, 
     <div 
       className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all cursor-pointer hover:border-blue-200 group"
       onClick={onClick}
-    >
+    > 
+      {/* 分期客户还款状态标签 */}
+      {customer.customerType === 'installment' && installmentStatus && (
+        <div className={`mb-3 px-3 py-1 inline-block rounded-lg text-sm font-medium ${
+          installmentStatus.status === 'normal' ? 'bg-green-100 text-green-600' :
+          installmentStatus.status === 'pending' ? 'bg-yellow-100 text-yellow-600' :
+          'bg-red-100 text-red-600'
+        }`}>
+          {installmentStatus.text}
+          {installmentStatus.status === 'overdue' && (
+            <span className="ml-1">({installmentStatus.days}天)</span>
+          )}
+        </div>
+      )}
+
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center">
           <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -34,7 +86,16 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onClick, onEdit, 
           </div>
           <div className="ml-3">
             <h3 className="font-semibold text-gray-800">{customer.name}</h3>
-            <p className="text-sm text-gray-600">{customer.assignedSales}</p>
+            <p className="text-sm text-gray-600">
+              {customer.assignedSales}
+              {customer.customerType && (
+                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                  customer.customerType === 'retail' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'
+                }`}>
+                  {customer.customerType === 'retail' ? '零售' : '分期'}
+                </span>
+              )}
+            </p>
           </div>
         </div>
         <div className="flex items-center space-x-2">
