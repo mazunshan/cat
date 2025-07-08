@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Customer, Order, Product, KnowledgeBase, AttendanceRecord, AfterSalesRecord, ServiceTemplate, CustomerFeedback, QuarantineVideo, CustomerFile } from '../types';
+import { Customer, Order, Product, KnowledgeBase, AttendanceRecord, AfterSalesRecord, ServiceTemplate, CustomerFeedback, QuarantineVideo, CustomerFile, SalesPerformance } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { calculateAttendanceStatus } from '../utils/attendanceUtils';
 
@@ -1005,6 +1005,46 @@ const mockServiceTemplates: ServiceTemplate[] = [
   }
 ];
 
+// 模拟销售业绩数据
+const generateSalesPerformanceData = (): SalesPerformance[] => {
+  const performances: SalesPerformance[] = [];
+  const salesStaff = mockUsers.filter(user => user.role === 'sales');
+  
+  // 生成过去90天的数据
+  for (let i = 90; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    const dateString = date.toISOString().split('T')[0];
+    
+    salesStaff.forEach(staff => {
+      // 根据销售员ID和日期生成一个伪随机数，确保相同的销售员在相同的日期有相同的数据
+      const seed = staff.id.charCodeAt(0) + date.getDate() + date.getMonth();
+      const randomFactor = Math.sin(seed) * 0.5 + 0.5; // 0-1之间的伪随机数
+      
+      // 生成业绩数据
+      const traffic = Math.floor(10 + randomFactor * 40); // 10-50之间
+      const orders = Math.floor(randomFactor * traffic * 0.3); // 转化率约30%
+      const avgOrderValue = 5000 + randomFactor * 15000; // 5000-20000之间
+      const revenue = orders * avgOrderValue;
+      
+      performances.push({
+        date: dateString,
+        salesId: staff.id,
+        salesName: staff.name,
+        teamId: staff.teamId,
+        teamName: staff.teamId === 'team-1' ? '销售一组' : staff.teamId === 'team-2' ? '销售二组' : undefined,
+        traffic,
+        orders,
+        revenue
+      });
+    });
+  }
+  
+  return performances;
+};
+
+const globalSalesPerformance = generateSalesPerformanceData();
+
 // 全局状态管理 - 确保数据一致性
 let globalCustomers = [...mockCustomers];
 let globalProducts = [...mockProducts];
@@ -1748,5 +1788,155 @@ export const useAnnouncements = () => {
     updateAnnouncement, 
     deleteAnnouncement, 
     refetch: fetchAnnouncements 
+  };
+};
+
+// 销售业绩数据钩子
+export const useSalesPerformance = () => {
+  const { user, teams } = useAuth();
+  const [salesPerformance, setSalesPerformance] = useState<SalesPerformance[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSalesPerformance = async (startDate?: string, endDate?: string) => {
+    setLoading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // 过滤日期范围
+      let filteredPerformance = [...globalSalesPerformance];
+      
+      if (startDate) {
+        filteredPerformance = filteredPerformance.filter(p => p.date >= startDate);
+      }
+      
+      if (endDate) {
+        filteredPerformance = filteredPerformance.filter(p => p.date <= endDate);
+      }
+      
+      // 如果是销售员，只显示自己的业绩
+      if (user && user.role === 'sales') {
+        filteredPerformance = filteredPerformance.filter(p => p.salesId === user.id);
+      }
+      
+      setSalesPerformance(filteredPerformance);
+      setError(null);
+    } catch (err) {
+      setError('获取销售业绩数据失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 获取团队业绩数据
+  const getTeamPerformance = (teamId: string, startDate?: string, endDate?: string) => {
+    let teamData = salesPerformance.filter(p => p.teamId === teamId);
+    
+    if (startDate) {
+      teamData = teamData.filter(p => p.date >= startDate);
+    }
+    
+    if (endDate) {
+      teamData = teamData.filter(p => p.date <= endDate);
+    }
+    
+    return teamData;
+  };
+
+  // 获取个人业绩数据
+  const getSalesPerformance = (salesId: string, startDate?: string, endDate?: string) => {
+    let salesData = salesPerformance.filter(p => p.salesId === salesId);
+    
+    if (startDate) {
+      salesData = salesData.filter(p => p.date >= startDate);
+    }
+    
+    if (endDate) {
+      salesData = salesData.filter(p => p.date <= endDate);
+    }
+    
+    return salesData;
+  };
+
+  // 获取日期范围内的汇总数据
+  const getSummaryData = (startDate?: string, endDate?: string, teamId?: string, salesId?: string) => {
+    let filteredData = [...salesPerformance];
+    
+    if (startDate) {
+      filteredData = filteredData.filter(p => p.date >= startDate);
+    }
+    
+    if (endDate) {
+      filteredData = filteredData.filter(p => p.date <= endDate);
+    }
+    
+    if (teamId) {
+      filteredData = filteredData.filter(p => p.teamId === teamId);
+    }
+    
+    if (salesId) {
+      filteredData = filteredData.filter(p => p.salesId === salesId);
+    }
+    
+    // 按销售员分组
+    const salesSummary = filteredData.reduce((acc, curr) => {
+      if (!acc[curr.salesId]) {
+        acc[curr.salesId] = {
+          salesId: curr.salesId,
+          salesName: curr.salesName,
+          teamId: curr.teamId,
+          teamName: curr.teamName,
+          totalTraffic: 0,
+          totalOrders: 0,
+          totalRevenue: 0
+        };
+      }
+      
+      acc[curr.salesId].totalTraffic += curr.traffic;
+      acc[curr.salesId].totalOrders += curr.orders;
+      acc[curr.salesId].totalRevenue += curr.revenue;
+      
+      return acc;
+    }, {} as Record<string, any>);
+    
+    // 按团队分组
+    const teamSummary = filteredData.reduce((acc, curr) => {
+      if (curr.teamId) {
+        if (!acc[curr.teamId]) {
+          acc[curr.teamId] = {
+            teamId: curr.teamId,
+            teamName: curr.teamName,
+            totalTraffic: 0,
+            totalOrders: 0,
+            totalRevenue: 0
+          };
+        }
+        
+        acc[curr.teamId].totalTraffic += curr.traffic;
+        acc[curr.teamId].totalOrders += curr.orders;
+        acc[curr.teamId].totalRevenue += curr.revenue;
+      }
+      
+      return acc;
+    }, {} as Record<string, any>);
+    
+    return {
+      salesSummary: Object.values(salesSummary),
+      teamSummary: Object.values(teamSummary)
+    };
+  };
+
+  useEffect(() => {
+    fetchSalesPerformance();
+  }, [user]);
+
+  return {
+    salesPerformance,
+    loading,
+    error,
+    fetchSalesPerformance,
+    getTeamPerformance,
+    getSalesPerformance,
+    getSummaryData
   };
 };

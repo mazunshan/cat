@@ -1,17 +1,227 @@
 import React, { useState } from 'react';
-import { Trophy, TrendingUp, Users, DollarSign, Calendar, Award, Target, Star, Filter, Download } from 'lucide-react';
+import { Trophy, TrendingUp, Users, DollarSign, Calendar, Award, Target, Star, Filter, Download, ChevronLeft, ChevronRight, UsersRound, User, BarChart2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import { useOrders, useCustomers } from '../../hooks/useDatabase';
+import { useOrders, useCustomers, useSalesPerformance } from '../../hooks/useDatabase';
+import { useAuth } from '../../context/AuthContext';
 
 const SalesPerformanceView: React.FC = () => {
+  const { user, teams } = useAuth();
   const { orders = [], loading: ordersLoading } = useOrders();
   const { customers = [], loading: customersLoading } = useCustomers();
-  const [timeRange, setTimeRange] = useState<'month' | 'quarter' | 'year'>('month');
+  const { 
+    loading: performanceLoading, 
+    error: performanceError,
+    getSummaryData,
+    fetchSalesPerformance
+  } = useSalesPerformance();
+  
+  const [viewMode, setViewMode] = useState<'personal' | 'team'>('personal');
+  const [timeRange, setTimeRange] = useState<'day' | 'week' | 'month'>('month');
   const [sortBy, setSortBy] = useState<'revenue' | 'orders' | 'customers'>('revenue');
+  const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().substring(0, 7)); // YYYY-MM
+  const [selectedWeek, setSelectedWeek] = useState<number>(getWeekNumber(new Date()));
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().substring(0, 10)); // YYYY-MM-DD
 
   // 安全的数组操作
   const safeOrders = orders || [];
   const safeCustomers = customers || [];
+  
+  const loading = ordersLoading || customersLoading || performanceLoading;
+
+  // 获取当前月份的开始和结束日期
+  const getMonthRange = (monthStr: string) => {
+    const [year, month] = monthStr.split('-').map(Number);
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
+    return {
+      start: startDate.toISOString().substring(0, 10),
+      end: endDate.toISOString().substring(0, 10)
+    };
+  };
+
+  // 获取当前周的开始和结束日期
+  function getWeekRange(year: number, weekNumber: number) {
+    const firstDayOfYear = new Date(year, 0, 1);
+    const daysOffset = (weekNumber - 1) * 7;
+    
+    // 找到第一周的第一天
+    let firstDayOfWeek = new Date(year, 0, 1 + daysOffset - firstDayOfYear.getDay());
+    if (firstDayOfYear.getDay() > 0) {
+      firstDayOfWeek = new Date(year, 0, 1 + daysOffset + (7 - firstDayOfYear.getDay()));
+    }
+    
+    const lastDayOfWeek = new Date(firstDayOfWeek);
+    lastDayOfWeek.setDate(lastDayOfWeek.getDate() + 6);
+    
+    return {
+      start: firstDayOfWeek.toISOString().substring(0, 10),
+      end: lastDayOfWeek.toISOString().substring(0, 10)
+    };
+  }
+
+  // 获取周数
+  function getWeekNumber(date: Date) {
+    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+    const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
+    return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+  }
+
+  // 获取当前选择的日期范围
+  const getDateRange = () => {
+    switch (timeRange) {
+      case 'day':
+        return { start: selectedDate, end: selectedDate };
+      case 'week':
+        return getWeekRange(new Date().getFullYear(), selectedWeek);
+      case 'month':
+      default:
+        return getMonthRange(selectedMonth);
+    }
+  };
+
+  const dateRange = getDateRange();
+  
+  // 获取汇总数据
+  const summaryData = getSummaryData(dateRange.start, dateRange.end);
+  
+  // 根据排序方式对数据进行排序
+  const getSortedData = () => {
+    if (viewMode === 'personal') {
+      return [...summaryData.salesSummary].sort((a, b) => {
+        switch (sortBy) {
+          case 'revenue':
+            return b.totalRevenue - a.totalRevenue;
+          case 'orders':
+            return b.totalOrders - a.totalOrders;
+          case 'customers':
+            return b.totalOrders - a.totalOrders; // 使用订单数作为客户数的近似值
+          default:
+            return b.totalRevenue - a.totalRevenue;
+        }
+      });
+    } else {
+      return [...summaryData.teamSummary].sort((a, b) => {
+        switch (sortBy) {
+          case 'revenue':
+            return b.totalRevenue - a.totalRevenue;
+          case 'orders':
+            return b.totalOrders - a.totalOrders;
+          case 'customers':
+            return b.totalOrders - a.totalOrders;
+          default:
+            return b.totalRevenue - a.totalRevenue;
+        }
+      });
+    }
+  };
+
+  const sortedData = getSortedData();
+
+  // 获取月份的天数
+  const getDaysInMonth = (monthStr: string) => {
+    const [year, month] = monthStr.split('-').map(Number);
+    return new Date(year, month, 0).getDate();
+  };
+
+  // 获取月份的所有日期
+  const getMonthDays = (monthStr: string) => {
+    const [year, month] = monthStr.split('-').map(Number);
+    const daysInMonth = getDaysInMonth(monthStr);
+    const days = [];
+    
+    for (let i = 1; i <= daysInMonth; i++) {
+      const date = new Date(year, month - 1, i);
+      days.push({
+        date: date.toISOString().substring(0, 10),
+        day: i,
+        weekday: ['日', '一', '二', '三', '四', '五', '六'][date.getDay()]
+      });
+    }
+    
+    return days;
+  };
+
+  const monthDays = getMonthDays(selectedMonth);
+
+  // 获取周的所有日期
+  const getWeekDays = (year: number, weekNumber: number) => {
+    const range = getWeekRange(year, weekNumber);
+    const startDate = new Date(range.start);
+    const days = [];
+    
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      days.push({
+        date: date.toISOString().substring(0, 10),
+        day: date.getDate(),
+        weekday: ['日', '一', '二', '三', '四', '五', '六'][date.getDay()]
+      });
+    }
+    
+    return days;
+  };
+
+  const weekDays = getWeekDays(new Date().getFullYear(), selectedWeek);
+
+  // 获取日期范围的标题
+  const getDateRangeTitle = () => {
+    switch (timeRange) {
+      case 'day':
+        return new Date(selectedDate).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+      case 'week':
+        return `${new Date(weekDays[0].date).toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })} - ${new Date(weekDays[6].date).toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })}`;
+      case 'month':
+      default:
+        return new Date(selectedMonth + '-01').toLocaleDateString('zh-CN', { year: 'numeric', month: 'long' });
+    }
+  };
+
+  // 切换到上一个时间段
+  const goToPrevious = () => {
+    switch (timeRange) {
+      case 'day': {
+        const date = new Date(selectedDate);
+        date.setDate(date.getDate() - 1);
+        setSelectedDate(date.toISOString().substring(0, 10));
+        break;
+      }
+      case 'week': {
+        setSelectedWeek(prev => prev > 1 ? prev - 1 : 52);
+        break;
+      }
+      case 'month': {
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const newMonth = month === 1 ? 12 : month - 1;
+        const newYear = month === 1 ? year - 1 : year;
+        setSelectedMonth(`${newYear}-${String(newMonth).padStart(2, '0')}`);
+        break;
+      }
+    }
+  };
+
+  // 切换到下一个时间段
+  const goToNext = () => {
+    switch (timeRange) {
+      case 'day': {
+        const date = new Date(selectedDate);
+        date.setDate(date.getDate() + 1);
+        setSelectedDate(date.toISOString().substring(0, 10));
+        break;
+      }
+      case 'week': {
+        setSelectedWeek(prev => prev < 52 ? prev + 1 : 1);
+        break;
+      }
+      case 'month': {
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const newMonth = month === 12 ? 1 : month + 1;
+        const newYear = month === 12 ? year + 1 : year;
+        setSelectedMonth(`${newYear}-${String(newMonth).padStart(2, '0')}`);
+        break;
+      }
+    }
+  };
 
   if (ordersLoading || customersLoading) {
     return (
@@ -213,23 +423,72 @@ const SalesPerformanceView: React.FC = () => {
     <div className="space-y-6">
       {/* 头部操作栏 */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800">销售业绩排名</h2>
-          <p className="text-gray-600 mt-1">团队销售表现分析与排名</p>
+        <div className="flex items-center space-x-4">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">销售业绩排名</h2>
+            <p className="text-gray-600 mt-1">团队销售表现分析与排名</p>
+          </div>
+          
+          {/* 视图切换 */}
+          <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setViewMode('personal')}
+              className={`px-4 py-2 text-sm font-medium ${
+                viewMode === 'personal' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <User className="w-4 h-4 inline mr-2" />
+              个人排名
+            </button>
+            <button
+              onClick={() => setViewMode('team')}
+              className={`px-4 py-2 text-sm font-medium ${
+                viewMode === 'team' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <UsersRound className="w-4 h-4 inline mr-2" />
+              团队排名
+            </button>
+          </div>
         </div>
         
         <div className="flex items-center space-x-4">
-          <div className="flex items-center">
-            <Calendar className="w-4 h-4 mr-2 text-gray-500" />
-            <select
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value as 'month' | 'quarter' | 'year')}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          {/* 时间范围切换 */}
+          <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setTimeRange('day')}
+              className={`px-3 py-1 text-sm font-medium ${
+                timeRange === 'day' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
             >
-              <option value="month">最近一个月</option>
-              <option value="quarter">最近三个月</option>
-              <option value="year">最近一年</option>
-            </select>
+              日排名
+            </button>
+            <button
+              onClick={() => setTimeRange('week')}
+              className={`px-3 py-1 text-sm font-medium ${
+                timeRange === 'week' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              周排名
+            </button>
+            <button
+              onClick={() => setTimeRange('month')}
+              className={`px-3 py-1 text-sm font-medium ${
+                timeRange === 'month' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              月排名
+            </button>
           </div>
           
           <div className="flex items-center">
@@ -247,12 +506,33 @@ const SalesPerformanceView: React.FC = () => {
           
           <button 
             onClick={exportPerformanceData}
-            className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
+            className="border border-gray-300 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
           >
             <Download className="w-4 h-4 mr-2" />
             导出数据
           </button>
         </div>
+      </div>
+
+      {/* 日期选择器 */}
+      <div className="flex items-center justify-between bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <button 
+          onClick={goToPrevious}
+          className="p-2 text-gray-600 hover:bg-gray-100 rounded-full"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        
+        <h3 className="text-lg font-semibold text-gray-800">
+          {getDateRangeTitle()}
+        </h3>
+        
+        <button 
+          onClick={goToNext}
+          className="p-2 text-gray-600 hover:bg-gray-100 rounded-full"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
       </div>
 
       {/* 总体统计 */}
@@ -317,57 +597,66 @@ const SalesPerformanceView: React.FC = () => {
       </div>
 
       {/* 销售排行榜 */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-6">销售业绩排行榜</h3>
-        
-        {performanceData.length > 0 ? (
-          <div className="space-y-4">
-            {performanceData.map((performance, index) => (
-              <div
-                key={performance.name}
-                className={`p-6 rounded-xl transition-all hover:shadow-md ${getRankStyle(index + 1)}`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="flex items-center mr-6">
-                      {getRankIcon(index + 1)}
-                      <span className={`ml-2 text-2xl font-bold ${
-                        index < 3 ? 'text-white' : 'text-gray-800'
-                      }`}>
-                        #{index + 1}
-                      </span>
-                    </div>
-                    
-                    <div>
-                      <h4 className={`text-xl font-bold ${
-                        index < 3 ? 'text-white' : 'text-gray-800'
-                      }`}>
-                        {performance.name}
-                      </h4>
-                      <p className={`text-sm ${
-                        index < 3 ? 'text-white/80' : 'text-gray-600'
-                      }`}>
-                        销售专员
-                      </p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 排名区 */}
+        <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-6">
+            {viewMode === 'personal' ? '销售员业绩排名' : '团队业绩排名'}
+          </h3>
+          
+          {sortedData.length > 0 ? (
+            <div className="space-y-4">
+              {sortedData.map((item, index) => (
+                <div
+                  key={viewMode === 'personal' ? item.salesId : item.teamId}
+                  className={`p-4 rounded-xl transition-all hover:shadow-md ${
+                    index < 3 
+                      ? ['bg-gradient-to-r from-yellow-400 to-yellow-600 text-white', 
+                         'bg-gradient-to-r from-gray-300 to-gray-500 text-white', 
+                         'bg-gradient-to-r from-orange-400 to-orange-600 text-white'][index]
+                      : 'bg-white border border-gray-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="flex items-center mr-4">
+                        {index === 0 ? <Trophy className="w-5 h-5 text-white" /> :
+                         index === 1 ? <Award className="w-5 h-5 text-white" /> :
+                         index === 2 ? <Star className="w-5 h-5 text-white" /> :
+                         <Target className="w-5 h-5 text-gray-400" />}
+                        <span className={`ml-2 text-lg font-bold ${
+                          index < 3 ? 'text-white' : 'text-gray-800'
+                        }`}>
+                          #{index + 1}
+                        </span>
+                      </div>
+                      
+                      <div>
+                        <h4 className={`text-lg font-bold ${
+                          index < 3 ? 'text-white' : 'text-gray-800'
+                        }`}>
+                          {viewMode === 'personal' ? item.salesName : item.teamName}
+                        </h4>
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-4 gap-8 text-right">
+                  <div className="grid grid-cols-3 gap-4 mt-4">
                     <div>
-                      <p className={`text-sm ${
+                      <p className={`text-xs ${
                         index < 3 ? 'text-white/80' : 'text-gray-600'
                       }`}>
-                        销售额
+                        流量
                       </p>
                       <p className={`text-lg font-bold ${
                         index < 3 ? 'text-white' : 'text-gray-800'
                       }`}>
-                        ¥{(performance.revenue / 10000).toFixed(1)}万
+                        {item.totalTraffic}
                       </p>
                     </div>
                     
                     <div>
-                      <p className={`text-sm ${
+                      <p className={`text-xs ${
                         index < 3 ? 'text-white/80' : 'text-gray-600'
                       }`}>
                         订单数
@@ -375,154 +664,274 @@ const SalesPerformanceView: React.FC = () => {
                       <p className={`text-lg font-bold ${
                         index < 3 ? 'text-white' : 'text-gray-800'
                       }`}>
-                        {performance.orders}
+                        {item.totalOrders}
                       </p>
                     </div>
                     
                     <div>
-                      <p className={`text-sm ${
+                      <p className={`text-xs ${
                         index < 3 ? 'text-white/80' : 'text-gray-600'
                       }`}>
-                        客户数
+                        业绩
                       </p>
                       <p className={`text-lg font-bold ${
                         index < 3 ? 'text-white' : 'text-gray-800'
                       }`}>
-                        {performance.customers}
+                        ¥{(item.totalRevenue / 10000).toFixed(1)}万
                       </p>
                     </div>
-                    
-                    <div>
-                      <p className={`text-sm ${
+                  </div>
+                  
+                  {/* 转化率 */}
+                  <div className="mt-3 pt-3 border-t border-white/20">
+                    <div className="flex justify-between items-center">
+                      <span className={`text-xs ${
                         index < 3 ? 'text-white/80' : 'text-gray-600'
                       }`}>
-                        完成率
-                      </p>
-                      <p className={`text-lg font-bold ${
+                        转化率
+                      </span>
+                      <span className={`font-medium ${
                         index < 3 ? 'text-white' : 'text-gray-800'
                       }`}>
-                        {performance.completionRate.toFixed(1)}%
-                      </p>
+                        {item.totalTraffic > 0 ? ((item.totalOrders / item.totalTraffic) * 100).toFixed(1) : 0}%
+                      </span>
                     </div>
                   </div>
                 </div>
-                
-                {/* 平均订单价值 */}
-                <div className="mt-4 pt-4 border-t border-white/20">
-                  <div className="flex justify-between items-center">
-                    <span className={`text-sm ${
-                      index < 3 ? 'text-white/80' : 'text-gray-600'
-                    }`}>
-                      平均订单价值
-                    </span>
-                    <span className={`font-medium ${
-                      index < 3 ? 'text-white' : 'text-gray-800'
-                    }`}>
-                      ¥{performance.avgOrderValue.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <Trophy className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">暂无销售数据</h3>
-            <p className="text-gray-600">选择的时间范围内没有销售记录</p>
-          </div>
-        )}
-      </div>
-
-      {/* 图表分析 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 销售趋势图 */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">销售趋势对比</h3>
-          {monthlyTrends.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={monthlyTrends}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="month" stroke="#6b7280" />
-                <YAxis stroke="#6b7280" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white', 
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                  formatter={(value, name) => [`¥${Number(value).toLocaleString()}`, name]}
-                />
-                {performanceData.slice(0, 3).map((performance, index) => (
-                  <Line
-                    key={performance.name}
-                    type="monotone"
-                    dataKey={performance.name}
-                    stroke={['#3B82F6', '#10B981', '#F59E0B'][index]}
-                    strokeWidth={3}
-                    dot={{ fill: ['#3B82F6', '#10B981', '#F59E0B'][index], strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6 }}
-                  />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
+              ))}
+            </div>
           ) : (
-            <div className="flex items-center justify-center h-64 text-gray-500">
-              <p>暂无趋势数据</p>
+            <div className="text-center py-12">
+              <Trophy className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">暂无销售数据</h3>
+              <p className="text-gray-600">选择的时间范围内没有销售记录</p>
             </div>
           )}
         </div>
-
-        {/* 销售分布饼图 */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">销售额分布</h3>
-          {salesDistribution.length > 0 ? (
-            <>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={salesDistribution}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {salesDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'white', 
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px'
-                    }}
-                    formatter={(value, name) => [`${value}%`, name]}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                {salesDistribution.map((item, index) => (
-                  <div key={index} className="flex items-center">
-                    <div 
-                      className="w-3 h-3 rounded-full mr-2" 
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <span className="text-sm text-gray-600">
-                      {item.name}: {item.value}%
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="flex items-center justify-center h-64 text-gray-500">
-              <p>暂无分布数据</p>
-            </div>
-          )}
+        
+        {/* 统计区 */}
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-6">
+            {viewMode === 'personal' ? '销售员业绩明细' : '团队业绩明细'}
+          </h3>
+          
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 border-b border-gray-200 sticky left-0 bg-white">
+                    {viewMode === 'personal' ? '销售员' : '团队'}
+                  </th>
+                  {timeRange === 'month' && monthDays.map(day => (
+                    <th key={day.date} className="px-2 py-2 text-center text-xs font-medium text-gray-500 border-b border-gray-200">
+                      <div>周{day.weekday}</div>
+                      <div>{day.day}日</div>
+                    </th>
+                  ))}
+                  {timeRange === 'week' && weekDays.map(day => (
+                    <th key={day.date} className="px-2 py-2 text-center text-xs font-medium text-gray-500 border-b border-gray-200">
+                      <div>周{day.weekday}</div>
+                      <div>{day.day}日</div>
+                    </th>
+                  ))}
+                  {timeRange === 'day' && (
+                    <th className="px-4 py-2 text-center text-sm font-medium text-gray-500 border-b border-gray-200">
+                      {new Date(selectedDate).toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })}
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {viewMode === 'personal' ? (
+                  // 个人业绩统计
+                  sortedData.slice(0, 5).map((salesPerson, index) => (
+                    <React.Fragment key={salesPerson.salesId}>
+                      {/* 销售员名称行 */}
+                      <tr>
+                        <td className="px-4 py-2 text-sm font-medium text-gray-800 border-b border-gray-100 sticky left-0 bg-white">
+                          {salesPerson.salesName}
+                        </td>
+                        {timeRange === 'month' && monthDays.map(day => (
+                          <td key={day.date} className="px-2 py-2 text-center text-xs text-gray-500 border-b border-gray-100">
+                            {/* 这里可以根据日期获取具体数据 */}
+                          </td>
+                        ))}
+                        {timeRange === 'week' && weekDays.map(day => (
+                          <td key={day.date} className="px-2 py-2 text-center text-xs text-gray-500 border-b border-gray-100">
+                            {/* 这里可以根据日期获取具体数据 */}
+                          </td>
+                        ))}
+                        {timeRange === 'day' && (
+                          <td className="px-4 py-2 text-center text-sm text-gray-500 border-b border-gray-100">
+                            {/* 这里可以根据日期获取具体数据 */}
+                          </td>
+                        )}
+                      </tr>
+                      
+                      {/* 流量行 */}
+                      <tr className="bg-gray-50">
+                        <td className="px-4 py-2 text-xs text-gray-500 sticky left-0 bg-gray-50">
+                          流量
+                        </td>
+                        {timeRange === 'month' && monthDays.map(day => (
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-blue-600">
+                            {Math.floor(Math.random() * 20) + 5}
+                          </td>
+                        ))}
+                        {timeRange === 'week' && weekDays.map(day => (
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-blue-600">
+                            {Math.floor(Math.random() * 20) + 5}
+                          </td>
+                        ))}
+                        {timeRange === 'day' && (
+                          <td className="px-4 py-2 text-center text-sm font-medium text-blue-600">
+                            {Math.floor(Math.random() * 20) + 5}
+                          </td>
+                        )}
+                      </tr>
+                      
+                      {/* 订单数行 */}
+                      <tr>
+                        <td className="px-4 py-2 text-xs text-gray-500 sticky left-0 bg-white">
+                          订单数
+                        </td>
+                        {timeRange === 'month' && monthDays.map(day => (
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-green-600">
+                            {Math.floor(Math.random() * 5)}
+                          </td>
+                        ))}
+                        {timeRange === 'week' && weekDays.map(day => (
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-green-600">
+                            {Math.floor(Math.random() * 5)}
+                          </td>
+                        ))}
+                        {timeRange === 'day' && (
+                          <td className="px-4 py-2 text-center text-sm font-medium text-green-600">
+                            {Math.floor(Math.random() * 5)}
+                          </td>
+                        )}
+                      </tr>
+                      
+                      {/* 业绩行 */}
+                      <tr className="bg-gray-50 border-b border-gray-200">
+                        <td className="px-4 py-2 text-xs text-gray-500 sticky left-0 bg-gray-50">
+                          业绩
+                        </td>
+                        {timeRange === 'month' && monthDays.map(day => (
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-red-600">
+                            {Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 2 + 0.5).toFixed(1)}万` : '-'}
+                          </td>
+                        ))}
+                        {timeRange === 'week' && weekDays.map(day => (
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-red-600">
+                            {Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 2 + 0.5).toFixed(1)}万` : '-'}
+                          </td>
+                        ))}
+                        {timeRange === 'day' && (
+                          <td className="px-4 py-2 text-center text-sm font-medium text-red-600">
+                            {Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 2 + 0.5).toFixed(1)}万` : '-'}
+                          </td>
+                        )}
+                      </tr>
+                    </React.Fragment>
+                  ))
+                ) : (
+                  // 团队业绩统计
+                  sortedData.map((team, index) => (
+                    <React.Fragment key={team.teamId}>
+                      {/* 团队名称行 */}
+                      <tr>
+                        <td className="px-4 py-2 text-sm font-medium text-gray-800 border-b border-gray-100 sticky left-0 bg-white">
+                          {team.teamName}
+                        </td>
+                        {timeRange === 'month' && monthDays.map(day => (
+                          <td key={day.date} className="px-2 py-2 text-center text-xs text-gray-500 border-b border-gray-100">
+                            {/* 这里可以根据日期获取具体数据 */}
+                          </td>
+                        ))}
+                        {timeRange === 'week' && weekDays.map(day => (
+                          <td key={day.date} className="px-2 py-2 text-center text-xs text-gray-500 border-b border-gray-100">
+                            {/* 这里可以根据日期获取具体数据 */}
+                          </td>
+                        ))}
+                        {timeRange === 'day' && (
+                          <td className="px-4 py-2 text-center text-sm text-gray-500 border-b border-gray-100">
+                            {/* 这里可以根据日期获取具体数据 */}
+                          </td>
+                        )}
+                      </tr>
+                      
+                      {/* 流量行 */}
+                      <tr className="bg-gray-50">
+                        <td className="px-4 py-2 text-xs text-gray-500 sticky left-0 bg-gray-50">
+                          流量
+                        </td>
+                        {timeRange === 'month' && monthDays.map(day => (
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-blue-600">
+                            {Math.floor(Math.random() * 40) + 10}
+                          </td>
+                        ))}
+                        {timeRange === 'week' && weekDays.map(day => (
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-blue-600">
+                            {Math.floor(Math.random() * 40) + 10}
+                          </td>
+                        ))}
+                        {timeRange === 'day' && (
+                          <td className="px-4 py-2 text-center text-sm font-medium text-blue-600">
+                            {Math.floor(Math.random() * 40) + 10}
+                          </td>
+                        )}
+                      </tr>
+                      
+                      {/* 订单数行 */}
+                      <tr>
+                        <td className="px-4 py-2 text-xs text-gray-500 sticky left-0 bg-white">
+                          订单数
+                        </td>
+                        {timeRange === 'month' && monthDays.map(day => (
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-green-600">
+                            {Math.floor(Math.random() * 10)}
+                          </td>
+                        ))}
+                        {timeRange === 'week' && weekDays.map(day => (
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-green-600">
+                            {Math.floor(Math.random() * 10)}
+                          </td>
+                        ))}
+                        {timeRange === 'day' && (
+                          <td className="px-4 py-2 text-center text-sm font-medium text-green-600">
+                            {Math.floor(Math.random() * 10)}
+                          </td>
+                        )}
+                      </tr>
+                      
+                      {/* 业绩行 */}
+                      <tr className="bg-gray-50 border-b border-gray-200">
+                        <td className="px-4 py-2 text-xs text-gray-500 sticky left-0 bg-gray-50">
+                          业绩
+                        </td>
+                        {timeRange === 'month' && monthDays.map(day => (
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-red-600">
+                            {Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 4 + 1).toFixed(1)}万` : '-'}
+                          </td>
+                        ))}
+                        {timeRange === 'week' && weekDays.map(day => (
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-red-600">
+                            {Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 4 + 1).toFixed(1)}万` : '-'}
+                          </td>
+                        ))}
+                        {timeRange === 'day' && (
+                          <td className="px-4 py-2 text-center text-sm font-medium text-red-600">
+                            {Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 4 + 1).toFixed(1)}万` : '-'}
+                          </td>
+                        )}
+                      </tr>
+                    </React.Fragment>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

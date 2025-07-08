@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, AuthState, BusinessHours } from '../types';
+import { User, AuthState, BusinessHours, Team } from '../types';
 import { authenticateUser, getAllUsers, createUser, updateUserStatus, deleteUser } from '../lib/auth';
 import { testConnection } from '../lib/database';
 
@@ -18,6 +18,12 @@ interface AuthContextType extends AuthState {
   toggleUserStatus: (userId: string, isActive: boolean) => Promise<void>;
   removeUser: (userId: string) => Promise<void>;
   refreshUsers: () => Promise<void>;
+  // 团队管理
+  teams: Team[];
+  addTeam: (teamData: Omit<Team, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Team>;
+  updateTeam: (teamId: string, teamData: Partial<Omit<Team, 'id' | 'createdAt' | 'updatedAt'>>) => Promise<void>;
+  removeTeam: (teamId: string) => Promise<void>;
+  assignUserToTeam: (userId: string, teamId: string) => Promise<void>;
   // 营业时间设置
   businessHours: BusinessHours;
   updateBusinessHours: (hours: BusinessHours) => void;
@@ -42,7 +48,8 @@ const mockUsers: (User & { password: string })[] = [
     name: 'Administrator',
     isActive: true,
     createdAt: '2024-01-01',
-    password: 'password123'
+    password: 'password123',
+    teamId: undefined
   },
   {
     id: '00000000-0000-0000-0000-000000000002',
@@ -51,7 +58,8 @@ const mockUsers: (User & { password: string })[] = [
     role: 'sales',
     name: 'Alice Chen',
     isActive: true,
-    createdAt: '2024-01-15',
+    createdAt: '2024-01-15', 
+    teamId: 'team-1',
     password: 'password123'
   },
   {
@@ -61,7 +69,8 @@ const mockUsers: (User & { password: string })[] = [
     role: 'sales',
     name: 'Bob Wang',
     isActive: true,
-    createdAt: '2024-01-20',
+    createdAt: '2024-01-20', 
+    teamId: 'team-1',
     password: 'password123'
   },
   {
@@ -71,7 +80,8 @@ const mockUsers: (User & { password: string })[] = [
     role: 'sales',
     name: 'Carol Li',
     isActive: true,
-    createdAt: '2024-02-01',
+    createdAt: '2024-02-01', 
+    teamId: 'team-2',
     password: 'password123'
   },
   {
@@ -91,7 +101,8 @@ const mockUsers: (User & { password: string })[] = [
     role: 'sales',
     name: 'Emma Liu',
     isActive: true,
-    createdAt: '2024-02-15',
+    createdAt: '2024-02-15', 
+    teamId: 'team-1',
     password: 'password123'
   },
   {
@@ -101,7 +112,8 @@ const mockUsers: (User & { password: string })[] = [
     role: 'sales',
     name: 'Frank Zhou',
     isActive: true,
-    createdAt: '2024-03-10',
+    createdAt: '2024-03-10', 
+    teamId: 'team-2',
     password: 'password123'
   },
   {
@@ -111,7 +123,8 @@ const mockUsers: (User & { password: string })[] = [
     role: 'sales',
     name: 'Grace Wu',
     isActive: true,
-    createdAt: '2024-03-15',
+    createdAt: '2024-03-15', 
+    teamId: 'team-2',
     password: 'password123'
   }
 ];
@@ -125,6 +138,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [users, setUsers] = useState<User[]>([]);
   const [isDatabaseConnected, setIsDatabaseConnected] = useState(false);
+  const [teams, setTeams] = useState<Team[]>([
+    {
+      id: 'team-1',
+      name: '销售一组',
+      description: '负责线上销售和展会推广',
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z'
+    },
+    {
+      id: 'team-2',
+      name: '销售二组',
+      description: '负责门店销售和VIP客户',
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z'
+    }
+  ]);
 
   const [systemSettings, setSystemSettings] = useState<SystemSettings>({
     requireVerificationCode: true,
@@ -365,6 +394,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // 团队管理方法
+  const addTeam = async (teamData: Omit<Team, 'id' | 'createdAt' | 'updatedAt'>): Promise<Team> => {
+    try {
+      // 模拟添加团队
+      const newTeam: Team = {
+        id: `team-${Date.now()}`,
+        ...teamData,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      setTeams(prev => [...prev, newTeam]);
+      return newTeam;
+    } catch (error) {
+      console.error('添加团队失败:', error);
+      throw error;
+    }
+  };
+
+  const updateTeam = async (teamId: string, teamData: Partial<Omit<Team, 'id' | 'createdAt' | 'updatedAt'>>): Promise<void> => {
+    try {
+      setTeams(prev => prev.map(team => 
+        team.id === teamId 
+          ? { 
+              ...team, 
+              ...teamData, 
+              updatedAt: new Date().toISOString() 
+            } 
+          : team
+      ));
+    } catch (error) {
+      console.error('更新团队失败:', error);
+      throw error;
+    }
+  };
+
+  const removeTeam = async (teamId: string): Promise<void> => {
+    try {
+      // 先将该团队的所有成员移出团队
+      setUsers(prev => prev.map(user => 
+        user.teamId === teamId ? { ...user, teamId: undefined } : user
+      ));
+      
+      // 然后删除团队
+      setTeams(prev => prev.filter(team => team.id !== teamId));
+    } catch (error) {
+      console.error('删除团队失败:', error);
+      throw error;
+    }
+  };
+
+  const assignUserToTeam = async (userId: string, teamId: string): Promise<void> => {
+    setUsers(prev => prev.map(user => 
+      user.id === userId ? { ...user, teamId } : user
+    ));
+  };
+
   return (
     <AuthContext.Provider value={{
       ...authState,
@@ -381,6 +467,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toggleUserStatus,
       removeUser,
       refreshUsers,
+      teams,
+      addTeam,
+      updateTeam,
+      removeTeam,
+      assignUserToTeam,
       businessHours,
       updateBusinessHours
     }}>

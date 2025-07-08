@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Users, Shield, Bell, Globe, RefreshCw, Trash2, AlertTriangle, CheckCircle, User, Key, Copy, Clock } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { Save, Users, Shield, Bell, Globe, RefreshCw, Trash2, AlertTriangle, CheckCircle, User, Key, Copy, Clock, UserPlus, UsersRound, Plus, Edit, X } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext'; 
 import { BusinessHours } from '../../types';
 import { getWorkDayNames, formatTimeRange } from '../../utils/attendanceUtils';
 
@@ -43,6 +43,14 @@ interface UserData {
   createdAt: string;
 }
 
+interface TeamData {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 const SettingsView: React.FC = () => {
   const { 
     user, 
@@ -53,6 +61,12 @@ const SettingsView: React.FC = () => {
     addUser,
     toggleUserStatus,
     removeUser,
+    teams,
+    addTeam,
+    updateTeam,
+    removeTeam,
+    assignUserToTeam,
+    refreshUsers,
     refreshUsers,
     businessHours,
     updateBusinessHours
@@ -65,6 +79,12 @@ const SettingsView: React.FC = () => {
   const [showVerificationCode, setShowVerificationCode] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
   const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
+  const [showAddTeamModal, setShowAddTeamModal] = useState(false);
+  const [showEditTeamModal, setShowEditTeamModal] = useState(false);
+  const [showDeleteTeamModal, setShowDeleteTeamModal] = useState(false);
+  const [teamToEdit, setTeamToEdit] = useState<TeamData | null>(null);
+  const [teamToDelete, setTeamToDelete] = useState<TeamData | null>(null);
+  const [showAssignTeamModal, setShowAssignTeamModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserData | null>(null);
   
   const [settings, setSettings] = useState<SystemSettings>({
@@ -99,17 +119,32 @@ const SettingsView: React.FC = () => {
   // 营业时间设置状态
   const [tempBusinessHours, setTempBusinessHours] = useState<BusinessHours>(businessHours);
 
+  // 新用户表单状态
   const [newUser, setNewUser] = useState({
     username: '',
     email: '',
     name: '',
     role: 'sales',
-    password: ''
+    password: '',
+    teamId: ''
+  });
+
+  // 新团队表单状态
+  const [newTeam, setNewTeam] = useState({
+    name: '',
+    description: ''
+  });
+
+  // 用户分配团队状态
+  const [userTeamAssignment, setUserTeamAssignment] = useState({
+    userId: '',
+    teamId: ''
   });
 
   const tabs = [
     { id: 'general', label: '基本设置', icon: Globe },
     { id: 'users', label: '用户管理', icon: Users },
+    { id: 'teams', label: '团队管理', icon: UsersRound },
     { id: 'attendance', label: '考勤设置', icon: Clock },
     { id: 'security', label: '安全设置', icon: Shield },
     { id: 'notifications', label: '通知设置', icon: Bell }
@@ -224,6 +259,103 @@ const SettingsView: React.FC = () => {
     } catch (error) {
       console.error('Failed to delete user:', error);
       alert('删除用户失败: ' + (error as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 团队管理相关函数
+  const handleAddTeam = async () => {
+    if (!newTeam.name) {
+      alert('请填写团队名称');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await addTeam(newTeam);
+      setNewTeam({ name: '', description: '' });
+      setShowAddTeamModal(false);
+      alert(`团队 ${newTeam.name} 创建成功！`);
+    } catch (error) {
+      console.error('Failed to add team:', error);
+      alert('添加团队失败: ' + (error as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditTeam = (team: TeamData) => {
+    setTeamToEdit(team);
+    setNewTeam({
+      name: team.name,
+      description: team.description || ''
+    });
+    setShowEditTeamModal(true);
+  };
+
+  const handleUpdateTeam = async () => {
+    if (!teamToEdit || !newTeam.name) {
+      alert('请填写团队名称');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await updateTeam(teamToEdit.id, newTeam);
+      setShowEditTeamModal(false);
+      setTeamToEdit(null);
+      alert(`团队 ${newTeam.name} 更新成功！`);
+    } catch (error) {
+      console.error('Failed to update team:', error);
+      alert('更新团队失败: ' + (error as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteTeam = (team: TeamData) => {
+    setTeamToDelete(team);
+    setShowDeleteTeamModal(true);
+  };
+
+  const confirmDeleteTeam = async () => {
+    if (!teamToDelete) return;
+    
+    try {
+      setLoading(true);
+      await removeTeam(teamToDelete.id);
+      setShowDeleteTeamModal(false);
+      setTeamToDelete(null);
+      alert(`团队 ${teamToDelete.name} 已成功删除`);
+    } catch (error) {
+      console.error('Failed to delete team:', error);
+      alert('删除团队失败: ' + (error as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAssignTeam = (userId: string) => {
+    setUserTeamAssignment({
+      userId,
+      teamId: users.find(u => u.id === userId)?.teamId || ''
+    });
+    setShowAssignTeamModal(true);
+  };
+
+  const confirmAssignTeam = async () => {
+    try {
+      setLoading(true);
+      await assignUserToTeam(
+        userTeamAssignment.userId, 
+        userTeamAssignment.teamId || undefined
+      );
+      setShowAssignTeamModal(false);
+      alert('团队分配成功！');
+    } catch (error) {
+      console.error('Failed to assign team:', error);
+      alert('团队分配失败: ' + (error as Error).message);
     } finally {
       setLoading(false);
     }
@@ -358,7 +490,10 @@ const SettingsView: React.FC = () => {
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-800">用户管理</h3>
         <button 
-          onClick={() => setShowAddUserModal(true)}
+          onClick={() => {
+            setNewUser({ username: '', email: '', name: '', role: 'sales', password: '', teamId: '' });
+            setShowAddUserModal(true);
+          }}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
         >
           <User className="w-4 h-4 mr-2" />
@@ -375,6 +510,9 @@ const SettingsView: React.FC = () => {
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 角色
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                团队
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 状态
@@ -419,6 +557,15 @@ const SettingsView: React.FC = () => {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
+                  {userData.role === 'sales' ? (
+                    <span className="text-sm text-gray-600">
+                      {teams.find(t => t.id === userData.teamId)?.name || '未分配团队'}
+                    </span>
+                  ) : (
+                    <span className="text-sm text-gray-400">-</span>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                     userData.isActive 
                       ? 'bg-green-100 text-green-600' 
@@ -431,6 +578,14 @@ const SettingsView: React.FC = () => {
                   {new Date(userData.createdAt).toLocaleDateString('zh-CN')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  {userData.role === 'sales' && (
+                    <button 
+                      onClick={() => handleAssignTeam(userData.id)}
+                      className="mr-4 text-blue-600 hover:text-blue-900"
+                    >
+                      分配团队
+                    </button>
+                  )}
                   <button 
                     onClick={() => handleToggleUserStatus(userData.id, userData.isActive)}
                     className={`mr-4 ${
@@ -470,6 +625,15 @@ const SettingsView: React.FC = () => {
                   required
                 />
               </div>
+              {newUser.role === 'sales' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">团队</label>
+                  <select value={newUser.teamId} onChange={(e) => setNewUser(prev => ({ ...prev, teamId: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">未分配团队</option>
+                    {teams.map(team => <option key={team.id} value={team.id}>{team.name}</option>)}
+                  </select>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">邮箱 *</label>
                 <input
@@ -504,7 +668,7 @@ const SettingsView: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">角色</label>
                 <select
                   value={newUser.role}
-                  onChange={(e) => setNewUser(prev => ({ ...prev, role: e.target.value }))}
+                  onChange={(e) => setNewUser(prev => ({ ...prev, role: e.target.value, teamId: e.target.value === 'sales' ? prev.teamId : '' }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="sales">销售员</option>
@@ -557,6 +721,282 @@ const SettingsView: React.FC = () => {
               </button>
               <button
                 onClick={confirmDeleteUser}
+                disabled={loading}
+                className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {loading ? '删除中...' : '确认删除'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderTeamManagement = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-gray-800">团队管理</h3>
+        <button 
+          onClick={() => {
+            setNewTeam({ name: '', description: '' });
+            setShowAddTeamModal(true);
+          }}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          添加团队
+        </button>
+      </div>
+      
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                团队名称
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                描述
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                成员数量
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                创建时间
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                操作
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {teams.map((team) => {
+              const teamMembers = users.filter(u => u.teamId === team.id);
+              return (
+                <tr key={team.id}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                        <UsersRound className="w-5 h-5 text-indigo-600" />
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">{team.name}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-sm text-gray-600">
+                      {team.description || '无描述'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-600">
+                      {teamMembers.length} 名成员
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date(team.createdAt).toLocaleDateString('zh-CN')}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button 
+                      onClick={() => handleEditTeam(team)}
+                      className="mr-4 text-blue-600 hover:text-blue-900"
+                    >
+                      编辑
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteTeam(team)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      删除
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* 添加团队模态框 */}
+      {showAddTeamModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">添加新团队</h3>
+              <button 
+                onClick={() => setShowAddTeamModal(false)}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">团队名称 *</label>
+                <input
+                  type="text"
+                  value={newTeam.name}
+                  onChange={(e) => setNewTeam(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">团队描述</label>
+                <textarea
+                  value={newTeam.description}
+                  onChange={(e) => setNewTeam(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={3}
+                />
+              </div>
+            </div>
+            <div className="flex space-x-3 mt-6">
+              <button
+                onClick={() => setShowAddTeamModal(false)}
+                className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleAddTeam}
+                disabled={loading}
+                className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                {loading ? '添加中...' : '添加'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 编辑团队模态框 */}
+      {showEditTeamModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">编辑团队</h3>
+              <button 
+                onClick={() => setShowEditTeamModal(false)}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">团队名称 *</label>
+                <input
+                  type="text"
+                  value={newTeam.name}
+                  onChange={(e) => setNewTeam(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">团队描述</label>
+                <textarea
+                  value={newTeam.description}
+                  onChange={(e) => setNewTeam(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={3}
+                />
+              </div>
+            </div>
+            <div className="flex space-x-3 mt-6">
+              <button
+                onClick={() => setShowEditTeamModal(false)}
+                className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleUpdateTeam}
+                disabled={loading}
+                className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                {loading ? '更新中...' : '更新'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 分配团队模态框 */}
+      {showAssignTeamModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">分配团队</h3>
+              <button 
+                onClick={() => setShowAssignTeamModal(false)}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="mb-6">
+              <p className="text-gray-600 mb-4">
+                为 <span className="font-semibold">{users.find(u => u.id === userTeamAssignment.userId)?.name}</span> 分配团队
+              </p>
+              <select
+                value={userTeamAssignment.teamId}
+                onChange={(e) => setUserTeamAssignment(prev => ({ ...prev, teamId: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">未分配团队</option>
+                {teams.map(team => (
+                  <option key={team.id} value={team.id}>{team.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowAssignTeamModal(false)}
+                className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={confirmAssignTeam}
+                disabled={loading}
+                className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                {loading ? '保存中...' : '保存'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 删除团队确认模态框 */}
+      {showDeleteTeamModal && teamToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">确认删除团队</h3>
+            <div className="mb-6">
+              <p className="text-gray-600">
+                您确定要删除团队 <span className="font-semibold">{teamToDelete.name}</span> 吗？
+              </p>
+              <p className="text-red-600 text-sm mt-2">
+                此操作不可撤销，团队将被永久删除，团队成员将被移出团队。
+              </p>
+            </div>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => {
+                  setShowDeleteTeamModal(false);
+                  setTeamToDelete(null);
+                }}
+                className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={confirmDeleteTeam}
                 disabled={loading}
                 className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
               >
@@ -933,6 +1373,8 @@ const SettingsView: React.FC = () => {
     switch (activeTab) {
       case 'general':
         return renderGeneralSettings();
+      case 'teams':
+        return renderTeamManagement();
       case 'users':
         return renderUserManagement();
       case 'attendance':

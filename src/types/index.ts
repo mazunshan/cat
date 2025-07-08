@@ -6,6 +6,26 @@ export interface User {
   name: string;
   isActive: boolean;
   createdAt: string;
+  teamId?: string;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SalesPerformance {
+  date: string;
+  salesId: string;
+  salesName: string;
+  teamId?: string;
+  teamName?: string;
+  traffic: number;
+  orders: number;
+  revenue: number;
 }
 
 export interface Customer {
