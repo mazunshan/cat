@@ -952,7 +952,7 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      分期数
+                      分期数 *
                     </label>
                     <input
                       type="number"
