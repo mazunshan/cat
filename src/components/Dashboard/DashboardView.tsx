@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import StatsCard from './StatsCard';
 import { useCustomers } from '../../hooks/useDatabase';
 import { useAuth } from '../../context/AuthContext';
+import FinancialDetailsView from '../Finance/FinancialDetailsView';
 
 const DashboardView: React.FC = () => {
   const { user } = useAuth();
@@ -110,62 +111,16 @@ const DashboardView: React.FC = () => {
   };
 
   return (
-    <div className={`${user?.role === 'admin' ? 'flex gap-6 h-full' : 'space-y-6'}`}>
+    <div className={`${user?.role === 'admin' ? 'grid grid-cols-4 gap-6 h-full' : 'space-y-6'}`}>
       {/* 管理员专用收支明细 - 左侧 */}
       {user?.role === 'admin' && (
-        <div className="w-80 flex-shrink-0">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 h-full flex flex-col">
-            {/* 收支明细组件内容 */}
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                  <div className="w-5 h-5 mr-2 text-green-600">💰</div>
-                  收支明细
-                </h3>
-                
-                <button className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm">
-                  <span className="mr-1">✏️</span>
-                  编辑
-                </button>
-              </div>
-
-              {/* 月份选择器 */}
-              <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
-                <button className="p-1 text-gray-600 hover:bg-gray-200 rounded-full">
-                  ←
-                </button>
-                
-                <h4 className="font-medium text-gray-800">
-                  {new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long' })}
-                </h4>
-                
-                <button className="p-1 text-gray-600 hover:bg-gray-200 rounded-full">
-                  →
-                </button>
-              </div>
-            </div>
-
-            {/* 内容区域 */}
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">📊</span>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">收支明细</h3>
-                <p className="text-gray-600 mb-4">
-                  点击"编辑"按钮查看和编辑当月收支数据
-                </p>
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                  开始编辑
-                </button>
-              </div>
-            </div>
-          </div>
+        <div className="col-span-1 h-full">
+          <FinancialDetailsView />
         </div>
       )}
       
       {/* 主要内容区域 */}
-      <div className={`${user?.role === 'admin' ? 'flex-1' : ''} space-y-6`}>
+      <div className={`${user?.role === 'admin' ? 'col-span-3' : ''} space-y-6`}>
       {/* 错误提示 */}
       {hasErrors && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
