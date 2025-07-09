@@ -11,7 +11,6 @@ const SalesPerformanceView: React.FC = () => {
   const { 
     loading: performanceLoading, 
     error: performanceError,
-    getSummaryData,
     fetchSalesPerformance
   } = useSalesPerformance();
   
@@ -93,8 +92,79 @@ const SalesPerformanceView: React.FC = () => {
 
   const dateRange = getDateRange();
   
-  // 获取汇总数据
-  const summaryData = getSummaryData(dateRange.start, dateRange.end);
+  // 计算汇总数据
+  const getSummaryData = () => {
+    // 模拟个人销售数据
+    const salesSummary = [
+      {
+        salesId: '1',
+        salesName: '张三',
+        totalTraffic: Math.floor(Math.random() * 200) + 100,
+        totalOrders: Math.floor(Math.random() * 50) + 20,
+        totalRevenue: Math.floor(Math.random() * 100000) + 50000
+      },
+      {
+        salesId: '2', 
+        salesName: '李四',
+        totalTraffic: Math.floor(Math.random() * 200) + 100,
+        totalOrders: Math.floor(Math.random() * 50) + 20,
+        totalRevenue: Math.floor(Math.random() * 100000) + 50000
+      },
+      {
+        salesId: '3',
+        salesName: '王五',
+        totalTraffic: Math.floor(Math.random() * 200) + 100,
+        totalOrders: Math.floor(Math.random() * 50) + 20,
+        totalRevenue: Math.floor(Math.random() * 100000) + 50000
+      },
+      {
+        salesId: '4',
+        salesName: '赵六',
+        totalTraffic: Math.floor(Math.random() * 200) + 100,
+        totalOrders: Math.floor(Math.random() * 50) + 20,
+        totalRevenue: Math.floor(Math.random() * 100000) + 50000
+      },
+      {
+        salesId: '5',
+        salesName: '孙七',
+        totalTraffic: Math.floor(Math.random() * 200) + 100,
+        totalOrders: Math.floor(Math.random() * 50) + 20,
+        totalRevenue: Math.floor(Math.random() * 100000) + 50000
+      }
+    ];
+
+    // 模拟团队数据
+    const teamSummary = [
+      {
+        teamId: '1',
+        teamName: '销售一组',
+        totalTraffic: Math.floor(Math.random() * 500) + 300,
+        totalOrders: Math.floor(Math.random() * 150) + 80,
+        totalRevenue: Math.floor(Math.random() * 300000) + 150000
+      },
+      {
+        teamId: '2',
+        teamName: '销售二组', 
+        totalTraffic: Math.floor(Math.random() * 500) + 300,
+        totalOrders: Math.floor(Math.random() * 150) + 80,
+        totalRevenue: Math.floor(Math.random() * 300000) + 150000
+      },
+      {
+        teamId: '3',
+        teamName: '销售三组',
+        totalTraffic: Math.floor(Math.random() * 500) + 300,
+        totalOrders: Math.floor(Math.random() * 150) + 80,
+        totalRevenue: Math.floor(Math.random() * 300000) + 150000
+      }
+    ];
+
+    return {
+      salesSummary,
+      teamSummary
+    };
+  };
+
+  const summaryData = getSummaryData();
   
   // 根据排序方式对数据进行排序
   const getSortedData = () => {
