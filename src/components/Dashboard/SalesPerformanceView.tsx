@@ -22,10 +22,6 @@ const SalesPerformanceView: React.FC = () => {
   const [selectedWeek, setSelectedWeek] = useState<number>(getWeekNumber(new Date()));
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().substring(0, 10)); // YYYY-MM-DD
 
-  // Edit mode state
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editedData, setEditedData] = useState<Record<string, Record<string, any>>>({});
-
   // 编辑状态管理
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<{
@@ -133,37 +129,6 @@ const SalesPerformanceView: React.FC = () => {
 
   const sortedData = getSortedData();
 
-  // 保存编辑的数据
-  const saveEditedData = () => {
-    // 在实际应用中，这里应该调用API保存数据到数据库
-    console.log('保存编辑的数据:', editedData);
-    setIsEditMode(false);
-    // 清空编辑数据
-    setEditedData({});
-  };
-
-  // 取消编辑
-  const cancelEdit = () => {
-    setIsEditMode(false);
-    setEditedData({});
-  };
-
-  // 处理数据编辑
-  const handleDataEdit = (entityId: string, field: string, value: number) => {
-    setEditedData(prev => ({
-      ...prev,
-      [entityId]: {
-        ...(prev[entityId] || {}),
-        [field]: value
-      }
-    }));
-  };
-
-  // 获取编辑后的值或原始值
-  const getEditedValue = (entityId: string, field: string, originalValue: number): number => {
-    return editedData[entityId]?.[field] !== undefined ? editedData[entityId][field] : originalValue;
-  };
-
   // 获取月份的天数
   const getDaysInMonth = (monthStr: string) => {
     const [year, month] = monthStr.split('-').map(Number);
@@ -215,25 +180,12 @@ const SalesPerformanceView: React.FC = () => {
   const getDateRangeTitle = () => {
     switch (timeRange) {
       case 'day':
-        return new Date(selectedDate).toLocaleDateString('zh-CN', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        });
+        return new Date(selectedDate).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
       case 'week':
-        return `${new Date(weekDays[0].date).toLocaleDateString('zh-CN', { 
-          month: 'long', 
-          day: 'numeric' 
-        })} - ${new Date(weekDays[6].date).toLocaleDateString('zh-CN', { 
-          month: 'long', 
-          day: 'numeric' 
-        })}`;
+        return `${new Date(weekDays[0].date).toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })} - ${new Date(weekDays[6].date).toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })}`;
       case 'month':
       default:
-        return new Date(selectedMonth + '-01').toLocaleDateString('zh-CN', { 
-          year: 'numeric', 
-          month: 'long' 
-        });
+        return new Date(selectedMonth + '-01').toLocaleDateString('zh-CN', { year: 'numeric', month: 'long' });
     }
   };
 
@@ -532,6 +484,34 @@ const SalesPerformanceView: React.FC = () => {
 
   const salesDistribution = getSalesDistribution();
 
+  // 获取排名图标
+  const getRankIcon = (rank: number) => {
+    switch (rank) {
+      case 1:
+        return <Trophy className="w-6 h-6 text-yellow-500" />;
+      case 2:
+        return <Award className="w-6 h-6 text-gray-400" />;
+      case 3:
+        return <Star className="w-6 h-6 text-orange-500" />;
+      default:
+        return <Target className="w-6 h-6 text-gray-300" />;
+    }
+  };
+
+  // 获取排名样式
+  const getRankStyle = (rank: number) => {
+    switch (rank) {
+      case 1:
+        return 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white';
+      case 2:
+        return 'bg-gradient-to-r from-gray-300 to-gray-500 text-white';
+      case 3:
+        return 'bg-gradient-to-r from-orange-400 to-orange-600 text-white';
+      default:
+        return 'bg-white border border-gray-200';
+    }
+  };
+
   const exportPerformanceData = () => {
     if (performanceData.length === 0) {
       alert('暂无业绩数据可导出');
@@ -632,19 +612,36 @@ const SalesPerformanceView: React.FC = () => {
           
           {/* 时间范围切换 */}
           <div className="flex border border-gray-300 rounded-lg overflow-hidden">
-            {['day', 'week', 'month'].map((range) => (
-              <button
-                key={range}
-                onClick={() => setTimeRange(range as 'day' | 'week' | 'month')}
-                className={`px-3 py-1 text-sm font-medium ${
-                  timeRange === range 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                {range === 'day' ? '日排名' : range === 'week' ? '周排名' : '月排名'}
-              </button>
-            ))}
+            <button
+              onClick={() => setTimeRange('day')}
+              className={`px-3 py-1 text-sm font-medium ${
+                timeRange === 'day' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              日排名
+            </button>
+            <button
+              onClick={() => setTimeRange('week')}
+              className={`px-3 py-1 text-sm font-medium ${
+                timeRange === 'week' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              周排名
+            </button>
+            <button
+              onClick={() => setTimeRange('month')}
+              className={`px-3 py-1 text-sm font-medium ${
+                timeRange === 'month' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              月排名
+            </button>
           </div>
           
           <div className="flex items-center">
@@ -667,36 +664,6 @@ const SalesPerformanceView: React.FC = () => {
             <Download className="w-4 h-4 mr-2" />
             导出数据
           </button>
-          
-          {/* 编辑模式按钮 - 仅管理员可见 */}
-          {user?.role === 'admin' && (
-            isEditMode ? (
-              <div className="flex space-x-2">
-                <button 
-                  onClick={saveEditedData}
-                  className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  保存
-                </button>
-                <button 
-                  onClick={cancelEdit}
-                  className="bg-gray-600 text-white px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center"
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  取消
-                </button>
-              </div>
-            ) : (
-              <button 
-                onClick={() => setIsEditMode(true)}
-                className="border border-gray-300 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                编辑数据
-              </button>
-            )
-          )}
         </div>
       </div>
 
@@ -834,34 +801,11 @@ const SalesPerformanceView: React.FC = () => {
                       }`}>
                         流量
                       </p>
-                      {isEditMode && user?.role === 'admin' ? (
-                        <input
-                          type="number"
-                          value={getEditedValue(
-                            viewMode === 'personal' ? item.salesId : item.teamId,
-                            'totalTraffic',
-                            item.totalTraffic
-                          )}
-                          onChange={(e) => handleDataEdit(
-                            viewMode === 'personal' ? item.salesId : item.teamId,
-                            'totalTraffic',
-                            parseInt(e.target.value) || 0
-                          )}
-                          className={`w-full text-lg font-bold px-2 py-1 rounded ${
-                            index < 3 ? 'bg-white/20 text-white' : 'bg-white text-gray-800 border border-gray-300'
-                          }`}
-                        />
-                      ) : (
-                        <p className={`text-lg font-bold ${
-                          index < 3 ? 'text-white' : 'text-gray-800'
-                        }`}>
-                          {getEditedValue(
-                            viewMode === 'personal' ? item.salesId : item.teamId,
-                            'totalTraffic',
-                            item.totalTraffic
-                          )}
-                        </p>
-                      )}
+                      <p className={`text-lg font-bold ${
+                        index < 3 ? 'text-white' : 'text-gray-800'
+                      }`}>
+                        {item.totalTraffic}
+                      </p>
                     </div>
                     
                     <div>
@@ -870,34 +814,11 @@ const SalesPerformanceView: React.FC = () => {
                       }`}>
                         订单数
                       </p>
-                      {isEditMode && user?.role === 'admin' ? (
-                        <input
-                          type="number"
-                          value={getEditedValue(
-                            viewMode === 'personal' ? item.salesId : item.teamId,
-                            'totalOrders',
-                            item.totalOrders
-                          )}
-                          onChange={(e) => handleDataEdit(
-                            viewMode === 'personal' ? item.salesId : item.teamId,
-                            'totalOrders',
-                            parseInt(e.target.value) || 0
-                          )}
-                          className={`w-full text-lg font-bold px-2 py-1 rounded ${
-                            index < 3 ? 'bg-white/20 text-white' : 'bg-white text-gray-800 border border-gray-300'
-                          }`}
-                        />
-                      ) : (
-                        <p className={`text-lg font-bold ${
-                          index < 3 ? 'text-white' : 'text-gray-800'
-                        }`}>
-                          {getEditedValue(
-                            viewMode === 'personal' ? item.salesId : item.teamId,
-                            'totalOrders',
-                            item.totalOrders
-                          )}
-                        </p>
-                      )}
+                      <p className={`text-lg font-bold ${
+                        index < 3 ? 'text-white' : 'text-gray-800'
+                      }`}>
+                        {item.totalOrders}
+                      </p>
                     </div>
                     
                     <div>
@@ -906,35 +827,11 @@ const SalesPerformanceView: React.FC = () => {
                       }`}>
                         业绩
                       </p>
-                      {isEditMode && user?.role === 'admin' ? (
-                        <input
-                          type="number"
-                          value={getEditedValue(
-                            viewMode === 'personal' ? item.salesId : item.teamId,
-                            'totalRevenue',
-                            item.totalRevenue
-                          ) / 10000}
-                          onChange={(e) => handleDataEdit(
-                            viewMode === 'personal' ? item.salesId : item.teamId,
-                            'totalRevenue',
-                            parseFloat(e.target.value) * 10000 || 0
-                          )}
-                          step="0.1"
-                          className={`w-full text-lg font-bold px-2 py-1 rounded ${
-                            index < 3 ? 'bg-white/20 text-white' : 'bg-white text-gray-800 border border-gray-300'
-                          }`}
-                        />
-                      ) : (
-                        <p className={`text-lg font-bold ${
-                          index < 3 ? 'text-white' : 'text-gray-800'
-                        }`}>
-                          ¥{(getEditedValue(
-                            viewMode === 'personal' ? item.salesId : item.teamId,
-                            'totalRevenue',
-                            item.totalRevenue
-                          ) / 10000).toFixed(1)}万
-                        </p>
-                      )}
+                      <p className={`text-lg font-bold ${
+                        index < 3 ? 'text-white' : 'text-gray-800'
+                      }`}>
+                        ¥{(item.totalRevenue / 10000).toFixed(1)}万
+                      </p>
                     </div>
                   </div>
                   
@@ -946,20 +843,10 @@ const SalesPerformanceView: React.FC = () => {
                       }`}>
                         转化率
                       </span>
-                      <span className={`font-medium ${index < 3 ? 'text-white' : 'text-gray-800'}`}>
-                        {(() => {
-                          const traffic = getEditedValue(
-                            viewMode === 'personal' ? item.salesId : item.teamId,
-                            'totalTraffic',
-                            item.totalTraffic
-                          );
-                          const orders = getEditedValue(
-                            viewMode === 'personal' ? item.salesId : item.teamId,
-                            'totalOrders',
-                            item.totalOrders
-                          );
-                          return traffic > 0 ? ((orders / traffic) * 100).toFixed(1) : 0;
-                        })()}%
+                      <span className={`font-medium ${
+                        index < 3 ? 'text-white' : 'text-gray-800'
+                      }`}>
+                        {item.totalTraffic > 0 ? ((item.totalOrders / item.totalTraffic) * 100).toFixed(1) : 0}%
                       </span>
                     </div>
                   </div>
@@ -1041,16 +928,13 @@ const SalesPerformanceView: React.FC = () => {
                         </td>
                         {timeRange === 'month' && monthDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-blue-600 min-w-[60px]">
-                            {isEditMode && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
-                                defaultValue={Math.floor(Math.random() * 20) + 5}
                                 min="0"
-                                className="w-12 px-1 py-1 text-center border border-gray-300 rounded"
-                                onChange={(e) => {
-                                  const id = `${salesPerson.name}-${day.date}-traffic`;
-                                  handleDataEdit(id, 'value', parseInt(e.target.value) || 0);
-                                }}
+                                value={editData[salesPerson.salesName]?.[day.date]?.traffic || 0}
+                                onChange={(e) => handleDataChange(salesPerson.salesName, day.date, 'traffic', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-blue-300 rounded text-xs"
                               />
                             ) : (
                               Math.floor(Math.random() * 20) + 5
@@ -1059,16 +943,13 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'week' && weekDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-blue-600 min-w-[60px]">
-                            {isEditMode && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
-                                defaultValue={Math.floor(Math.random() * 20) + 5}
                                 min="0"
-                                className="w-12 px-1 py-1 text-center border border-gray-300 rounded"
-                                onChange={(e) => {
-                                  const id = `${salesPerson.name}-${day.date}-traffic`;
-                                  handleDataEdit(id, 'value', parseInt(e.target.value) || 0);
-                                }}
+                                value={editData[salesPerson.salesName]?.[day.date]?.traffic || 0}
+                                onChange={(e) => handleDataChange(salesPerson.salesName, day.date, 'traffic', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-blue-300 rounded text-xs"
                               />
                             ) : (
                               Math.floor(Math.random() * 20) + 5
@@ -1077,16 +958,13 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'day' && (
                           <td className="px-4 py-2 text-center text-sm font-medium text-blue-600 min-w-[60px]">
-                            {isEditMode && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
-                                defaultValue={Math.floor(Math.random() * 20) + 5}
                                 min="0"
-                                className="w-16 px-2 py-1 text-center border border-gray-300 rounded"
-                                onChange={(e) => {
-                                  const id = `${salesPerson.name}-${selectedDate}-traffic`;
-                                  handleDataEdit(id, 'value', parseInt(e.target.value) || 0);
-                                }}
+                                value={editData[salesPerson.salesName]?.[selectedDate]?.traffic || 0}
+                                onChange={(e) => handleDataChange(salesPerson.salesName, selectedDate, 'traffic', e.target.value)}
+                                className="w-full px-2 py-1 text-center border border-blue-300 rounded text-sm"
                               />
                             ) : (
                               Math.floor(Math.random() * 20) + 5
@@ -1102,16 +980,13 @@ const SalesPerformanceView: React.FC = () => {
                         </td>
                         {timeRange === 'month' && monthDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-green-600 min-w-[60px]">
-                            {isEditMode && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
-                                defaultValue={Math.floor(Math.random() * 5)}
                                 min="0"
-                                className="w-12 px-1 py-1 text-center border border-gray-300 rounded"
-                                onChange={(e) => {
-                                  const id = `${salesPerson.name}-${day.date}-orders`;
-                                  handleDataEdit(id, 'value', parseInt(e.target.value) || 0);
-                                }}
+                                value={editData[salesPerson.salesName]?.[day.date]?.orders || 0}
+                                onChange={(e) => handleDataChange(salesPerson.salesName, day.date, 'orders', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-green-300 rounded text-xs"
                               />
                             ) : (
                               Math.floor(Math.random() * 5)
@@ -1120,16 +995,13 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'week' && weekDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-green-600 min-w-[60px]">
-                            {isEditMode && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
-                                defaultValue={Math.floor(Math.random() * 5)}
                                 min="0"
-                                className="w-12 px-1 py-1 text-center border border-gray-300 rounded"
-                                onChange={(e) => {
-                                  const id = `${salesPerson.name}-${day.date}-orders`;
-                                  handleDataEdit(id, 'value', parseInt(e.target.value) || 0);
-                                }}
+                                value={editData[salesPerson.salesName]?.[day.date]?.orders || 0}
+                                onChange={(e) => handleDataChange(salesPerson.salesName, day.date, 'orders', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-green-300 rounded text-xs"
                               />
                             ) : (
                               Math.floor(Math.random() * 5)
@@ -1138,16 +1010,13 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'day' && (
                           <td className="px-4 py-2 text-center text-sm font-medium text-green-600 min-w-[60px]">
-                            {isEditMode && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
-                                defaultValue={Math.floor(Math.random() * 5)}
                                 min="0"
-                                className="w-16 px-2 py-1 text-center border border-gray-300 rounded"
-                                onChange={(e) => {
-                                  const id = `${salesPerson.name}-${selectedDate}-orders`;
-                                  handleDataEdit(id, 'value', parseInt(e.target.value) || 0);
-                                }}
+                                value={editData[salesPerson.salesName]?.[selectedDate]?.orders || 0}
+                                onChange={(e) => handleDataChange(salesPerson.salesName, selectedDate, 'orders', e.target.value)}
+                                className="w-full px-2 py-1 text-center border border-green-300 rounded text-sm"
                               />
                             ) : (
                               Math.floor(Math.random() * 5)
@@ -1163,17 +1032,13 @@ const SalesPerformanceView: React.FC = () => {
                         </td>
                         {timeRange === 'month' && monthDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-red-600 min-w-[60px]">
-                            {isEditMode && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
-                                defaultValue={Math.floor(Math.random() * 5) > 0 ? (Math.random() * 2 + 0.5).toFixed(1) : 0}
                                 min="0"
-                                step="0.1"
-                                className="w-16 px-1 py-1 text-center border border-gray-300 rounded"
-                                onChange={(e) => {
-                                  const id = `${salesPerson.name}-${day.date}-revenue`;
-                                  handleDataEdit(id, 'value', parseFloat(e.target.value) || 0);
-                                }}
+                                value={editData[salesPerson.salesName]?.[day.date]?.revenue || 0}
+                                onChange={(e) => handleDataChange(salesPerson.salesName, day.date, 'revenue', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-red-300 rounded text-xs"
                               />
                             ) : (
                               Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 2 + 0.5).toFixed(1)}万` : '-'
@@ -1182,17 +1047,13 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'week' && weekDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-red-600 min-w-[60px]">
-                            {isEditMode && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
-                                defaultValue={Math.floor(Math.random() * 5) > 0 ? (Math.random() * 2 + 0.5).toFixed(1) : 0}
                                 min="0"
-                                step="0.1"
-                                className="w-16 px-1 py-1 text-center border border-gray-300 rounded"
-                                onChange={(e) => {
-                                  const id = `${salesPerson.name}-${day.date}-revenue`;
-                                  handleDataEdit(id, 'value', parseFloat(e.target.value) || 0);
-                                }}
+                                value={editData[salesPerson.salesName]?.[day.date]?.revenue || 0}
+                                onChange={(e) => handleDataChange(salesPerson.salesName, day.date, 'revenue', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-red-300 rounded text-xs"
                               />
                             ) : (
                               Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 2 + 0.5).toFixed(1)}万` : '-'
@@ -1201,17 +1062,13 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'day' && (
                           <td className="px-4 py-2 text-center text-sm font-medium text-red-600 min-w-[60px]">
-                            {isEditMode && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
-                                defaultValue={Math.floor(Math.random() * 5) > 0 ? (Math.random() * 2 + 0.5).toFixed(1) : 0}
                                 min="0"
-                                step="0.1"
-                                className="w-16 px-2 py-1 text-center border border-gray-300 rounded"
-                                onChange={(e) => {
-                                  const id = `${salesPerson.name}-${selectedDate}-revenue`;
-                                  handleDataEdit(id, 'value', parseFloat(e.target.value) || 0);
-                                }}
+                                value={editData[salesPerson.salesName]?.[selectedDate]?.revenue || 0}
+                                onChange={(e) => handleDataChange(salesPerson.salesName, selectedDate, 'revenue', e.target.value)}
+                                className="w-full px-2 py-1 text-center border border-red-300 rounded text-sm"
                               />
                             ) : (
                               Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 2 + 0.5).toFixed(1)}万` : '-'
@@ -1254,16 +1111,13 @@ const SalesPerformanceView: React.FC = () => {
                         </td>
                         {timeRange === 'month' && monthDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-blue-600 min-w-[60px]">
-                            {isEditMode && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
-                                defaultValue={Math.floor(Math.random() * 40) + 10}
                                 min="0"
-                                className="w-12 px-1 py-1 text-center border border-gray-300 rounded"
-                                onChange={(e) => {
-                                  const id = `${team.name}-${day.date}-traffic`;
-                                  handleDataEdit(id, 'value', parseInt(e.target.value) || 0);
-                                }}
+                                value={editData[team.teamName]?.[day.date]?.traffic || 0}
+                                onChange={(e) => handleDataChange(team.teamName, day.date, 'traffic', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-blue-300 rounded text-xs"
                               />
                             ) : (
                               Math.floor(Math.random() * 40) + 10
@@ -1272,16 +1126,13 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'week' && weekDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-blue-600 min-w-[60px]">
-                            {isEditMode && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
-                                defaultValue={Math.floor(Math.random() * 40) + 10}
                                 min="0"
-                                className="w-12 px-1 py-1 text-center border border-gray-300 rounded"
-                                onChange={(e) => {
-                                  const id = `${team.name}-${day.date}-traffic`;
-                                  handleDataEdit(id, 'value', parseInt(e.target.value) || 0);
-                                }}
+                                value={editData[team.teamName]?.[day.date]?.traffic || 0}
+                                onChange={(e) => handleDataChange(team.teamName, day.date, 'traffic', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-blue-300 rounded text-xs"
                               />
                             ) : (
                               Math.floor(Math.random() * 40) + 10
@@ -1290,16 +1141,13 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'day' && (
                           <td className="px-4 py-2 text-center text-sm font-medium text-blue-600 min-w-[60px]">
-                            {isEditMode && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
-                                defaultValue={Math.floor(Math.random() * 40) + 10}
                                 min="0"
-                                className="w-16 px-2 py-1 text-center border border-gray-300 rounded"
-                                onChange={(e) => {
-                                  const id = `${team.name}-${selectedDate}-traffic`;
-                                  handleDataEdit(id, 'value', parseInt(e.target.value) || 0);
-                                }}
+                                value={editData[team.teamName]?.[selectedDate]?.traffic || 0}
+                                onChange={(e) => handleDataChange(team.teamName, selectedDate, 'traffic', e.target.value)}
+                                className="w-full px-2 py-1 text-center border border-blue-300 rounded text-sm"
                               />
                             ) : (
                               Math.floor(Math.random() * 40) + 10
@@ -1315,16 +1163,13 @@ const SalesPerformanceView: React.FC = () => {
                         </td>
                         {timeRange === 'month' && monthDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-green-600 min-w-[60px]">
-                            {isEditMode && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
-                                defaultValue={Math.floor(Math.random() * 10)}
                                 min="0"
-                                className="w-12 px-1 py-1 text-center border border-gray-300 rounded"
-                                onChange={(e) => {
-                                  const id = `${team.name}-${day.date}-orders`;
-                                  handleDataEdit(id, 'value', parseInt(e.target.value) || 0);
-                                }}
+                                value={editData[team.teamName]?.[day.date]?.orders || 0}
+                                onChange={(e) => handleDataChange(team.teamName, day.date, 'orders', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-green-300 rounded text-xs"
                               />
                             ) : (
                               Math.floor(Math.random() * 10)
@@ -1333,16 +1178,13 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'week' && weekDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-green-600 min-w-[60px]">
-                            {isEditMode && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
-                                defaultValue={Math.floor(Math.random() * 10)}
                                 min="0"
-                                className="w-12 px-1 py-1 text-center border border-gray-300 rounded"
-                                onChange={(e) => {
-                                  const id = `${team.name}-${day.date}-orders`;
-                                  handleDataEdit(id, 'value', parseInt(e.target.value) || 0);
-                                }}
+                                value={editData[team.teamName]?.[day.date]?.orders || 0}
+                                onChange={(e) => handleDataChange(team.teamName, day.date, 'orders', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-green-300 rounded text-xs"
                               />
                             ) : (
                               Math.floor(Math.random() * 10)
@@ -1351,16 +1193,13 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'day' && (
                           <td className="px-4 py-2 text-center text-sm font-medium text-green-600 min-w-[60px]">
-                            {isEditMode && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
-                                defaultValue={Math.floor(Math.random() * 10)}
                                 min="0"
-                                className="w-16 px-2 py-1 text-center border border-gray-300 rounded"
-                                onChange={(e) => {
-                                  const id = `${team.name}-${selectedDate}-orders`;
-                                  handleDataEdit(id, 'value', parseInt(e.target.value) || 0);
-                                }}
+                                value={editData[team.teamName]?.[selectedDate]?.orders || 0}
+                                onChange={(e) => handleDataChange(team.teamName, selectedDate, 'orders', e.target.value)}
+                                className="w-full px-2 py-1 text-center border border-green-300 rounded text-sm"
                               />
                             ) : (
                               Math.floor(Math.random() * 10)
@@ -1376,17 +1215,13 @@ const SalesPerformanceView: React.FC = () => {
                         </td>
                         {timeRange === 'month' && monthDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-red-600 min-w-[60px]">
-                            {isEditMode && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
-                                defaultValue={Math.floor(Math.random() * 5) > 0 ? (Math.random() * 4 + 1).toFixed(1) : 0}
                                 min="0"
-                                step="0.1"
-                                className="w-16 px-1 py-1 text-center border border-gray-300 rounded"
-                                onChange={(e) => {
-                                  const id = `${team.name}-${day.date}-revenue`;
-                                  handleDataEdit(id, 'value', parseFloat(e.target.value) || 0);
-                                }}
+                                value={editData[team.teamName]?.[day.date]?.revenue || 0}
+                                onChange={(e) => handleDataChange(team.teamName, day.date, 'revenue', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-red-300 rounded text-xs"
                               />
                             ) : (
                               Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 4 + 1).toFixed(1)}万` : '-'
@@ -1395,17 +1230,13 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'week' && weekDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-red-600 min-w-[60px]">
-                            {isEditMode && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
-                                defaultValue={Math.floor(Math.random() * 5) > 0 ? (Math.random() * 4 + 1).toFixed(1) : 0}
                                 min="0"
-                                step="0.1"
-                                className="w-16 px-1 py-1 text-center border border-gray-300 rounded"
-                                onChange={(e) => {
-                                  const id = `${team.name}-${day.date}-revenue`;
-                                  handleDataEdit(id, 'value', parseFloat(e.target.value) || 0);
-                                }}
+                                value={editData[team.teamName]?.[day.date]?.revenue || 0}
+                                onChange={(e) => handleDataChange(team.teamName, day.date, 'revenue', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-red-300 rounded text-xs"
                               />
                             ) : (
                               Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 4 + 1).toFixed(1)}万` : '-'
@@ -1414,17 +1245,13 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'day' && (
                           <td className="px-4 py-2 text-center text-sm font-medium text-red-600 min-w-[60px]">
-                            {isEditMode && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
-                                defaultValue={Math.floor(Math.random() * 5) > 0 ? (Math.random() * 4 + 1).toFixed(1) : 0}
                                 min="0"
-                                step="0.1"
-                                className="w-16 px-2 py-1 text-center border border-gray-300 rounded"
-                                onChange={(e) => {
-                                  const id = `${team.name}-${selectedDate}-revenue`;
-                                  handleDataEdit(id, 'value', parseFloat(e.target.value) || 0);
-                                }}
+                                value={editData[team.teamName]?.[selectedDate]?.revenue || 0}
+                                onChange={(e) => handleDataChange(team.teamName, selectedDate, 'revenue', e.target.value)}
+                                className="w-full px-2 py-1 text-center border border-red-300 rounded text-sm"
                               />
                             ) : (
                               Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 4 + 1).toFixed(1)}万` : '-'
