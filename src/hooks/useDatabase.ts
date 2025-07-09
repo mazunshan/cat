@@ -12,7 +12,8 @@ import {
   Announcement,
   SalesPerformance,
   Team,
-  InstallmentPayment
+  InstallmentPayment,
+  PaymentStatus
 } from '../types';
 
 // 模拟数据库连接状态
@@ -64,6 +65,46 @@ const generateInstallmentPayments = (count: number, amount: number, startDate: s
   }
   
   return payments;
+};
+
+// 计算还款状态的辅助函数
+export const calculatePaymentStatus = (customer: Customer): PaymentStatus => {
+  if (customer.customerType !== 'installment' || !customer.installmentPayments) {
+    return { status: 'normal', message: '正常' };
+  }
+
+  const today = new Date();
+  const overduePayments = customer.installmentPayments.filter(payment => {
+    if (payment.status === 'paid') return false;
+    const dueDate = new Date(payment.dueDate);
+    return dueDate < today;
+  });
+
+  if (overduePayments.length > 0) {
+    return {
+      status: 'overdue',
+      overdueCount: overduePayments.length,
+      message: `逾期 ${overduePayments.length} 期`
+    };
+  }
+
+  // 检查是否有3天内到期的还款
+  const upcomingPayments = customer.installmentPayments.filter(payment => {
+    if (payment.status === 'paid') return false;
+    const dueDate = new Date(payment.dueDate);
+    const threeDaysLater = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000);
+    return dueDate >= today && dueDate <= threeDaysLater;
+  });
+
+  if (upcomingPayments.length > 0) {
+    return {
+      status: 'reminder',
+      nextDueDate: upcomingPayments[0].dueDate,
+      message: '待催款'
+    };
+  }
+
+  return { status: 'normal', message: '还款正常' };
 };
 
 // 模拟客户数据
@@ -600,13 +641,25 @@ export const useCustomers = () => {
     setCustomers(prev => prev.filter(customer => customer.id !== customerId));
   };
 
+  // 获取逾期提醒列表
+  const getOverdueReminders = () => {
+    return customers
+      .filter(customer => customer.customerType === 'installment')
+      .map(customer => ({
+        id: customer.id,
+        customer,
+        status: calculatePaymentStatus(customer)
+      }))
+      .filter(item => item.status.status !== 'normal');
+  };
   return { 
     customers, 
     loading, 
     error, 
     addCustomer, 
     updateCustomer, 
-    deleteCustomer 
+    deleteCustomer,
+    getOverdueReminders
   };
 };
 
