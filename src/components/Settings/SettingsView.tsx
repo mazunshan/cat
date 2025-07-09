@@ -1219,20 +1219,6 @@ const SettingsView: React.FC = () => {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                最大登录尝试次数
-              </label>
-              <input
-                type="number"
-                value={settings.security.maxLoginAttempts}
-                onChange={(e) => setSettings(prev => ({
-                  ...prev,
-                  security: { ...prev.security, maxLoginAttempts: parseInt(e.target.value) }
-                }))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
           </div>
         </div>
       </div>
