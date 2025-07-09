@@ -88,7 +88,7 @@ const SalesPerformanceView: React.FC = () => {
       case 'month':
       default:
         return getMonthRange(selectedMonth);
-    }
+    };
   };
 
   const dateRange = getDateRange();
@@ -249,12 +249,12 @@ const SalesPerformanceView: React.FC = () => {
     } = {};
     
     if (viewMode === 'personal') {
-      performanceData.forEach(person => {
-        initialEditData[person.name] = {};
+      sortedData.forEach(person => {
+        initialEditData[person.salesName] = {};
         
         if (timeRange === 'month') {
           monthDays.forEach(day => {
-            initialEditData[person.name][day.date] = {
+            initialEditData[person.salesName][day.date] = {
               traffic: Math.floor(Math.random() * 20) + 5,
               orders: Math.floor(Math.random() * 5),
               revenue: Math.floor(Math.random() * 5) > 0 ? Math.round((Math.random() * 2 + 0.5) * 10000) : 0
@@ -262,14 +262,14 @@ const SalesPerformanceView: React.FC = () => {
           });
         } else if (timeRange === 'week') {
           weekDays.forEach(day => {
-            initialEditData[person.name][day.date] = {
+            initialEditData[person.salesName][day.date] = {
               traffic: Math.floor(Math.random() * 20) + 5,
               orders: Math.floor(Math.random() * 5),
               revenue: Math.floor(Math.random() * 5) > 0 ? Math.round((Math.random() * 2 + 0.5) * 10000) : 0
             };
           });
         } else if (timeRange === 'day') {
-          initialEditData[person.name][selectedDate] = {
+          initialEditData[person.salesName][selectedDate] = {
             traffic: Math.floor(Math.random() * 20) + 5,
             orders: Math.floor(Math.random() * 5),
             revenue: Math.floor(Math.random() * 5) > 0 ? Math.round((Math.random() * 2 + 0.5) * 10000) : 0
