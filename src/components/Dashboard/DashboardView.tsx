@@ -4,12 +4,56 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import StatsCard from './StatsCard';
 import { useCustomers } from '../../hooks/useDatabase';
 import { useAuth } from '../../context/AuthContext';
-import { OverdueReminder } from '../../types';
+import { Customer, PaymentStatus } from '../../types';
+
+// 计算还款状态
+const calculatePaymentStatus = (customer: Customer): PaymentStatus => {
+  if (customer.customerType !== 'installment' || !customer.installmentPayments) {
+    return { status: 'normal', message: '正常' };
+  }
+
+  const today = new Date();
+  const overduePayments = customer.installmentPayments.filter(payment => {
+    if (payment.status === 'paid') return false;
+    const dueDate = new Date(payment.dueDate);
+    return dueDate < today;
+  });
+
+  if (overduePayments.length > 0) {
+    return {
+      status: 'overdue',
+      overdueCount: overduePayments.length,
+      message: `逾期 ${overduePayments.length} 期`
+    };
+  }
+
+  // 检查是否有3天内到期的还款
+  const upcomingPayments = customer.installmentPayments.filter(payment => {
+    if (payment.status === 'paid') return false;
+    const dueDate = new Date(payment.dueDate);
+    const threeDaysLater = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000);
+    return dueDate >= today && dueDate <= threeDaysLater;
+  });
+
+  if (upcomingPayments.length > 0) {
+    return {
+      status: 'reminder',
+      nextDueDate: upcomingPayments[0].dueDate,
+      message: '待催款'
+    };
+  }
+
+  return { status: 'normal', message: '还款正常' };
+};
 
 const DashboardView: React.FC = () => {
   const { user } = useAuth();
   const { customers = [], loading: customersLoading, error: customersError } = useCustomers();
-  const [overdueReminders, setOverdueReminders] = React.useState<OverdueReminder[]>([]);
+  const [overdueReminders, setOverdueReminders] = React.useState<Array<{
+    id: string;
+    customer: Customer;
+    status: PaymentStatus;
+  }>>([]);
 
   const loading = customersLoading;
   const hasErrors = customersError;
@@ -17,57 +61,22 @@ const DashboardView: React.FC = () => {
   // 安全的数组操作
   const safeCustomers = customers || [];
 
-  // 生成逾期提醒数据
+  // 计算逾期提醒列表
   React.useEffect(() => {
-    const reminders: OverdueReminder[] = [];
-    const today = new Date();
-    
-    safeCustomers.forEach(customer => {
-      if (customer.customerType === 'installment' && customer.installmentPayments) {
-        customer.installmentPayments.forEach(payment => {
-          if (!payment.isPaid) {
-            const dueDate = new Date(payment.dueDate);
-            const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-            
-            if (diffDays < 0) {
-              // 逾期
-              reminders.push({
-                id: `${customer.id}-${payment.id}`,
-                customerId: customer.id,
-                customerName: customer.name,
-                type: 'overdue',
-                overdueCount: payment.overdueCount || Math.abs(diffDays),
-                nextPaymentDate: payment.dueDate,
-                amount: payment.amount,
-                createdAt: new Date().toISOString()
-              });
-            } else if (diffDays <= 3) {
-              // 即将到期
-              reminders.push({
-                id: `${customer.id}-${payment.id}`,
-                customerId: customer.id,
-                customerName: customer.name,
-                type: 'due_soon',
-                nextPaymentDate: payment.dueDate,
-                amount: payment.amount,
-                createdAt: new Date().toISOString()
-              });
-            }
-          }
-        });
-      }
-    });
+    const reminders = safeCustomers
+      .filter(customer => customer.customerType === 'installment')
+      .map(customer => ({
+        id: customer.id,
+        customer,
+        status: calculatePaymentStatus(customer)
+      }))
+      .filter(item => item.status.status !== 'normal');
     
     setOverdueReminders(reminders);
   }, [safeCustomers]);
 
-  const handleEditReminder = (reminder: OverdueReminder) => {
-    // 这里可以打开编辑模态框
-    console.log('编辑提醒:', reminder);
-  };
-
   const handleDeleteReminder = (reminderId: string) => {
-    setOverdueReminders(prev => prev.filter(r => r.id !== reminderId));
+    setOverdueReminders(prev => prev.filter(item => item.id !== reminderId));
   };
 
   if (loading) {
@@ -223,7 +232,7 @@ const DashboardView: React.FC = () => {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sales Trend */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">销售趋势</h3>
@@ -337,127 +346,97 @@ const DashboardView: React.FC = () => {
         </div>
 
         {/* Recent Activity */}
-        {user?.role === 'admin' ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">最近活动</h3>
+          <div className="space-y-4">
+            {recentActivities.length > 0 ? (
+              recentActivities.map((activity, index) => (
+                <div key={index} className={`flex items-center p-3 rounded-lg ${
+                  activity.color === 'blue' ? 'bg-blue-50' :
+                  activity.color === 'green' ? 'bg-green-50' :
+                  'bg-yellow-50'
+                }`}>
+                  <div className={`w-2 h-2 rounded-full mr-3 ${
+                    activity.color === 'blue' ? 'bg-blue-500' :
+                    activity.color === 'green' ? 'bg-green-500' :
+                    'bg-yellow-500'
+                  }`} />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-800">{activity.title}</p>
+                    <p className="text-xs text-gray-600">{activity.description}</p>
+                  </div>
+                  <span className="text-xs text-gray-500">{getActivityTimeText(activity.time)}</span>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p>暂无最近活动</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 逾期提醒列表 - 仅管理员可见 */}
+        {user?.role === 'admin' && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">逾期提醒</h3>
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-80 overflow-y-auto">
               {overdueReminders.length > 0 ? (
-                overdueReminders.map((reminder) => (
-                  <div key={reminder.id} className={`flex items-center justify-between p-3 rounded-lg border ${
-                    reminder.type === 'overdue' 
-                      ? 'bg-red-50 border-red-200' 
-                      : 'bg-yellow-50 border-yellow-200'
-                  }`}>
-                    <div className="flex items-center">
-                      <div className={`w-3 h-3 rounded-full mr-3 ${
-                        reminder.type === 'overdue' ? 'bg-red-500' : 'bg-yellow-500'
-                      }`} />
-                      <div>
-                        <p className="text-sm font-medium text-gray-800">
-                          {reminder.customerName}
-                          {reminder.type === 'overdue' && reminder.overdueCount && (
-                            <span className="ml-2 text-red-600">
-                              (逾期{reminder.overdueCount}天)
-                            </span>
-                          )}
-                        </p>
-                        <p className="text-xs text-gray-600">
-                          {reminder.type === 'overdue' ? '逾期还款' : '即将到期'} - 
-                          ¥{reminder.amount.toLocaleString()} - 
-                          {new Date(reminder.nextPaymentDate).toLocaleDateString('zh-CN')}
-                        </p>
+                overdueReminders.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`p-3 rounded-lg border ${
+                      item.status.status === 'overdue'
+                        ? 'bg-red-50 border-red-200'
+                        : 'bg-yellow-50 border-yellow-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center">
+                          <span className="font-medium text-gray-900">
+                            {item.customer.name}
+                          </span>
+                          <span className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${
+                            item.status.status === 'overdue'
+                              ? 'bg-red-100 text-red-600'
+                              : 'bg-yellow-100 text-yellow-600'
+                          }`}>
+                            {item.status.message}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {item.customer.phone}
+                        </div>
+                        {item.status.nextDueDate && (
+                          <div className="text-xs text-gray-500">
+                            下次还款: {new Date(item.status.nextDueDate).toLocaleDateString('zh-CN')}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-1 ml-2">
+                        <button
+                          onClick={() => handleDeleteReminder(item.id)}
+                          className="p-1 text-red-600 hover:bg-red-100 rounded"
+                          title="移除提醒"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handleEditReminder(reminder)}
-                        className="p-1 text-blue-600 hover:bg-blue-100 rounded"
-                        title="编辑"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteReminder(reminder.id)}
-                        className="p-1 text-red-600 hover:bg-red-100 rounded"
-                        title="删除"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
                   </div>
                 ))
               ) : (
                 <div className="text-center py-8 text-gray-500">
-                  <p>暂无逾期提醒</p>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">最近活动</h3>
-            <div className="space-y-4">
-              {recentActivities.length > 0 ? (
-                recentActivities.map((activity, index) => (
-                  <div key={index} className={`flex items-center p-3 rounded-lg ${
-                    activity.color === 'blue' ? 'bg-blue-50' :
-                    activity.color === 'green' ? 'bg-green-50' :
-                    'bg-yellow-50'
-                  }`}>
-                    <div className={`w-2 h-2 rounded-full mr-3 ${
-                      activity.color === 'blue' ? 'bg-blue-500' :
-                      activity.color === 'green' ? 'bg-green-500' :
-                      'bg-yellow-500'
-                    }`} />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-800">{activity.title}</p>
-                      <p className="text-xs text-gray-600">{activity.description}</p>
-                    </div>
-                    <span className="text-xs text-gray-500">{getActivityTimeText(activity.time)}</span>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <p>暂无最近活动</p>
+                  <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                  <p className="text-sm">暂无逾期提醒</p>
                 </div>
               )}
             </div>
           </div>
         )}
       </div>
-
-      {/* 逾期统计卡片 - 仅管理员可见 */}
-      {user?.role === 'admin' && overdueReminders.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">逾期统计</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">逾期客户</span>
-                <span className="font-semibold text-red-600">
-                  {overdueReminders.filter(r => r.type === 'overdue').length}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">待催款客户</span>
-                <span className="font-semibold text-yellow-600">
-                  {overdueReminders.filter(r => r.type === 'due_soon').length}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">逾期总金额</span>
-                <span className="font-semibold text-red-600">
-                  ¥{overdueReminders
-                    .filter(r => r.type === 'overdue')
-                    .reduce((sum, r) => sum + r.amount, 0)
-                    .toLocaleString()}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      </div>
+    </div>
   );
 };
 
