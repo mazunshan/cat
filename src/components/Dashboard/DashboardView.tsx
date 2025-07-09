@@ -79,13 +79,6 @@ const DashboardView: React.FC = () => {
     setOverdueReminders(prev => prev.filter(item => item.id !== reminderId));
   };
 
-  const handleEditReminder = (customerId: string) => {
-    // Since direct navigation and modal control between DashboardView and CustomersView 
-    // is not currently implemented, we'll show an alert for now
-    alert('请前往"客户管理"页面编辑客户信息');
-    console.log('Edit customer with ID:', customerId);
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -422,13 +415,6 @@ const DashboardView: React.FC = () => {
                         )}
                       </div>
                       <div className="flex items-center space-x-1 ml-2">
-                        <button
-                          onClick={() => handleEditReminder(item.customer.id)}
-                          className="p-1 text-blue-600 hover:bg-blue-100 rounded"
-                          title="编辑客户"
-                        >
-                          <Edit className="w-3 h-3" />
-                        </button>
                         <button
                           onClick={() => handleDeleteReminder(item.id)}
                           className="p-1 text-red-600 hover:bg-red-100 rounded"
