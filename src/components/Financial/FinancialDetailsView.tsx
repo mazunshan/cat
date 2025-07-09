@@ -358,8 +358,13 @@ const FinancialDetailsView: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {salesIncome.map((item, index) => {
-                const dayInfo = monthDays[index];
+              {monthDays.map((dayInfo) => {
+                const item = salesIncome.find(income => income.date === dayInfo.date) || {
+                  date: dayInfo.date,
+                  amount: 0,
+                  note: '',
+                  otherIncome: 0
+                };
                 return (
                   <tr key={item.date} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -459,8 +464,16 @@ const FinancialDetailsView: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {expenses.map((item, index) => {
-                const dayInfo = monthDays[index];
+              {monthDays.map((dayInfo) => {
+                const item = expenses.find(expense => expense.date === dayInfo.date) || {
+                  date: dayInfo.date,
+                  project: '',
+                  content: '',
+                  amount: 0,
+                  reimbursementPerson: '',
+                  isReimbursed: false,
+                  note: ''
+                };
                 return (
                   <tr key={item.date} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
