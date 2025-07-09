@@ -372,16 +372,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onClose }) => {
                 <p className="text-gray-600 leading-relaxed">{product.description}</p>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex space-x-4 pt-4">
-                <button className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors">
-                  立即预定
-                </button>
-                <button className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-colors">
-                  咨询客服
-                </button>
-              </div>
-
               {/* Additional Info */}
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
                 <h4 className="font-semibold text-amber-800 mb-2">购买须知</h4>
