@@ -19,7 +19,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
       { id: 'dashboard', label: '仪表盘', icon: Home, roles: ['admin', 'sales', 'after_sales'] },
       { id: 'customers', label: '客户管理', icon: Users, roles: ['admin', 'sales', 'after_sales'] },
       { id: 'knowledge', label: '知识库', icon: BookOpen, roles: ['admin', 'sales', 'after_sales'] },
-      { id: 'announcements', label: '公告管理', icon: Megaphone, roles: ['admin', 'sales', 'after_sales'] }
+      { id: 'announcements', label: '公告管理', icon: Megaphone, roles: ['admin', 'sales', 'after_sales'] },
       { id: 'financial', label: '收支明细', icon: DollarSign, roles: ['admin'] }
     ];
 
