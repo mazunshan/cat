@@ -217,18 +217,6 @@ const CustomersView: React.FC = () => {
             }).length}
           </p>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <p className="text-sm text-gray-600">活跃客户</p>
-          <p className="text-2xl font-bold text-blue-600">
-            {safeCustomers.filter(c => (c.orders || []).length > 0).length}
-          </p>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <p className="text-sm text-gray-600">转化率</p>
-          <p className="text-2xl font-bold text-purple-600">
-            {safeCustomers.length > 0 ? Math.round((safeCustomers.filter(c => (c.orders || []).length > 0).length / safeCustomers.length) * 100) : 0}%
-          </p>
-        </div>
       </div>
 
       {/* Customer Grid */}
