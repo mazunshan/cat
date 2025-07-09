@@ -205,6 +205,7 @@ const CustomersView: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <p className="text-sm text-gray-600">总客户数</p>
           <p className="text-2xl font-bold text-gray-800">{safeCustomers.length}</p>
+        </div>
       </div>
 
       {/* Customer Grid */}
