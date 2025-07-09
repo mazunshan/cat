@@ -143,7 +143,6 @@ const SettingsView: React.FC = () => {
     { id: 'general', label: '基本设置', icon: Globe },
     { id: 'users', label: '用户管理', icon: Users },
     { id: 'teams', label: '团队管理', icon: UsersRound },
-    { id: 'teams', label: '团队管理', icon: UsersRound },
     { id: 'security', label: '安全设置', icon: Shield },
     { id: 'notifications', label: '通知设置', icon: Bell }
   ];
