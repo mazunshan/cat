@@ -75,11 +75,6 @@ const DashboardView: React.FC = () => {
     setOverdueReminders(reminders);
   }, [safeCustomers]);
 
-  const handleEditReminder = (customerId: string) => {
-    // 这里可以打开编辑客户的模态框
-    console.log('编辑客户:', customerId);
-  };
-
   const handleDeleteReminder = (reminderId: string) => {
     setOverdueReminders(prev => prev.filter(item => item.id !== reminderId));
   };
