@@ -14,7 +14,7 @@ const calculatePaymentStatus = (customer: Customer): PaymentStatus => {
 
   const today = new Date();
   const overduePayments = customer.installmentPayments.filter(payment => {
-    if (payment.status === 'paid') return false;
+    if (payment.isPaid) return false;
     const dueDate = new Date(payment.dueDate);
     return dueDate < today;
   });
@@ -29,7 +29,7 @@ const calculatePaymentStatus = (customer: Customer): PaymentStatus => {
 
   // 检查是否有3天内到期的还款
   const upcomingPayments = customer.installmentPayments.filter(payment => {
-    if (payment.status === 'paid') return false;
+    if (payment.isPaid) return false;
     const dueDate = new Date(payment.dueDate);
     const threeDaysLater = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000);
     return dueDate >= today && dueDate <= threeDaysLater;
