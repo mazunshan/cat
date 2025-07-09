@@ -3,11 +3,8 @@ import { Users, DollarSign, TrendingUp, Clock, AlertTriangle } from 'lucide-reac
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import StatsCard from './StatsCard';
 import { useCustomers } from '../../hooks/useDatabase';
-import { useAuth } from '../../context/AuthContext';
-import FinancialDetailsView from '../Finance/FinancialDetailsView';
 
 const DashboardView: React.FC = () => {
-  const { user } = useAuth();
   const { customers = [], loading: customersLoading, error: customersError } = useCustomers();
 
   const loading = customersLoading;
@@ -111,16 +108,7 @@ const DashboardView: React.FC = () => {
   };
 
   return (
-    <div className={`${user?.role === 'admin' ? 'grid grid-cols-4 gap-6 h-full' : 'space-y-6'}`}>
-      {/* 管理员专用收支明细 - 左侧 */}
-      {user?.role === 'admin' && (
-        <div className="col-span-1 h-full">
-          <FinancialDetailsView />
-        </div>
-      )}
-      
-      {/* 主要内容区域 */}
-      <div className={`${user?.role === 'admin' ? 'col-span-3' : ''} space-y-6`}>
+    <div className="space-y-6">
       {/* 错误提示 */}
       {hasErrors && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -321,7 +309,6 @@ const DashboardView: React.FC = () => {
             )}
           </div>
         </div>
-      </div>
       </div>
     </div>
   );
