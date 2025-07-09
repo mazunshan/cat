@@ -1559,6 +1559,114 @@ export const useAttendance = () => {
   };
 };
 
+// 销售业绩数据钩子
+export const useSalesPerformance = () => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // 获取汇总数据
+  const getSummaryData = (startDate: string, endDate: string) => {
+    // 模拟销售业绩数据
+    const salesSummary = [
+      {
+        salesId: '1',
+        salesName: 'Alice Chen',
+        teamId: 'team-1',
+        teamName: '销售一组',
+        totalTraffic: 120,
+        totalOrders: 15,
+        totalRevenue: 180000
+      },
+      {
+        salesId: '2',
+        salesName: 'Bob Wang',
+        teamId: 'team-1',
+        teamName: '销售一组',
+        totalTraffic: 95,
+        totalOrders: 12,
+        totalRevenue: 144000
+      },
+      {
+        salesId: '3',
+        salesName: 'Carol Li',
+        teamId: 'team-2',
+        teamName: '销售二组',
+        totalTraffic: 85,
+        totalOrders: 10,
+        totalRevenue: 120000
+      },
+      {
+        salesId: '4',
+        salesName: 'Emma Liu',
+        teamId: 'team-1',
+        teamName: '销售一组',
+        totalTraffic: 75,
+        totalOrders: 8,
+        totalRevenue: 96000
+      },
+      {
+        salesId: '5',
+        salesName: 'Frank Zhou',
+        teamId: 'team-2',
+        teamName: '销售二组',
+        totalTraffic: 65,
+        totalOrders: 7,
+        totalRevenue: 84000
+      }
+    ];
+
+    // 计算团队汇总数据
+    const teamSummary = [
+      {
+        teamId: 'team-1',
+        teamName: '销售一组',
+        totalTraffic: 290,
+        totalOrders: 35,
+        totalRevenue: 420000
+      },
+      {
+        teamId: 'team-2',
+        teamName: '销售二组',
+        totalTraffic: 150,
+        totalOrders: 17,
+        totalRevenue: 204000
+      }
+    ];
+
+    return {
+      salesSummary,
+      teamSummary
+    };
+  };
+
+  // 获取销售业绩数据
+  const fetchSalesPerformance = async (startDate: string, endDate: string) => {
+    setLoading(true);
+    try {
+      // 这里应该是从API获取数据
+      // 模拟API调用延迟
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setLoading(false);
+      return getSummaryData(startDate, endDate);
+    } catch (err) {
+      setError((err as Error).message);
+      setLoading(false);
+      return {
+        salesSummary: [],
+        teamSummary: []
+      };
+    }
+  };
+
+  return {
+    loading,
+    error,
+    getSummaryData,
+    fetchSalesPerformance
+  };
+};
+
 // 售后服务记录钩子
 export const useAfterSalesRecords = () => {
   const [afterSalesRecords, setAfterSalesRecords] = useState<AfterSalesRecord[]>(globalAfterSalesRecords);
