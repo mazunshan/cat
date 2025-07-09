@@ -10,6 +10,7 @@ import KnowledgeView from './components/Knowledge/KnowledgeView';
 import SettingsView from './components/Settings/SettingsView';
 import AfterSalesView from './components/AfterSales/AfterSalesView';
 import SalesPerformanceView from './components/Dashboard/SalesPerformanceView';
+import FinancialDetailsView from './components/Financial/FinancialDetailsView';
 import AnnouncementView from './components/Announcements/AnnouncementView';
 import AnnouncementBanner from './components/Announcements/AnnouncementBanner';
 
@@ -31,7 +32,8 @@ const AppContent: React.FC = () => {
       analytics: '销售业绩排名',
       settings: '系统设置',
       after_sales: '售后服务',
-      announcements: '公告管理'
+      announcements: '公告管理',
+      financial: '收支明细'
     };
     return titles[tab as keyof typeof titles] || '仪表盘';
   };
@@ -52,6 +54,8 @@ const AppContent: React.FC = () => {
         return <AfterSalesView />;
       case 'announcements':
         return <AnnouncementView />;
+      case 'financial':
+        return <FinancialDetailsView />;
       default:
         return <DashboardView />;
     }
