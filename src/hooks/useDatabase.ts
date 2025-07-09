@@ -798,6 +798,133 @@ export const useAnnouncements = () => {
 
 // 销售业绩数据 Hook
 export const useSalesPerformance = () => {
-  const { data: salesPerformance, loading, error } = useAsyncData(mockSalesPerformance);
-  return { salesPerformance, loading, error };
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Mock function to get summary data for sales performance
+  const getSummaryData = (startDate: string, endDate: string) => {
+    // Generate mock sales summary data
+    const salesSummary = [
+      {
+        salesId: '1',
+        salesName: '张三',
+        totalTraffic: 150,
+        totalOrders: 25,
+        totalRevenue: 125000,
+        conversionRate: 16.7
+      },
+      {
+        salesId: '2', 
+        salesName: '李四',
+        totalTraffic: 120,
+        totalOrders: 18,
+        totalRevenue: 98000,
+        conversionRate: 15.0
+      },
+      {
+        salesId: '3',
+        salesName: '王五',
+        totalTraffic: 100,
+        totalOrders: 15,
+        totalRevenue: 75000,
+        conversionRate: 15.0
+      },
+      {
+        salesId: '4',
+        salesName: '赵六',
+        totalTraffic: 80,
+        totalOrders: 12,
+        totalRevenue: 60000,
+        conversionRate: 15.0
+      },
+      {
+        salesId: '5',
+        salesName: '孙七',
+        totalTraffic: 90,
+        totalOrders: 10,
+        totalRevenue: 45000,
+        conversionRate: 11.1
+      }
+    ];
+
+    // Generate mock team summary data
+    const teamSummary = [
+      {
+        teamId: '1',
+        teamName: '销售一组',
+        totalTraffic: 300,
+        totalOrders: 45,
+        totalRevenue: 250000,
+        conversionRate: 15.0
+      },
+      {
+        teamId: '2',
+        teamName: '销售二组', 
+        totalTraffic: 280,
+        totalOrders: 38,
+        totalRevenue: 210000,
+        conversionRate: 13.6
+      },
+      {
+        teamId: '3',
+        teamName: '销售三组',
+        totalTraffic: 260,
+        totalOrders: 35,
+        totalRevenue: 180000,
+        conversionRate: 13.5
+      }
+    ];
+
+    return {
+      salesSummary,
+      teamSummary
+    };
+  };
+
+  const fetchSalesPerformance = async (filters?: {
+    startDate?: string;
+    endDate?: string;
+    salesId?: string;
+    teamId?: string;
+  }) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // 模拟API调用延迟
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      let filteredData = [...mockSalesPerformance];
+      
+      if (filters?.startDate) {
+        filteredData = filteredData.filter(item => item.date >= filters.startDate!);
+      }
+      
+      if (filters?.endDate) {
+        filteredData = filteredData.filter(item => item.date <= filters.endDate!);
+      }
+      
+      if (filters?.salesId) {
+        filteredData = filteredData.filter(item => item.salesId === filters.salesId);
+      }
+      
+      if (filters?.teamId) {
+        filteredData = filteredData.filter(item => item.teamId === filters.teamId);
+      }
+      
+      return filteredData;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '获取销售业绩数据失败');
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    loading,
+    error,
+    getSummaryData,
+    fetchSalesPerformance
+  };
 };
