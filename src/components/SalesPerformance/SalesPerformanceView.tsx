@@ -11,6 +11,7 @@ const SalesPerformanceView: React.FC = () => {
   const { 
     loading: performanceLoading, 
     error: performanceError,
+    getSummaryData,
     fetchSalesPerformance
   } = useSalesPerformance();
   
@@ -92,109 +93,8 @@ const SalesPerformanceView: React.FC = () => {
 
   const dateRange = getDateRange();
   
-  // Calculate sales performance data first
-  const getTimeRangeFilter = () => {
-    const now = new Date();
-    const startDate = new Date();
-    
-    switch (timeRange) {
-      case 'month':
-        startDate.setMonth(now.getMonth() - 1);
-        break;
-      case 'quarter':
-        startDate.setMonth(now.getMonth() - 3);
-        break;
-      case 'year':
-        startDate.setFullYear(now.getFullYear() - 1);
-        break;
-    }
-    
-    return startDate;
-  };
-
-  const startDate = getTimeRangeFilter();
-  const filteredOrders = safeOrders.filter(order => 
-    new Date(order.orderDate) >= startDate
-  );
-
-  // Calculate sales performance
-  const salesPerformance = () => {
-    const salesStats: Record<string, {
-      name: string;
-      revenue: number;
-      orders: number;
-      customers: Set<string>;
-      avgOrderValue: number;
-      completionRate: number;
-    }> = {};
-
-    filteredOrders.forEach(order => {
-      const salesperson = order.salesPerson;
-      if (!salesStats[salesperson]) {
-        salesStats[salesperson] = {
-          name: salesperson,
-          revenue: 0,
-          orders: 0,
-          customers: new Set(),
-          avgOrderValue: 0,
-          completionRate: 0
-        };
-      }
-
-      salesStats[salesperson].revenue += order.amount;
-      salesStats[salesperson].orders += 1;
-      salesStats[salesperson].customers.add(order.customerId);
-    });
-
-    // Calculate average order value and completion rate
-    Object.keys(salesStats).forEach(salesperson => {
-      const stats = salesStats[salesperson];
-      stats.avgOrderValue = stats.orders > 0 ? stats.revenue / stats.orders : 0;
-      
-      const salespersonOrders = filteredOrders.filter(o => o.salesPerson === salesperson);
-      const completedOrders = salespersonOrders.filter(o => o.status === 'completed');
-      stats.completionRate = salespersonOrders.length > 0 ? (completedOrders.length / salespersonOrders.length) * 100 : 0;
-    });
-
-    // Convert to array and sort
-    const performanceArray = Object.values(salesStats).map(stats => ({
-      ...stats,
-      customers: stats.customers.size
-    }));
-
-    return performanceArray.sort((a, b) => {
-      switch (sortBy) {
-        case 'revenue':
-          return b.revenue - a.revenue;
-        case 'orders':
-          return b.orders - a.orders;
-        case 'customers':
-          return b.customers - a.customers;
-        default:
-          return b.revenue - a.revenue;
-      }
-    });
-  };
-
-  const performanceData = salesPerformance();
-
   // 获取汇总数据
-  const summaryData = {
-    salesSummary: performanceData.map(p => ({
-      salesId: p.name,
-      salesName: p.name,
-      totalTraffic: Math.floor(Math.random() * 100) + 50,
-      totalOrders: p.orders,
-      totalRevenue: p.revenue
-    })),
-    teamSummary: teams?.map(team => ({
-      teamId: team.id,
-      teamName: team.name,
-      totalTraffic: Math.floor(Math.random() * 200) + 100,
-      totalOrders: Math.floor(Math.random() * 50) + 20,
-      totalRevenue: Math.floor(Math.random() * 100000) + 50000
-    })) || []
-  };
+  const summaryData = getSummaryData(dateRange.start, dateRange.end);
   
   // 根据排序方式对数据进行排序
   const getSortedData = () => {
@@ -456,6 +356,92 @@ const SalesPerformanceView: React.FC = () => {
       </div>
     );
   }
+
+  // 计算时间范围
+  const getTimeRangeFilter = () => {
+    const now = new Date();
+    const startDate = new Date();
+    
+    switch (timeRange) {
+      case 'month':
+        startDate.setMonth(now.getMonth() - 1);
+        break;
+      case 'quarter':
+        startDate.setMonth(now.getMonth() - 3);
+        break;
+      case 'year':
+        startDate.setFullYear(now.getFullYear() - 1);
+        break;
+    }
+    
+    return startDate;
+  };
+
+  const startDate = getTimeRangeFilter();
+  const filteredOrders = safeOrders.filter(order => 
+    new Date(order.orderDate) >= startDate
+  );
+
+  // 计算销售员业绩
+  const salesPerformance = () => {
+    const salesStats: Record<string, {
+      name: string;
+      revenue: number;
+      orders: number;
+      customers: Set<string>;
+      avgOrderValue: number;
+      completionRate: number;
+    }> = {};
+
+    filteredOrders.forEach(order => {
+      const salesperson = order.salesPerson;
+      if (!salesStats[salesperson]) {
+        salesStats[salesperson] = {
+          name: salesperson,
+          revenue: 0,
+          orders: 0,
+          customers: new Set(),
+          avgOrderValue: 0,
+          completionRate: 0
+        };
+      }
+
+      salesStats[salesperson].revenue += order.amount;
+      salesStats[salesperson].orders += 1;
+      salesStats[salesperson].customers.add(order.customerId);
+    });
+
+    // 计算平均订单价值和完成率
+    Object.keys(salesStats).forEach(salesperson => {
+      const stats = salesStats[salesperson];
+      stats.avgOrderValue = stats.orders > 0 ? stats.revenue / stats.orders : 0;
+      
+      const salespersonOrders = filteredOrders.filter(o => o.salesPerson === salesperson);
+      const completedOrders = salespersonOrders.filter(o => o.status === 'completed');
+      stats.completionRate = salespersonOrders.length > 0 ? (completedOrders.length / salespersonOrders.length) * 100 : 0;
+    });
+
+    // 转换为数组并排序
+    const performanceArray = Object.values(salesStats).map(stats => ({
+      ...stats,
+      customers: stats.customers.size
+    }));
+
+    return performanceArray.sort((a, b) => {
+      switch (sortBy) {
+        case 'revenue':
+          return b.revenue - a.revenue;
+        case 'orders':
+          return b.orders - a.orders;
+        case 'customers':
+          return b.customers - a.customers;
+        default:
+          return b.revenue - a.revenue;
+      }
+    });
+  };
+
+  const performanceData = salesPerformance();
 
   // 月度趋势数据
   const getMonthlyTrends = () => {
