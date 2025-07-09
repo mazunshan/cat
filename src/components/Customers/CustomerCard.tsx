@@ -1,6 +1,46 @@
 import React from 'react';
-import { Phone, MessageCircle, MapPin, Briefcase, Tag, Edit, Trash2 } from 'lucide-react';
-import { Customer } from '../../types';
+import { Phone, MessageCircle, MapPin, Briefcase, Tag, Edit, Trash2, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
+import { Customer, PaymentStatus } from '../../types';
+
+// 计算还款状态
+const calculatePaymentStatus = (customer: Customer): PaymentStatus => {
+  if (customer.customerType !== 'installment' || !customer.installmentPayments) {
+    return { status: 'normal', message: '正常' };
+  }
+
+  const today = new Date();
+  const overduePayments = customer.installmentPayments.filter(payment => {
+    if (payment.status === 'paid') return false;
+    const dueDate = new Date(payment.dueDate);
+    return dueDate < today;
+  });
+
+  if (overduePayments.length > 0) {
+    return {
+      status: 'overdue',
+      overdueCount: overduePayments.length,
+      message: `逾期 ${overduePayments.length} 期`
+    };
+  }
+
+  // 检查是否有3天内到期的还款
+  const upcomingPayments = customer.installmentPayments.filter(payment => {
+    if (payment.status === 'paid') return false;
+    const dueDate = new Date(payment.dueDate);
+    const threeDaysLater = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000);
+    return dueDate >= today && dueDate <= threeDaysLater;
+  });
+
+  if (upcomingPayments.length > 0) {
+    return {
+      status: 'reminder',
+      nextDueDate: upcomingPayments[0].dueDate,
+      message: '待催款'
+    };
+  }
+
+  return { status: 'normal', message: '还款正常' };
+};
 
 interface CustomerCardProps {
   customer: Customer;
@@ -10,6 +50,8 @@ interface CustomerCardProps {
 }
 
 const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onClick, onEdit, onDelete }) => {
+  const paymentStatus = calculatePaymentStatus(customer);
+
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     onEdit(customer);
@@ -25,6 +67,24 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onClick, onEdit, 
       className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all cursor-pointer hover:border-blue-200 group"
       onClick={onClick}
     >
+      {/* 还款状态标签 - 仅分期客户显示 */}
+      {customer.customerType === 'installment' && (
+        <div className="mb-4">
+          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+            paymentStatus.status === 'normal' 
+              ? 'bg-green-100 text-green-600' 
+              : paymentStatus.status === 'reminder'
+              ? 'bg-yellow-100 text-yellow-600'
+              : 'bg-red-100 text-red-600'
+          }`}>
+            {paymentStatus.status === 'normal' && <CheckCircle className="w-3 h-3 mr-1" />}
+            {paymentStatus.status === 'reminder' && <Clock className="w-3 h-3 mr-1" />}
+            {paymentStatus.status === 'overdue' && <AlertTriangle className="w-3 h-3 mr-1" />}
+            {paymentStatus.message}
+          </span>
+        </div>
+      )}
+
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center">
           <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -42,6 +102,11 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onClick, onEdit, 
             customer.gender === 'female' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'
           }`}>
             {customer.gender === 'female' ? '女' : '男'}
+          </span>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            customer.customerType === 'retail' ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-600'
+          }`}>
+            {customer.customerType === 'retail' ? '零售' : '分期'}
           </span>
           <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
