@@ -9,6 +9,7 @@ import CustomersView from './components/Customers/CustomersView';
 import KnowledgeView from './components/Knowledge/KnowledgeView';
 import SettingsView from './components/Settings/SettingsView';
 import AfterSalesView from './components/AfterSales/AfterSalesView';
+import FinancialDetailsView from './components/Dashboard/FinancialDetailsView';
 import SalesPerformanceView from './components/Dashboard/SalesPerformanceView';
 import AnnouncementView from './components/Announcements/AnnouncementView';
 import AnnouncementBanner from './components/Announcements/AnnouncementBanner';
@@ -46,6 +47,8 @@ const AppContent: React.FC = () => {
         return <KnowledgeView />;
       case 'analytics':
         return <SalesPerformanceView />;
+      case 'financial':
+        return <FinancialDetailsView />;
       case 'settings':
         return <SettingsView />;
       case 'after_sales':
