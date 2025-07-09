@@ -3,8 +3,11 @@ import { Users, DollarSign, TrendingUp, Clock, AlertTriangle } from 'lucide-reac
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import StatsCard from './StatsCard';
 import { useCustomers } from '../../hooks/useDatabase';
+import { useAuth } from '../../context/AuthContext';
+import FinancialDetails from './FinancialDetails';
 
 const DashboardView: React.FC = () => {
+  const { user } = useAuth();
   const { customers = [], loading: customersLoading, error: customersError } = useCustomers();
 
   const loading = customersLoading;
@@ -166,9 +169,16 @@ const DashboardView: React.FC = () => {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className={`grid gap-6 ${user?.role === 'admin' ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1 lg:grid-cols-2'}`}>
+        {/* 管理员专用收支明细 */}
+        {user?.role === 'admin' && (
+          <div className="lg:col-span-1">
+            <FinancialDetails />
+          </div>
+        )}
+        
         {/* Sales Trend */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${user?.role === 'admin' ? 'lg:col-span-1' : ''}`}>
           <h3 className="text-lg font-semibold text-gray-800 mb-4">销售趋势</h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={salesData}>
@@ -200,7 +210,7 @@ const DashboardView: React.FC = () => {
         </div>
 
         {/* Breed Distribution */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${user?.role === 'admin' ? 'lg:col-span-1' : ''}`}>
           <h3 className="text-lg font-semibold text-gray-800 mb-4">品种销售分布</h3>
           {breedData.length > 0 ? (
             <>
@@ -249,7 +259,7 @@ const DashboardView: React.FC = () => {
         </div>
 
         {/* Payment Methods */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${user?.role === 'admin' ? 'lg:col-span-1' : ''}`}>
           <h3 className="text-lg font-semibold text-gray-800 mb-4">付款方式分布</h3>
           {paymentMethodData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
@@ -280,7 +290,7 @@ const DashboardView: React.FC = () => {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${user?.role === 'admin' ? 'lg:col-span-1' : ''}`}>
           <h3 className="text-lg font-semibold text-gray-800 mb-4">最近活动</h3>
           <div className="space-y-4">
             {recentActivities.length > 0 ? (
