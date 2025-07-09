@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trophy, TrendingUp, Users, DollarSign, Calendar, Award, Target, Star, Filter, Download, ChevronLeft, ChevronRight, UsersRound, User, BarChart2 } from 'lucide-react';
+import { Trophy, TrendingUp, Users, DollarSign, Calendar, Award, Target, Star, Filter, Download, ChevronLeft, ChevronRight, UsersRound, User, BarChart2, Edit, Save, X } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { useOrders, useCustomers, useSalesPerformance } from '../../hooks/useDatabase';
 import { useAuth } from '../../context/AuthContext';
@@ -21,6 +21,18 @@ const SalesPerformanceView: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().substring(0, 7)); // YYYY-MM
   const [selectedWeek, setSelectedWeek] = useState<number>(getWeekNumber(new Date()));
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().substring(0, 10)); // YYYY-MM-DD
+
+  // 编辑状态管理
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState<{
+    [key: string]: {
+      [date: string]: {
+        traffic?: number;
+        orders?: number;
+        revenue?: number;
+      }
+    }
+  }>({});
 
   // 安全的数组操作
   const safeOrders = orders || [];
@@ -221,6 +233,117 @@ const SalesPerformanceView: React.FC = () => {
         break;
       }
     }
+  };
+
+  // 处理编辑数据
+  const handleEditStart = () => {
+    // 初始化编辑数据
+    const initialEditData: {
+      [key: string]: {
+        [date: string]: {
+          traffic?: number;
+          orders?: number;
+          revenue?: number;
+        }
+      }
+    } = {};
+    
+    if (viewMode === 'personal') {
+      performanceData.forEach(person => {
+        initialEditData[person.name] = {};
+        
+        if (timeRange === 'month') {
+          monthDays.forEach(day => {
+            initialEditData[person.name][day.date] = {
+              traffic: Math.floor(Math.random() * 20) + 5,
+              orders: Math.floor(Math.random() * 5),
+              revenue: Math.floor(Math.random() * 5) > 0 ? Math.round((Math.random() * 2 + 0.5) * 10000) : 0
+            };
+          });
+        } else if (timeRange === 'week') {
+          weekDays.forEach(day => {
+            initialEditData[person.name][day.date] = {
+              traffic: Math.floor(Math.random() * 20) + 5,
+              orders: Math.floor(Math.random() * 5),
+              revenue: Math.floor(Math.random() * 5) > 0 ? Math.round((Math.random() * 2 + 0.5) * 10000) : 0
+            };
+          });
+        } else if (timeRange === 'day') {
+          initialEditData[person.name][selectedDate] = {
+            traffic: Math.floor(Math.random() * 20) + 5,
+            orders: Math.floor(Math.random() * 5),
+            revenue: Math.floor(Math.random() * 5) > 0 ? Math.round((Math.random() * 2 + 0.5) * 10000) : 0
+          };
+        }
+      });
+    } else {
+      // 团队数据
+      sortedData.forEach(team => {
+        initialEditData[team.teamName] = {};
+        
+        if (timeRange === 'month') {
+          monthDays.forEach(day => {
+            initialEditData[team.teamName][day.date] = {
+              traffic: Math.floor(Math.random() * 40) + 10,
+              orders: Math.floor(Math.random() * 10),
+              revenue: Math.floor(Math.random() * 5) > 0 ? Math.round((Math.random() * 4 + 1) * 10000) : 0
+            };
+          });
+        } else if (timeRange === 'week') {
+          weekDays.forEach(day => {
+            initialEditData[team.teamName][day.date] = {
+              traffic: Math.floor(Math.random() * 40) + 10,
+              orders: Math.floor(Math.random() * 10),
+              revenue: Math.floor(Math.random() * 5) > 0 ? Math.round((Math.random() * 4 + 1) * 10000) : 0
+            };
+          });
+        } else if (timeRange === 'day') {
+          initialEditData[team.teamName][selectedDate] = {
+            traffic: Math.floor(Math.random() * 40) + 10,
+            orders: Math.floor(Math.random() * 10),
+            revenue: Math.floor(Math.random() * 5) > 0 ? Math.round((Math.random() * 4 + 1) * 10000) : 0
+          };
+        }
+      });
+    }
+    
+    setEditData(initialEditData);
+    setIsEditing(true);
+  };
+
+  const handleEditCancel = () => {
+    setIsEditing(false);
+    setEditData({});
+  };
+
+  const handleEditSave = () => {
+    // 这里应该调用API保存数据到数据库
+    // 在实际应用中，这里会调用updateSalesPerformance等方法
+    console.log('保存编辑数据:', editData);
+    
+    // 模拟保存成功
+    alert('数据保存成功！');
+    setIsEditing(false);
+  };
+
+  const handleDataChange = (
+    entityName: string, 
+    date: string, 
+    field: 'traffic' | 'orders' | 'revenue', 
+    value: string
+  ) => {
+    const numValue = parseInt(value) || 0;
+    
+    setEditData(prev => ({
+      ...prev,
+      [entityName]: {
+        ...prev[entityName],
+        [date]: {
+          ...prev[entityName]?.[date],
+          [field]: numValue
+        }
+      }
+    }));
   };
 
   if (ordersLoading || customersLoading) {
@@ -457,6 +580,36 @@ const SalesPerformanceView: React.FC = () => {
         </div>
         
         <div className="flex items-center space-x-4">
+          {/* 管理员编辑按钮 */}
+          {user?.role === 'admin' && (
+            isEditing ? (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={handleEditSave}
+                  className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  保存
+                </button>
+                <button 
+                  onClick={handleEditCancel}
+                  className="bg-gray-600 text-white px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  取消
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={handleEditStart}
+                className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                编辑数据
+              </button>
+            )
+          )}
+          
           {/* 时间范围切换 */}
           <div className="flex border border-gray-300 rounded-lg overflow-hidden">
             <button
@@ -752,18 +905,18 @@ const SalesPerformanceView: React.FC = () => {
                           {salesPerson.salesName}
                         </td>
                         {timeRange === 'month' && monthDays.map(day => (
-                          <td key={day.date} className="px-2 py-2 text-center text-xs text-gray-500 border-b border-gray-100">
-                            {/* 这里可以根据日期获取具体数据 */}
+                          <td key={day.date} className="px-2 py-2 text-center text-xs text-gray-500 border-b border-gray-100 min-w-[60px]">
+                            {/* 日期单元格内容 */}
                           </td>
                         ))}
                         {timeRange === 'week' && weekDays.map(day => (
-                          <td key={day.date} className="px-2 py-2 text-center text-xs text-gray-500 border-b border-gray-100">
-                            {/* 这里可以根据日期获取具体数据 */}
+                          <td key={day.date} className="px-2 py-2 text-center text-xs text-gray-500 border-b border-gray-100 min-w-[60px]">
+                            {/* 日期单元格内容 */}
                           </td>
                         ))}
                         {timeRange === 'day' && (
-                          <td className="px-4 py-2 text-center text-sm text-gray-500 border-b border-gray-100">
-                            {/* 这里可以根据日期获取具体数据 */}
+                          <td className="px-4 py-2 text-center text-sm text-gray-500 border-b border-gray-100 min-w-[60px]">
+                            {/* 日期单元格内容 */}
                           </td>
                         )}
                       </tr>
@@ -774,18 +927,48 @@ const SalesPerformanceView: React.FC = () => {
                           流量
                         </td>
                         {timeRange === 'month' && monthDays.map(day => (
-                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-blue-600">
-                            {Math.floor(Math.random() * 20) + 5}
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-blue-600 min-w-[60px]">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={editData[salesPerson.salesName]?.[day.date]?.traffic || 0}
+                                onChange={(e) => handleDataChange(salesPerson.salesName, day.date, 'traffic', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-blue-300 rounded text-xs"
+                              />
+                            ) : (
+                              Math.floor(Math.random() * 20) + 5
+                            )}
                           </td>
                         ))}
                         {timeRange === 'week' && weekDays.map(day => (
-                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-blue-600">
-                            {Math.floor(Math.random() * 20) + 5}
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-blue-600 min-w-[60px]">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={editData[salesPerson.salesName]?.[day.date]?.traffic || 0}
+                                onChange={(e) => handleDataChange(salesPerson.salesName, day.date, 'traffic', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-blue-300 rounded text-xs"
+                              />
+                            ) : (
+                              Math.floor(Math.random() * 20) + 5
+                            )}
                           </td>
                         ))}
                         {timeRange === 'day' && (
-                          <td className="px-4 py-2 text-center text-sm font-medium text-blue-600">
-                            {Math.floor(Math.random() * 20) + 5}
+                          <td className="px-4 py-2 text-center text-sm font-medium text-blue-600 min-w-[60px]">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={editData[salesPerson.salesName]?.[selectedDate]?.traffic || 0}
+                                onChange={(e) => handleDataChange(salesPerson.salesName, selectedDate, 'traffic', e.target.value)}
+                                className="w-full px-2 py-1 text-center border border-blue-300 rounded text-sm"
+                              />
+                            ) : (
+                              Math.floor(Math.random() * 20) + 5
+                            )}
                           </td>
                         )}
                       </tr>
@@ -796,18 +979,48 @@ const SalesPerformanceView: React.FC = () => {
                           订单数
                         </td>
                         {timeRange === 'month' && monthDays.map(day => (
-                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-green-600">
-                            {Math.floor(Math.random() * 5)}
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-green-600 min-w-[60px]">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={editData[salesPerson.salesName]?.[day.date]?.orders || 0}
+                                onChange={(e) => handleDataChange(salesPerson.salesName, day.date, 'orders', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-green-300 rounded text-xs"
+                              />
+                            ) : (
+                              Math.floor(Math.random() * 5)
+                            )}
                           </td>
                         ))}
                         {timeRange === 'week' && weekDays.map(day => (
-                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-green-600">
-                            {Math.floor(Math.random() * 5)}
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-green-600 min-w-[60px]">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={editData[salesPerson.salesName]?.[day.date]?.orders || 0}
+                                onChange={(e) => handleDataChange(salesPerson.salesName, day.date, 'orders', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-green-300 rounded text-xs"
+                              />
+                            ) : (
+                              Math.floor(Math.random() * 5)
+                            )}
                           </td>
                         ))}
                         {timeRange === 'day' && (
-                          <td className="px-4 py-2 text-center text-sm font-medium text-green-600">
-                            {Math.floor(Math.random() * 5)}
+                          <td className="px-4 py-2 text-center text-sm font-medium text-green-600 min-w-[60px]">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={editData[salesPerson.salesName]?.[selectedDate]?.orders || 0}
+                                onChange={(e) => handleDataChange(salesPerson.salesName, selectedDate, 'orders', e.target.value)}
+                                className="w-full px-2 py-1 text-center border border-green-300 rounded text-sm"
+                              />
+                            ) : (
+                              Math.floor(Math.random() * 5)
+                            )}
                           </td>
                         )}
                       </tr>
@@ -818,18 +1031,48 @@ const SalesPerformanceView: React.FC = () => {
                           业绩
                         </td>
                         {timeRange === 'month' && monthDays.map(day => (
-                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-red-600">
-                            {Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 2 + 0.5).toFixed(1)}万` : '-'}
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-red-600 min-w-[60px]">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={editData[salesPerson.salesName]?.[day.date]?.revenue || 0}
+                                onChange={(e) => handleDataChange(salesPerson.salesName, day.date, 'revenue', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-red-300 rounded text-xs"
+                              />
+                            ) : (
+                              Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 2 + 0.5).toFixed(1)}万` : '-'
+                            )}
                           </td>
                         ))}
                         {timeRange === 'week' && weekDays.map(day => (
-                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-red-600">
-                            {Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 2 + 0.5).toFixed(1)}万` : '-'}
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-red-600 min-w-[60px]">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={editData[salesPerson.salesName]?.[day.date]?.revenue || 0}
+                                onChange={(e) => handleDataChange(salesPerson.salesName, day.date, 'revenue', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-red-300 rounded text-xs"
+                              />
+                            ) : (
+                              Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 2 + 0.5).toFixed(1)}万` : '-'
+                            )}
                           </td>
                         ))}
                         {timeRange === 'day' && (
-                          <td className="px-4 py-2 text-center text-sm font-medium text-red-600">
-                            {Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 2 + 0.5).toFixed(1)}万` : '-'}
+                          <td className="px-4 py-2 text-center text-sm font-medium text-red-600 min-w-[60px]">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={editData[salesPerson.salesName]?.[selectedDate]?.revenue || 0}
+                                onChange={(e) => handleDataChange(salesPerson.salesName, selectedDate, 'revenue', e.target.value)}
+                                className="w-full px-2 py-1 text-center border border-red-300 rounded text-sm"
+                              />
+                            ) : (
+                              Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 2 + 0.5).toFixed(1)}万` : '-'
+                            )}
                           </td>
                         )}
                       </tr>
@@ -867,18 +1110,48 @@ const SalesPerformanceView: React.FC = () => {
                           流量
                         </td>
                         {timeRange === 'month' && monthDays.map(day => (
-                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-blue-600">
-                            {Math.floor(Math.random() * 40) + 10}
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-blue-600 min-w-[60px]">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={editData[team.teamName]?.[day.date]?.traffic || 0}
+                                onChange={(e) => handleDataChange(team.teamName, day.date, 'traffic', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-blue-300 rounded text-xs"
+                              />
+                            ) : (
+                              Math.floor(Math.random() * 40) + 10
+                            )}
                           </td>
                         ))}
                         {timeRange === 'week' && weekDays.map(day => (
-                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-blue-600">
-                            {Math.floor(Math.random() * 40) + 10}
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-blue-600 min-w-[60px]">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={editData[team.teamName]?.[day.date]?.traffic || 0}
+                                onChange={(e) => handleDataChange(team.teamName, day.date, 'traffic', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-blue-300 rounded text-xs"
+                              />
+                            ) : (
+                              Math.floor(Math.random() * 40) + 10
+                            )}
                           </td>
                         ))}
                         {timeRange === 'day' && (
-                          <td className="px-4 py-2 text-center text-sm font-medium text-blue-600">
-                            {Math.floor(Math.random() * 40) + 10}
+                          <td className="px-4 py-2 text-center text-sm font-medium text-blue-600 min-w-[60px]">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={editData[team.teamName]?.[selectedDate]?.traffic || 0}
+                                onChange={(e) => handleDataChange(team.teamName, selectedDate, 'traffic', e.target.value)}
+                                className="w-full px-2 py-1 text-center border border-blue-300 rounded text-sm"
+                              />
+                            ) : (
+                              Math.floor(Math.random() * 40) + 10
+                            )}
                           </td>
                         )}
                       </tr>
@@ -889,18 +1162,48 @@ const SalesPerformanceView: React.FC = () => {
                           订单数
                         </td>
                         {timeRange === 'month' && monthDays.map(day => (
-                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-green-600">
-                            {Math.floor(Math.random() * 10)}
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-green-600 min-w-[60px]">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={editData[team.teamName]?.[day.date]?.orders || 0}
+                                onChange={(e) => handleDataChange(team.teamName, day.date, 'orders', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-green-300 rounded text-xs"
+                              />
+                            ) : (
+                              Math.floor(Math.random() * 10)
+                            )}
                           </td>
                         ))}
                         {timeRange === 'week' && weekDays.map(day => (
-                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-green-600">
-                            {Math.floor(Math.random() * 10)}
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-green-600 min-w-[60px]">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={editData[team.teamName]?.[day.date]?.orders || 0}
+                                onChange={(e) => handleDataChange(team.teamName, day.date, 'orders', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-green-300 rounded text-xs"
+                              />
+                            ) : (
+                              Math.floor(Math.random() * 10)
+                            )}
                           </td>
                         ))}
                         {timeRange === 'day' && (
-                          <td className="px-4 py-2 text-center text-sm font-medium text-green-600">
-                            {Math.floor(Math.random() * 10)}
+                          <td className="px-4 py-2 text-center text-sm font-medium text-green-600 min-w-[60px]">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={editData[team.teamName]?.[selectedDate]?.orders || 0}
+                                onChange={(e) => handleDataChange(team.teamName, selectedDate, 'orders', e.target.value)}
+                                className="w-full px-2 py-1 text-center border border-green-300 rounded text-sm"
+                              />
+                            ) : (
+                              Math.floor(Math.random() * 10)
+                            )}
                           </td>
                         )}
                       </tr>
@@ -911,18 +1214,48 @@ const SalesPerformanceView: React.FC = () => {
                           业绩
                         </td>
                         {timeRange === 'month' && monthDays.map(day => (
-                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-red-600">
-                            {Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 4 + 1).toFixed(1)}万` : '-'}
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-red-600 min-w-[60px]">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={editData[team.teamName]?.[day.date]?.revenue || 0}
+                                onChange={(e) => handleDataChange(team.teamName, day.date, 'revenue', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-red-300 rounded text-xs"
+                              />
+                            ) : (
+                              Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 4 + 1).toFixed(1)}万` : '-'
+                            )}
                           </td>
                         ))}
                         {timeRange === 'week' && weekDays.map(day => (
-                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-red-600">
-                            {Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 4 + 1).toFixed(1)}万` : '-'}
+                          <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-red-600 min-w-[60px]">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={editData[team.teamName]?.[day.date]?.revenue || 0}
+                                onChange={(e) => handleDataChange(team.teamName, day.date, 'revenue', e.target.value)}
+                                className="w-full px-1 py-1 text-center border border-red-300 rounded text-xs"
+                              />
+                            ) : (
+                              Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 4 + 1).toFixed(1)}万` : '-'
+                            )}
                           </td>
                         ))}
                         {timeRange === 'day' && (
-                          <td className="px-4 py-2 text-center text-sm font-medium text-red-600">
-                            {Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 4 + 1).toFixed(1)}万` : '-'}
+                          <td className="px-4 py-2 text-center text-sm font-medium text-red-600 min-w-[60px]">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={editData[team.teamName]?.[selectedDate]?.revenue || 0}
+                                onChange={(e) => handleDataChange(team.teamName, selectedDate, 'revenue', e.target.value)}
+                                className="w-full px-2 py-1 text-center border border-red-300 rounded text-sm"
+                              />
+                            ) : (
+                              Math.floor(Math.random() * 5) > 0 ? `¥${(Math.random() * 4 + 1).toFixed(1)}万` : '-'
+                            )}
                           </td>
                         )}
                       </tr>
