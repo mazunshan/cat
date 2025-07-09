@@ -39,13 +39,13 @@ const FinancialDetailsView: React.FC = () => {
   // 获取月份的所有日期
   const getMonthDays = (monthStr: string) => {
     const [year, month] = monthStr.split('-').map(Number);
-    const daysInMonth = getDaysInMonth(monthStr);
     const days = [];
+    const daysInMonth = new Date(year, month, 0).getDate();
     
     for (let i = 1; i <= daysInMonth; i++) {
       const date = new Date(year, month - 1, i);
       days.push({
-        date: date.toISOString().substring(0, 10),
+        date: `${year}-${String(month).padStart(2, '0')}-${String(i).padStart(2, '0')}`,
         day: i,
         weekday: ['日', '一', '二', '三', '四', '五', '六'][date.getDay()]
       });
@@ -372,7 +372,7 @@ const FinancialDetailsView: React.FC = () => {
                         {dayInfo.day}日 (周{dayInfo.weekday})
                       </div>
                       <div className="text-xs text-gray-500">
-                        {new Date(item.date).toLocaleDateString('zh-CN')}
+                        {item.date}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -481,7 +481,7 @@ const FinancialDetailsView: React.FC = () => {
                         {dayInfo.day}日 (周{dayInfo.weekday})
                       </div>
                       <div className="text-xs text-gray-500">
-                        {new Date(item.date).toLocaleDateString('zh-CN')}
+                        {item.date}
                       </div>
                     </td>
                     <td className="px-6 py-4">
