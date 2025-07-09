@@ -458,7 +458,6 @@ const DashboardView: React.FC = () => {
         </div>
       )}
       </div>
-    </div>
   );
 };
 
