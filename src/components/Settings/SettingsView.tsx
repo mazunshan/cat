@@ -1217,7 +1217,6 @@ const SettingsView: React.FC = () => {
               </div>
             </div>
           )}
-
         </div>
       </div>
     </div>
