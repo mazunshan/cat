@@ -6,8 +6,6 @@ import Header from './components/Layout/Header';
 import WelcomeToast from './components/Common/WelcomeToast';
 import DashboardView from './components/Dashboard/DashboardView';
 import CustomersView from './components/Customers/CustomersView';
-import OrdersView from './components/Orders/OrdersView';
-import ProductsView from './components/Products/ProductsView';
 import KnowledgeView from './components/Knowledge/KnowledgeView';
 import SettingsView from './components/Settings/SettingsView';
 import AfterSalesView from './components/AfterSales/AfterSalesView';
@@ -44,10 +42,6 @@ const AppContent: React.FC = () => {
         return <DashboardView />;
       case 'customers':
         return <CustomersView />;
-      case 'orders':
-        return <OrdersView />;
-      case 'products':
-        return <ProductsView />;
       case 'knowledge':
         return <KnowledgeView />;
       case 'analytics':

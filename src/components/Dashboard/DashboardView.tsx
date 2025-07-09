@@ -1,21 +1,17 @@
 import React from 'react';
-import { Users, ShoppingBag, DollarSign, TrendingUp, Clock, AlertTriangle } from 'lucide-react';
+import { Users, DollarSign, TrendingUp, Clock, AlertTriangle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import StatsCard from './StatsCard';
-import { useCustomers, useOrders, useProducts } from '../../hooks/useDatabase';
+import { useCustomers } from '../../hooks/useDatabase';
 
 const DashboardView: React.FC = () => {
   const { customers = [], loading: customersLoading, error: customersError } = useCustomers();
-  const { orders = [], loading: ordersLoading, error: ordersError } = useOrders();
-  const { products = [], loading: productsLoading, error: productsError } = useProducts();
 
-  const loading = customersLoading || ordersLoading || productsLoading;
-  const hasErrors = customersError || ordersError || productsError;
+  const loading = customersLoading;
+  const hasErrors = customersError;
 
   // 安全的数组操作
   const safeCustomers = customers || [];
-  const safeOrders = orders || [];
-  const safeProducts = products || [];
 
   if (loading) {
     return (
@@ -29,48 +25,19 @@ const DashboardView: React.FC = () => {
   }
 
   // 计算统计数据
-  const totalRevenue = safeOrders.reduce((sum, order) => sum + (order.amount || 0), 0);
-  const completedOrders = safeOrders.filter(order => order.status === 'completed');
-  const pendingPayments = safeOrders.filter(order => 
-    order.status === 'pending_payment' || 
-    (order.paymentMethod === 'installment' && order.installmentPlan && 
-     (order.installmentPlan.paidInstallments || 0) < (order.installmentPlan.totalInstallments || 0))
-  ).length;
-
-  // 计算逾期付款
-  const overduePayments = safeOrders.filter(order => {
-    if (order.paymentMethod === 'installment' && order.installmentPlan) {
-      return (order.installmentPlan.payments || []).some(payment => 
-        payment.status === 'overdue' || 
-        (payment.status === 'pending' && new Date(payment.dueDate) < new Date())
-      );
-    }
-    return false;
-  }).length;
+  const totalRevenue = 0;
+  const pendingPayments = 0;
+  const overduePayments = 0;
 
   // 计算月度增长率
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
   const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
   const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-
-  const currentMonthRevenue = safeOrders
-    .filter(order => {
-      const orderDate = new Date(order.orderDate);
-      return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear;
-    })
-    .reduce((sum, order) => sum + (order.amount || 0), 0);
-
-  const lastMonthRevenue = safeOrders
-    .filter(order => {
-      const orderDate = new Date(order.orderDate);
-      return orderDate.getMonth() === lastMonth && orderDate.getFullYear() === lastMonthYear;
-    })
-    .reduce((sum, order) => sum + (order.amount || 0), 0);
-
-  const monthlyGrowth = lastMonthRevenue > 0 
-    ? ((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 
-    : 0;
+  
+  const currentMonthRevenue = 0;
+  const lastMonthRevenue = 0;
+  const monthlyGrowth = 0;
 
   // 生成销售趋势数据（最近6个月）
   const salesData = [];
@@ -79,64 +46,40 @@ const DashboardView: React.FC = () => {
     date.setMonth(date.getMonth() - i);
     const month = date.getMonth();
     const year = date.getFullYear();
-    
-    const monthOrders = safeOrders.filter(order => {
-      const orderDate = new Date(order.orderDate);
-      return orderDate.getMonth() === month && orderDate.getFullYear() === year;
-    });
-    
-    const monthRevenue = monthOrders.reduce((sum, order) => sum + (order.amount || 0), 0);
-    
+
+    // 模拟数据
+    const monthRevenue = Math.floor(Math.random() * 500000) + 100000;
+    const monthOrders = Math.floor(Math.random() * 20) + 5;
+
     salesData.push({
       name: `${month + 1}月`,
       sales: monthRevenue,
-      orders: monthOrders.length
+      orders: monthOrders
     });
   }
 
-  // 品种销售分布
-  const breedStats = safeProducts.reduce((acc, product) => {
-    const orderCount = safeOrders.filter(order => 
-      (order.products || []).some(p => p.id === product.id)
-    ).length;
-    
-    if (acc[product.breed]) {
-      acc[product.breed] += orderCount;
-    } else {
-      acc[product.breed] = orderCount;
-    }
-    return acc;
-  }, {} as Record<string, number>);
+  // 模拟品种销售分布数据
+  const breedData = [
+    { name: '英国短毛猫', value: 35, color: '#3B82F6' },
+    { name: '布偶猫', value: 25, color: '#10B981' },
+    { name: '波斯猫', value: 20, color: '#F59E0B' },
+    { name: '暹罗猫', value: 15, color: '#EF4444' },
+    { name: '美国短毛猫', value: 5, color: '#8B5CF6' }
+  ];
 
-  const totalBreedOrders = Object.values(breedStats).reduce((sum, count) => sum + count, 0);
-  
-  const breedData = Object.entries(breedStats)
-    .map(([breed, count], index) => ({
-      name: breed,
-      value: totalBreedOrders > 0 ? Math.round((count / totalBreedOrders) * 100) : 0,
-      color: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'][index % 5]
-    }))
-    .filter(item => item.value > 0)
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 5);
-
-  // 付款方式分布
-  const fullPaymentCount = safeOrders.filter(order => order.paymentMethod === 'full').length;
-  const installmentCount = safeOrders.filter(order => order.paymentMethod === 'installment').length;
-  const totalOrders = safeOrders.length;
-
+  // 模拟付款方式分布
   const paymentMethodData = [
     {
       name: '全款',
-      value: totalOrders > 0 ? Math.round((fullPaymentCount / totalOrders) * 100) : 0,
+      value: 65,
       color: '#3B82F6'
     },
     {
       name: '分期',
-      value: totalOrders > 0 ? Math.round((installmentCount / totalOrders) * 100) : 0,
+      value: 35,
       color: '#10B981'
     }
-  ].filter(item => item.value > 0);
+  ];
 
   // 最近活动数据
   const recentActivities = [
@@ -146,24 +89,7 @@ const DashboardView: React.FC = () => {
       description: `${customer.name} 刚刚注册`,
       time: new Date(customer.createdAt).getTime(),
       color: 'blue'
-    })),
-    ...safeOrders.slice(0, 2).map(order => ({
-      type: 'order',
-      title: order.status === 'completed' ? '订单完成' : '新订单',
-      description: `订单 ${order.orderNumber} ${order.status === 'completed' ? '已完成' : '已创建'}`,
-      time: new Date(order.orderDate).getTime(),
-      color: order.status === 'completed' ? 'green' : 'blue'
-    })),
-    ...safeOrders
-      .filter(order => order.paymentMethod === 'installment' && order.installmentPlan)
-      .slice(0, 1)
-      .map(order => ({
-        type: 'payment',
-        title: '付款提醒',
-        description: `${safeCustomers.find(c => c.id === order.customerId)?.name || '客户'}的分期付款到期`,
-        time: new Date(order.installmentPlan!.nextPaymentDate).getTime(),
-        color: 'yellow'
-      }))
+    }))
   ]
   .sort((a, b) => b.time - a.time)
   .slice(0, 3);
@@ -211,18 +137,6 @@ const DashboardView: React.FC = () => {
           }).length > 0 ? 12.5 : 0}
           icon={Users}
           color="blue"
-        />
-        <StatsCard
-          title="总订单数"
-          value={safeOrders.length}
-          change={safeOrders.filter(o => {
-            const orderDate = new Date(o.orderDate);
-            const now = new Date();
-            return orderDate.getMonth() === now.getMonth() && 
-                   orderDate.getFullYear() === now.getFullYear();
-          }).length > 0 ? 8.3 : 0}
-          icon={ShoppingBag}
-          color="green"
         />
         <StatsCard
           title="总营收"
