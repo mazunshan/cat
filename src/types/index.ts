@@ -34,62 +34,14 @@ export interface Customer {
   gender: 'male' | 'female';
   phone: string;
   wechat: string;
-  customerType?: 'retail' | 'installment';
   address: string;
   occupation: string;
   // 客户类型
   customerType?: 'retail' | 'installment';
+  
   // 零售客户特有字段
   orderDate?: string;
   salesPerson?: string;
-  catName?: string;
-  catBirthday?: string;
-  isMallMember?: boolean;
-  catBreed?: string;
-  catGender?: 'male' | 'female';
-  supplyChain?: string;
-  supplyChainDeposit?: number;
-  totalAmount?: number;
-  paymentMethod?: 'full' | 'cod' | 'balance';
-  customerDeposit?: number;
-  depositDestination?: string;
-  shippingDate?: string;
-  shippingVideo?: string;
-  balance?: number;
-  balancePaid?: boolean;
-  balanceConfirmMethod?: string;
-  sellingPrice?: number;
-  cost?: number;
-  shippingFee?: number;
-  profit?: number;
-  profitRate?: number;
-  // 分期客户特有字段
-  contractName?: string;
-  relationship?: string;
-  isInGroup?: boolean;
-  repaymentDate?: string;
-  installmentPeriod?: string;
-  catCost?: number;
-  receivableAmount?: number;
-  paymentDestination?: string;
-  installmentAmount?: number;
-  installmentCount?: number;
-  signingMethod?: string;
-  isFirstManualTransfer?: boolean;
-  hasESignContract?: boolean;
-  contractTotalPrice?: number;
-  mallGrossProfit?: number;
-  monthlyProfit?: number;
-  breakEvenPeriod?: number;
-  // 通用字段
-  tags: string[];
-  notes: string;
-  createdAt: string;
-  files: CustomerFile[];
-  orders: Order[];
-  
-  // 零售客户字段
-  orderDate?: string;
   catName?: string;
   catBirthday?: string;
   isMallMember?: boolean;
@@ -102,7 +54,7 @@ export interface Customer {
   customerDeposit?: number;
   depositDestination?: string;
   shippingDate?: string;
-  shippingVideo?: string;
+  shippingVideoUrl?: string;
   balance?: number;
   balancePaid?: boolean;
   balanceConfirmMethod?: string;
@@ -112,7 +64,7 @@ export interface Customer {
   profit?: number;
   profitRate?: number;
   
-  // 分期客户字段
+  // 分期客户特有字段
   contractName?: string;
   relationship?: string;
   isInGroup?: boolean;
@@ -131,6 +83,27 @@ export interface Customer {
   grossProfit?: number;
   monthlyProfit?: number;
   breakEvenPeriod?: number;
+  
+  // 分期还款记录
+  installmentPayments?: InstallmentPayment[];
+  
+  // 通用字段  
+  tags: string[];
+  notes: string;
+  createdAt: string;
+  files: CustomerFile[];
+  orders: Order[];
+}
+
+export interface InstallmentPayment {
+  id: string;
+  installmentNumber: number;
+  amount: number;
+  dueDate: string;
+  paidDate?: string;
+  isPaid: boolean;
+  isOverdue: boolean;
+  overdueCount?: number;
 }
 
 export interface CustomerFile {
@@ -314,6 +287,17 @@ export interface Announcement {
   created_by: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface OverdueReminder {
+  id: string;
+  customerId: string;
+  customerName: string;
+  type: 'overdue' | 'due_soon';
+  overdueCount?: number;
+  nextPaymentDate: string;
+  amount: number;
+  createdAt: string;
 }
 
 export interface AuthState {

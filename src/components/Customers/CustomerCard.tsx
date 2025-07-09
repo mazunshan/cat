@@ -1,6 +1,6 @@
 import React from 'react';
-import { Phone, MessageCircle, MapPin, Briefcase, Tag, Edit, Trash2 } from 'lucide-react';
-import { Customer } from '../../types';
+import { Phone, MessageCircle, MapPin, Briefcase, Tag, Edit, Trash2, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
+import { Customer, InstallmentPayment } from '../../types';
 
 interface CustomerCardProps {
   customer: Customer;
@@ -20,11 +20,71 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onClick, onEdit, 
     onDelete(customer);
   };
 
+  // 计算分期客户的还款状态
+  const getPaymentStatus = () => {
+    if (customer.customerType !== 'installment' || !customer.installmentPayments) {
+      return null;
+    }
+
+    const payments = customer.installmentPayments;
+    const overduePayments = payments.filter(p => p.isOverdue && !p.isPaid);
+    const dueSoonPayments = payments.filter(p => {
+      if (p.isPaid) return false;
+      const dueDate = new Date(p.dueDate);
+      const today = new Date();
+      const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return diffDays <= 3 && diffDays >= 0;
+    });
+
+    if (overduePayments.length > 0) {
+      const totalOverdueCount = overduePayments.reduce((sum, p) => sum + (p.overdueCount || 1), 0);
+      return {
+        type: 'overdue' as const,
+        count: totalOverdueCount,
+        label: `逾期 (${totalOverdueCount}次)`
+      };
+    }
+
+    if (dueSoonPayments.length > 0) {
+      return {
+        type: 'due_soon' as const,
+        count: dueSoonPayments.length,
+        label: '待催款'
+      };
+    }
+
+    return {
+      type: 'normal' as const,
+      count: 0,
+      label: '还款正常'
+    };
+  };
+
+  const paymentStatus = getPaymentStatus();
+
   return (
     <div 
       className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all cursor-pointer hover:border-blue-200 group"
       onClick={onClick}
     >
+      {/* 分期客户还款状态标签 */}
+      {paymentStatus && (
+        <div className="mb-3">
+          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+            paymentStatus.type === 'overdue' 
+              ? 'bg-red-100 text-red-600 border border-red-200' 
+              : paymentStatus.type === 'due_soon'
+              ? 'bg-yellow-100 text-yellow-600 border border-yellow-200'
+              : 'bg-green-100 text-green-600 border border-green-200'
+          }`}>
+            {paymentStatus.type === 'overdue' && <AlertTriangle className="w-3 h-3 mr-1" />}
+            {paymentStatus.type === 'due_soon' && <Clock className="w-3 h-3 mr-1" />}
+            {paymentStatus.type === 'normal' && <CheckCircle className="w-3 h-3 mr-1" />}
+            {paymentStatus.label}
+          </span>
+        </div>
+      )}
+
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center">
           <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -34,7 +94,18 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onClick, onEdit, 
           </div>
           <div className="ml-3">
             <h3 className="font-semibold text-gray-800">{customer.name}</h3>
-            <p className="text-sm text-gray-600">{customer.assignedSales}</p>
+            <div className="flex items-center space-x-2">
+              <p className="text-sm text-gray-600">{customer.salesPerson || customer.assignedSales}</p>
+              {customer.customerType && (
+                <span className={`px-2 py-0.5 text-xs rounded-full ${
+                  customer.customerType === 'retail' 
+                    ? 'bg-blue-100 text-blue-600' 
+                    : 'bg-purple-100 text-purple-600'
+                }`}>
+                  {customer.customerType === 'retail' ? '零售' : '分期'}
+                </span>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex items-center space-x-2">
@@ -79,6 +150,12 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onClick, onEdit, 
           <Briefcase className="w-4 h-4 mr-2" />
           <span>{customer.occupation}</span>
         </div>
+        {customer.catName && (
+          <div className="flex items-center text-sm text-gray-600">
+            <span className="w-4 h-4 mr-2">🐱</span>
+            <span>{customer.catName} ({customer.catGender === 'male' ? '弟弟' : '妹妹'})</span>
+          </div>
+        )}
       </div>
 
       {customer.tags.length > 0 && (
@@ -115,6 +192,11 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onClick, onEdit, 
         <div className="flex items-center space-x-2">
           <span className="text-xs text-gray-500">订单: {customer.orders.length}</span>
           <span className="text-xs text-gray-500">文件: {customer.files.length}</span>
+          {customer.customerType === 'installment' && customer.installmentPayments && (
+            <span className="text-xs text-gray-500">
+              还款: {customer.installmentPayments.filter(p => p.isPaid).length}/{customer.installmentPayments.length}
+            </span>
+          )}
         </div>
       </div>
     </div>
