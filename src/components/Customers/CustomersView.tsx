@@ -201,22 +201,10 @@ const CustomersView: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <p className="text-sm text-gray-600">总客户数</p>
           <p className="text-2xl font-bold text-gray-800">{safeCustomers.length}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <p className="text-sm text-gray-600">本月新增</p>
-          <p className="text-2xl font-bold text-green-600">
-            {safeCustomers.filter(c => {
-              const createdDate = new Date(c.createdAt);
-              const now = new Date();
-              return createdDate.getMonth() === now.getMonth() && 
-                     createdDate.getFullYear() === now.getFullYear();
-            }).length}
-          </p>
-        </div>
       </div>
 
       {/* Customer Grid */}
