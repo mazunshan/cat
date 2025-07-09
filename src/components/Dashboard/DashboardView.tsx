@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, DollarSign, TrendingUp, Clock, AlertTriangle, Edit, Trash2 } from 'lucide-react';
+import { Users, DollarSign, TrendingUp, AlertTriangle, Trash2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import StatsCard from './StatsCard';
 import { useCustomers } from '../../hooks/useDatabase';
@@ -92,8 +92,6 @@ const DashboardView: React.FC = () => {
 
   // 计算统计数据
   const totalRevenue = 0;
-  const pendingPayments = 0;
-  const overduePayments = 0;
 
   // 计算月度增长率
   const currentMonth = new Date().getMonth();
@@ -164,6 +162,59 @@ const DashboardView: React.FC = () => {
         </div>
       )}
 
+      {/* 逾期提醒列表 - 仅管理员可见，移到顶部 */}
+      {user?.role === 'admin' && overdueReminders.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">逾期提醒</h3>
+          <div className="space-y-3 max-h-80 overflow-y-auto">
+            {overdueReminders.map((item) => (
+              <div
+                key={item.id}
+                className={`p-3 rounded-lg border ${
+                  item.status.status === 'overdue'
+                    ? 'bg-red-50 border-red-200'
+                    : 'bg-yellow-50 border-yellow-200'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center">
+                      <span className="font-medium text-gray-900">
+                        {item.customer.name}
+                      </span>
+                      <span className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${
+                        item.status.status === 'overdue'
+                          ? 'bg-red-100 text-red-600'
+                          : 'bg-yellow-100 text-yellow-600'
+                      }`}>
+                        {item.status.message}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {item.customer.phone}
+                    </div>
+                    {item.status.nextDueDate && (
+                      <div className="text-xs text-gray-500">
+                        下次还款: {new Date(item.status.nextDueDate).toLocaleDateString('zh-CN')}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-1 ml-2">
+                    <button
+                      onClick={() => handleDeleteReminder(item.id)}
+                      className="p-1 text-red-600 hover:bg-red-100 rounded"
+                      title="移除提醒"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatsCard
@@ -190,18 +241,6 @@ const DashboardView: React.FC = () => {
           value={`${monthlyGrowth.toFixed(1)}%`}
           icon={TrendingUp}
           color="green"
-        />
-        <StatsCard
-          title="待付款"
-          value={pendingPayments}
-          icon={Clock}
-          color="yellow"
-        />
-        <StatsCard
-          title="逾期付款"
-          value={overduePayments}
-          icon={AlertTriangle}
-          color="red"
         />
       </div>
 
@@ -318,66 +357,6 @@ const DashboardView: React.FC = () => {
             </div>
           )}
         </div>
-
-        {/* 逾期提醒列表 - 仅管理员可见 */}
-        {user?.role === 'admin' && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">逾期提醒</h3>
-            <div className="space-y-3 max-h-80 overflow-y-auto">
-              {overdueReminders.length > 0 ? (
-                overdueReminders.map((item) => (
-                  <div
-                    key={item.id}
-                    className={`p-3 rounded-lg border ${
-                      item.status.status === 'overdue'
-                        ? 'bg-red-50 border-red-200'
-                        : 'bg-yellow-50 border-yellow-200'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center">
-                          <span className="font-medium text-gray-900">
-                            {item.customer.name}
-                          </span>
-                          <span className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${
-                            item.status.status === 'overdue'
-                              ? 'bg-red-100 text-red-600'
-                              : 'bg-yellow-100 text-yellow-600'
-                          }`}>
-                            {item.status.message}
-                          </span>
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {item.customer.phone}
-                        </div>
-                        {item.status.nextDueDate && (
-                          <div className="text-xs text-gray-500">
-                            下次还款: {new Date(item.status.nextDueDate).toLocaleDateString('zh-CN')}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-1 ml-2">
-                        <button
-                          onClick={() => handleDeleteReminder(item.id)}
-                          className="p-1 text-red-600 hover:bg-red-100 rounded"
-                          title="移除提醒"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                  <p className="text-sm">暂无逾期提醒</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
