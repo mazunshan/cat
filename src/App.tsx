@@ -9,7 +9,7 @@ import CustomersView from './components/Customers/CustomersView';
 import KnowledgeView from './components/Knowledge/KnowledgeView';
 import SettingsView from './components/Settings/SettingsView';
 import AfterSalesView from './components/AfterSales/AfterSalesView';
-import SalesPerformanceView from './components/Dashboard/SalesPerformanceView';
+import SalesPerformanceView from './components/SalesPerformance/SalesPerformanceView';
 import FinancialDetailsView from './components/Financial/FinancialDetailsView';
 import AnnouncementView from './components/Announcements/AnnouncementView';
 import AnnouncementBanner from './components/Announcements/AnnouncementBanner';
