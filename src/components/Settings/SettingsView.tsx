@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Users, Shield, Bell, Globe, RefreshCw, Trash2, AlertTriangle, CheckCircle, User, Key, Copy, Clock, UserPlus, UsersRound, Plus, Edit, X } from 'lucide-react';
+import { Save, Users, Shield, Globe, RefreshCw, Trash2, AlertTriangle, CheckCircle, User, Key, Copy, Clock, UserPlus, UsersRound, Plus, Edit, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext'; 
 import { BusinessHours } from '../../types';
 import { getWorkDayNames, formatTimeRange } from '../../utils/attendanceUtils';
@@ -14,15 +14,6 @@ interface SystemSettings {
     businessHours: string;
     timezone: string;
     currency: string;
-  };
-  notifications: {
-    emailNotifications: boolean;
-    smsNotifications: boolean;
-    orderReminders: boolean;
-    paymentReminders: boolean;
-    systemAlerts: boolean;
-    reminderDays: number;
-    emailTemplate: string;
   };
   security: {
     requireVerificationCode: boolean;
@@ -96,15 +87,6 @@ const SettingsView: React.FC = () => {
       timezone: 'Asia/Shanghai',
       currency: 'CNY'
     },
-    notifications: {
-      emailNotifications: true,
-      smsNotifications: false,
-      orderReminders: true,
-      paymentReminders: true,
-      systemAlerts: true,
-      reminderDays: 3,
-      emailTemplate: '亲爱的客户，您的订单 {orderNumber} 状态已更新为 {status}。'
-    },
     security: {
       requireVerificationCode: systemSettings.requireVerificationCode,
       sessionTimeout: 30,
@@ -144,7 +126,6 @@ const SettingsView: React.FC = () => {
     { id: 'users', label: '用户管理', icon: Users },
     { id: 'teams', label: '团队管理', icon: UsersRound },
     { id: 'security', label: '安全设置', icon: Shield },
-    { id: 'notifications', label: '通知设置', icon: Bell }
   ];
 
   // 同步系统设置
@@ -1286,95 +1267,16 @@ const SettingsView: React.FC = () => {
     </div>
   );
 
-  const renderNotificationSettings = () => (
-    <div className="space-y-6">
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-6">通知配置</h3>
-        <div className="space-y-6">
-          {[
-            { key: 'emailNotifications', label: '邮件通知', desc: '接收系统邮件通知' },
-            { key: 'smsNotifications', label: '短信通知', desc: '接收重要短信提醒' },
-            { key: 'orderReminders', label: '订单提醒', desc: '新订单和订单状态变更提醒' },
-            { key: 'paymentReminders', label: '付款提醒', desc: '分期付款到期提醒' },
-            { key: 'systemAlerts', label: '系统警报', desc: '系统异常和安全警报' }
-          ].map((item) => (
-            <div key={item.key} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div>
-                <h4 className="font-medium text-gray-800">{item.label}</h4>
-                <p className="text-sm text-gray-600">{item.desc}</p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={settings.notifications[item.key as keyof typeof settings.notifications] as boolean}
-                  onChange={(e) => setSettings(prev => ({
-                    ...prev,
-                    notifications: { 
-                      ...prev.notifications, 
-                      [item.key]: e.target.checked 
-                    }
-                  }))}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
-            </div>
-          ))}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                提醒提前天数
-              </label>
-              <input
-                type="number"
-                value={settings.notifications.reminderDays}
-                onChange={(e) => setSettings(prev => ({
-                  ...prev,
-                  notifications: { ...prev.notifications, reminderDays: parseInt(e.target.value) }
-                }))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              邮件模板
-            </label>
-            <textarea
-              value={settings.notifications.emailTemplate}
-              onChange={(e) => setSettings(prev => ({
-                ...prev,
-                notifications: { ...prev.notifications, emailTemplate: e.target.value }
-              }))}
-              rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="使用 {orderNumber}, {status}, {customerName} 等变量"
-            />
-            <p className="text-sm text-gray-500 mt-2">
-              可用变量: {'{orderNumber}'}, {'{status}'}, {'{customerName}'}, {'{amount}'}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   const renderContent = () => {
     switch (activeTab) {
       case 'general':
         return renderGeneralSettings();
       case 'teams':
         return renderTeamManagement();
-      case 'teams':
-        return renderTeamManagement();
       case 'users':
         return renderUserManagement();
       case 'security':
         return renderSecuritySettings();
-      case 'notifications':
-        return renderNotificationSettings();
       default:
         return renderGeneralSettings();
     }
