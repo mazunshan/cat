@@ -147,32 +147,6 @@ const DashboardView: React.FC = () => {
     }
   ];
 
-  // 最近活动数据
-  const recentActivities = [
-    ...safeCustomers.slice(0, 2).map(customer => ({
-      type: 'customer',
-      title: '新客户注册',
-      description: `${customer.name} 刚刚注册`,
-      time: new Date(customer.createdAt).getTime(),
-      color: 'blue'
-    }))
-  ]
-  .sort((a, b) => b.time - a.time)
-  .slice(0, 3);
-
-  const getActivityTimeText = (timestamp: number) => {
-    const now = Date.now();
-    const diff = now - timestamp;
-    const minutes = Math.floor(diff / (1000 * 60));
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (days > 0) return `${days}天前`;
-    if (hours > 0) return `${hours}小时前`;
-    if (minutes > 0) return `${minutes}分钟前`;
-    return '刚刚';
-  };
-
   return (
     <div className="space-y-6">
       {/* 错误提示 */}
@@ -343,37 +317,6 @@ const DashboardView: React.FC = () => {
               <p>暂无订单数据</p>
             </div>
           )}
-        </div>
-
-        {/* Recent Activity */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">最近活动</h3>
-          <div className="space-y-4">
-            {recentActivities.length > 0 ? (
-              recentActivities.map((activity, index) => (
-                <div key={index} className={`flex items-center p-3 rounded-lg ${
-                  activity.color === 'blue' ? 'bg-blue-50' :
-                  activity.color === 'green' ? 'bg-green-50' :
-                  'bg-yellow-50'
-                }`}>
-                  <div className={`w-2 h-2 rounded-full mr-3 ${
-                    activity.color === 'blue' ? 'bg-blue-500' :
-                    activity.color === 'green' ? 'bg-green-500' :
-                    'bg-yellow-500'
-                  }`} />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-800">{activity.title}</p>
-                    <p className="text-xs text-gray-600">{activity.description}</p>
-                  </div>
-                  <span className="text-xs text-gray-500">{getActivityTimeText(activity.time)}</span>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <p>暂无最近活动</p>
-              </div>
-            )}
-          </div>
         </div>
 
         {/* 逾期提醒列表 - 仅管理员可见 */}
