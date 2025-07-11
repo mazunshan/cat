@@ -33,14 +33,18 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
       });
     }
 
-    // 管理员特有的菜单项
-    if (user?.role === 'admin') {
+    // 管理员和销售员特有的菜单项
+    if (user?.role === 'admin' || user?.role === 'sales') {
       baseItems.push({ 
         id: 'analytics', 
         label: '销售业绩排名', 
         icon: Trophy, 
         roles: ['admin'] 
       });
+
+    }
+ // 管理员特有的菜单项
+    if (user?.role === 'admin') {
       baseItems.push({ 
         id: 'settings', 
         label: '系统设置', 
@@ -48,6 +52,22 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
         roles: ['admin'] 
       });
     }
+
+    // 管理员特有的菜单项
+    // if (user?.role === 'admin') {
+    //   baseItems.push({ 
+    //     id: 'analytics', 
+    //     label: '销售业绩排名', 
+    //     icon: Trophy, 
+    //     roles: ['admin'] 
+    //   });
+    //   baseItems.push({ 
+    //     id: 'settings', 
+    //     label: '系统设置', 
+    //     icon: Settings, 
+    //     roles: ['admin'] 
+    //   });
+    // }
 
     // 根据当前用户角色过滤菜单项
     return baseItems.filter(item => item.roles.includes(user?.role || ''));
