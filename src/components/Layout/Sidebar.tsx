@@ -33,14 +33,16 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
       });
     }
 
+    // 销售业绩排名 - 所有角色都可以查看
+    baseItems.push({ 
+      id: 'analytics', 
+      label: '销售业绩排名', 
+      icon: Trophy, 
+      roles: ['admin', 'sales', 'after_sales'] 
+    });
+
     // 管理员特有的菜单项
     if (user?.role === 'admin') {
-      baseItems.push({ 
-        id: 'analytics', 
-        label: '销售业绩排名', 
-        icon: Trophy, 
-        roles: ['admin'] 
-      });
       baseItems.push({ 
         id: 'settings', 
         label: '系统设置', 
