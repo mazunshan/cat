@@ -581,7 +581,7 @@ const SalesPerformanceView: React.FC = () => {
         
         <div className="flex items-center space-x-4">
           {/* 管理员编辑按钮 */}
-          {(user?.role === 'admin' || user?.role === 'sales') && (
+          {user?.role === 'admin' && (
             isEditing ? (
               <div className="flex items-center space-x-2">
                 <button 
@@ -608,6 +608,16 @@ const SalesPerformanceView: React.FC = () => {
                 编辑数据
               </button>
             )
+          )}
+          
+          {/* 销售员查看提示 */}
+          {user?.role === 'sales' && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-sm text-blue-700">
+              <div className="flex items-center">
+                <Trophy className="w-4 h-4 mr-2" />
+                <span>查看团队业绩排名</span>
+              </div>
+            </div>
           )}
           
           {/* 时间范围切换 */}
