@@ -39,7 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
         id: 'analytics', 
         label: '销售业绩排名', 
         icon: Trophy, 
-        roles: ['admin'] 
+        roles: ['admin','sales'] 
       });
 
     }
