@@ -345,14 +345,14 @@ const SalesPerformanceView: React.FC = () => {
       }
     }));
   };
-
-  if (ordersLoading || customersLoading) {
+  // 只有管理员和销售员可以访问
+  if (user?.role !== 'admin' && user?.role !== 'sales') {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">正在加载销售业绩数据...</p>
-        </div>
+        <p className="text-gray-600">只有管理员和销售员才能访问销售业绩排名</p>
       </div>
     );
   }

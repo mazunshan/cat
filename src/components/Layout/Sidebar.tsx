@@ -36,16 +36,20 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
     // 管理员特有的菜单项
     if (user?.role === 'admin') {
       baseItems.push({ 
-        id: 'analytics', 
-        label: '销售业绩排名', 
-        icon: Trophy, 
-        roles: ['admin'] 
-      });
-      baseItems.push({ 
         id: 'settings', 
         label: '系统设置', 
         icon: Settings, 
         roles: ['admin'] 
+      });
+    }
+
+    // 销售业绩排名 - 销售员和管理员都可以访问
+    if (user?.role === 'admin' || user?.role === 'sales') {
+      baseItems.push({ 
+        id: 'analytics', 
+        label: '销售业绩排名', 
+        icon: Trophy, 
+        roles: ['admin', 'sales'] 
       });
     }
 
