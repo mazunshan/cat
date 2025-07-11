@@ -581,7 +581,7 @@ const SalesPerformanceView: React.FC = () => {
         
         <div className="flex items-center space-x-4">
           {/* 管理员编辑按钮 - 只有管理员可以编辑数据 */}
-          {user?.role === 'admin' && (
+          {(user?.role === 'admin' || user?.role === 'sales') && (
             isEditing ? (
               <div className="flex items-center space-x-2">
                 <button 
