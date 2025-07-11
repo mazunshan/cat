@@ -2,7 +2,7 @@ import React from 'react';
 import { Users, DollarSign, TrendingUp, AlertTriangle, Trash2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import StatsCard from './StatsCard';
-import CustomerMap from './CustomerMap';
+import CustomerRegionStats from './CustomerMap';
 import { useCustomers } from '../../hooks/useDatabase';
 import { useAuth } from '../../context/AuthContext';
 import { Customer, PaymentStatus } from '../../types';
@@ -246,10 +246,10 @@ const DashboardView: React.FC = () => {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Customer Distribution Map */}
-        <div className="lg:col-span-2">
-          <CustomerMap customers={safeCustomers} />
+      <div className="grid grid-cols-1 gap-6">
+        {/* Customer Region Statistics */}
+        <div>
+          <CustomerRegionStats customers={safeCustomers} />
         </div>
       </div>
 
