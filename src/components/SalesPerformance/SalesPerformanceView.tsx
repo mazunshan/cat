@@ -580,7 +580,7 @@ const SalesPerformanceView: React.FC = () => {
         </div>
         
         <div className="flex items-center space-x-4">
-          {/* 管理员编辑按钮 - 只有管理员可以编辑数据 */}
+          {/* 管理员编辑按钮 */}
           {user?.role === 'admin' && (
             isEditing ? (
               <div className="flex items-center space-x-2">
@@ -928,7 +928,7 @@ const SalesPerformanceView: React.FC = () => {
                         </td>
                         {timeRange === 'month' && monthDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-blue-600 min-w-[60px]">
-                            {isEditing && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
                                 min="0"
@@ -943,7 +943,7 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'week' && weekDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-blue-600 min-w-[60px]">
-                            {isEditing && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
                                 min="0"
@@ -958,7 +958,7 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'day' && (
                           <td className="px-4 py-2 text-center text-sm font-medium text-blue-600 min-w-[60px]">
-                            {isEditing && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
                                 min="0"
@@ -980,7 +980,7 @@ const SalesPerformanceView: React.FC = () => {
                         </td>
                         {timeRange === 'month' && monthDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-green-600 min-w-[60px]">
-                            {isEditing && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
                                 min="0"
@@ -995,7 +995,7 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'week' && weekDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-green-600 min-w-[60px]">
-                            {isEditing && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
                                 min="0"
@@ -1010,7 +1010,7 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'day' && (
                           <td className="px-4 py-2 text-center text-sm font-medium text-green-600 min-w-[60px]">
-                            {isEditing && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
                                 min="0"
@@ -1032,7 +1032,7 @@ const SalesPerformanceView: React.FC = () => {
                         </td>
                         {timeRange === 'month' && monthDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-red-600 min-w-[60px]">
-                            {isEditing && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
                                 min="0"
@@ -1047,7 +1047,7 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'week' && weekDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-red-600 min-w-[60px]">
-                            {isEditing && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
                                 min="0"
@@ -1062,7 +1062,7 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'day' && (
                           <td className="px-4 py-2 text-center text-sm font-medium text-red-600 min-w-[60px]">
-                            {isEditing && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
                                 min="0"
@@ -1111,7 +1111,7 @@ const SalesPerformanceView: React.FC = () => {
                         </td>
                         {timeRange === 'month' && monthDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-blue-600 min-w-[60px]">
-                            {isEditing && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
                                 min="0"
@@ -1126,7 +1126,7 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'week' && weekDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-blue-600 min-w-[60px]">
-                            {isEditing && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
                                 min="0"
@@ -1141,7 +1141,7 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'day' && (
                           <td className="px-4 py-2 text-center text-sm font-medium text-blue-600 min-w-[60px]">
-                            {isEditing && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
                                 min="0"
@@ -1163,7 +1163,7 @@ const SalesPerformanceView: React.FC = () => {
                         </td>
                         {timeRange === 'month' && monthDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-green-600 min-w-[60px]">
-                            {isEditing && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
                                 min="0"
@@ -1178,7 +1178,7 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'week' && weekDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-green-600 min-w-[60px]">
-                            {isEditing && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
                                 min="0"
@@ -1193,7 +1193,7 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'day' && (
                           <td className="px-4 py-2 text-center text-sm font-medium text-green-600 min-w-[60px]">
-                            {isEditing && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
                                 min="0"
@@ -1215,7 +1215,7 @@ const SalesPerformanceView: React.FC = () => {
                         </td>
                         {timeRange === 'month' && monthDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-red-600 min-w-[60px]">
-                            {isEditing && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
                                 min="0"
@@ -1230,7 +1230,7 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'week' && weekDays.map(day => (
                           <td key={day.date} className="px-2 py-2 text-center text-xs font-medium text-red-600 min-w-[60px]">
-                            {isEditing && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
                                 min="0"
@@ -1245,7 +1245,7 @@ const SalesPerformanceView: React.FC = () => {
                         ))}
                         {timeRange === 'day' && (
                           <td className="px-4 py-2 text-center text-sm font-medium text-red-600 min-w-[60px]">
-                            {isEditing && user?.role === 'admin' ? (
+                            {isEditing ? (
                               <input
                                 type="number"
                                 min="0"
