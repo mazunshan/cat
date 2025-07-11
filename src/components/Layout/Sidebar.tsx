@@ -20,8 +20,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
       { id: 'customers', label: '客户管理', icon: Users, roles: ['admin', 'sales', 'after_sales'] },
       { id: 'knowledge', label: '知识库', icon: BookOpen, roles: ['admin', 'sales', 'after_sales'] },
       { id: 'announcements', label: '公告管理', icon: Megaphone, roles: ['admin', 'sales', 'after_sales'] },
-      { id: 'financial', label: '收支明细', icon: DollarSign, roles: ['admin'] },
-      { id: 'analytics', label: '销售业绩排名', icon: Trophy, roles: ['admin', 'sales'] }
+      { id: 'financial', label: '收支明细', icon: DollarSign, roles: ['admin'] }
     ];
 
     // 售后专员特有的菜单项
@@ -36,6 +35,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
 
     // 管理员特有的菜单项
     if (user?.role === 'admin') {
+      baseItems.push({ 
+        id: 'analytics', 
+        label: '销售业绩排名', 
+        icon: Trophy, 
+        roles: ['admin'] 
+      });
       baseItems.push({ 
         id: 'settings', 
         label: '系统设置', 
