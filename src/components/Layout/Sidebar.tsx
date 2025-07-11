@@ -43,6 +43,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
       });
 
     }
+    
     // 管理员特有的菜单项
     if (user?.role === 'admin') {
       baseItems.push({ 
