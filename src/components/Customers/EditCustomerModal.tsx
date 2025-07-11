@@ -258,7 +258,7 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
           {/* 备注信息 */}
           <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">备注信息</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
+           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               备注
             </label>
@@ -269,7 +269,7 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ isOpen, onClose, 
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               placeholder="请输入客户备注信息"
             />
-          </div>
+           </div>
           </div>
 
 
