@@ -6,39 +6,39 @@ interface CustomerMapProps {
   customers: Customer[];
 }
 
-// 中国主要省份/直辖市的坐标数据
+// 中国主要省份/直辖市的坐标数据 (基于SVG坐标系统)
 const provinceCoordinates: Record<string, { x: number; y: number; name: string }> = {
-  '北京': { x: 116.4, y: 39.9, name: '北京市' },
-  '上海': { x: 121.5, y: 31.2, name: '上海市' },
-  '天津': { x: 117.2, y: 39.1, name: '天津市' },
-  '重庆': { x: 106.5, y: 29.6, name: '重庆市' },
-  '广东': { x: 113.3, y: 23.1, name: '广东省' },
-  '江苏': { x: 118.8, y: 32.1, name: '江苏省' },
-  '浙江': { x: 120.2, y: 30.3, name: '浙江省' },
-  '山东': { x: 117.0, y: 36.7, name: '山东省' },
-  '河南': { x: 113.6, y: 34.8, name: '河南省' },
-  '四川': { x: 104.1, y: 30.7, name: '四川省' },
-  '湖北': { x: 114.3, y: 30.6, name: '湖北省' },
-  '湖南': { x: 112.9, y: 28.2, name: '湖南省' },
-  '河北': { x: 114.5, y: 38.0, name: '河北省' },
-  '福建': { x: 119.3, y: 26.1, name: '福建省' },
-  '安徽': { x: 117.3, y: 31.9, name: '安徽省' },
-  '辽宁': { x: 123.4, y: 41.8, name: '辽宁省' },
-  '陕西': { x: 108.9, y: 34.3, name: '陕西省' },
-  '江西': { x: 115.9, y: 28.7, name: '江西省' },
-  '山西': { x: 112.5, y: 37.9, name: '山西省' },
-  '黑龙江': { x: 126.6, y: 45.8, name: '黑龙江省' },
-  '吉林': { x: 125.3, y: 43.9, name: '吉林省' },
-  '云南': { x: 102.7, y: 25.0, name: '云南省' },
-  '贵州': { x: 106.7, y: 26.6, name: '贵州省' },
-  '广西': { x: 108.3, y: 22.8, name: '广西壮族自治区' },
-  '新疆': { x: 87.6, y: 43.8, name: '新疆维吾尔自治区' },
-  '内蒙古': { x: 111.7, y: 40.8, name: '内蒙古自治区' },
-  '西藏': { x: 91.1, y: 29.7, name: '西藏自治区' },
-  '宁夏': { x: 106.3, y: 38.5, name: '宁夏回族自治区' },
-  '青海': { x: 101.8, y: 36.6, name: '青海省' },
-  '甘肃': { x: 103.8, y: 36.1, name: '甘肃省' },
-  '海南': { x: 110.3, y: 20.0, name: '海南省' }
+  '北京': { x: 420, y: 180, name: '北京市' },
+  '上海': { x: 520, y: 280, name: '上海市' },
+  '天津': { x: 430, y: 170, name: '天津市' },
+  '重庆': { x: 350, y: 320, name: '重庆市' },
+  '广东': { x: 450, y: 420, name: '广东省' },
+  '江苏': { x: 500, y: 260, name: '江苏省' },
+  '浙江': { x: 520, y: 300, name: '浙江省' },
+  '山东': { x: 460, y: 220, name: '山东省' },
+  '河南': { x: 420, y: 260, name: '河南省' },
+  '四川': { x: 300, y: 320, name: '四川省' },
+  '湖北': { x: 420, y: 300, name: '湖北省' },
+  '湖南': { x: 400, y: 340, name: '湖南省' },
+  '河北': { x: 430, y: 200, name: '河北省' },
+  '福建': { x: 500, y: 360, name: '福建省' },
+  '安徽': { x: 480, y: 280, name: '安徽省' },
+  '辽宁': { x: 500, y: 140, name: '辽宁省' },
+  '陕西': { x: 360, y: 260, name: '陕西省' },
+  '江西': { x: 470, y: 320, name: '江西省' },
+  '山西': { x: 400, y: 220, name: '山西省' },
+  '黑龙江': { x: 520, y: 100, name: '黑龙江省' },
+  '吉林': { x: 510, y: 120, name: '吉林省' },
+  '云南': { x: 280, y: 380, name: '云南省' },
+  '贵州': { x: 320, y: 360, name: '贵州省' },
+  '广西': { x: 380, y: 400, name: '广西壮族自治区' },
+  '新疆': { x: 150, y: 200, name: '新疆维吾尔自治区' },
+  '内蒙古': { x: 380, y: 140, name: '内蒙古自治区' },
+  '西藏': { x: 200, y: 320, name: '西藏自治区' },
+  '宁夏': { x: 360, y: 220, name: '宁夏回族自治区' },
+  '青海': { x: 280, y: 240, name: '青海省' },
+  '甘肃': { x: 320, y: 220, name: '甘肃省' },
+  '海南': { x: 420, y: 480, name: '海南省' }
 };
 
 const CustomerMap: React.FC<CustomerMapProps> = ({ customers }) => {
@@ -121,62 +121,110 @@ const CustomerMap: React.FC<CustomerMapProps> = ({ customers }) => {
       {/* 地图容器 */}
       <div className="relative">
         {/* 中国地图背景 */}
-        <div className="w-full h-80 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg relative overflow-hidden border border-gray-200">
+        <div className="w-full h-96 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg relative overflow-hidden border border-gray-200">
           {/* SVG 中国地图轮廓 */}
           <svg 
             width="100%" 
             height="100%" 
-            viewBox="0 0 800 600" 
+            viewBox="0 0 640 480" 
             className="absolute inset-0"
             style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.1))' }}
           >
-            {/* 中国大陆轮廓 (简化版) */}
+            {/* 中国大陆轮廓 (更准确的形状) */}
             <path
-              d="M 150 180 L 200 160 L 280 140 L 350 130 L 420 140 L 480 160 L 540 180 L 580 220 L 600 280 L 590 340 L 570 380 L 540 420 L 480 450 L 420 460 L 360 450 L 300 440 L 240 420 L 180 380 L 150 340 L 140 280 L 150 220 Z"
-              fill="#E2E8F0"
+              d="M 120 200 
+                 L 140 180 L 160 160 L 200 140 L 240 130 L 280 125 L 320 120 L 360 115 L 400 110 L 440 115 L 480 120 L 520 130 L 540 140 L 560 160 L 570 180 L 575 200 L 580 220 L 585 240 L 590 260 L 595 280 L 600 300 L 595 320 L 590 340 L 580 360 L 570 380 L 555 400 L 540 415 L 520 430 L 500 440 L 480 445 L 460 450 L 440 455 L 420 460 L 400 465 L 380 460 L 360 455 L 340 450 L 320 445 L 300 440 L 280 435 L 260 425 L 240 415 L 220 400 L 200 385 L 185 370 L 170 350 L 160 330 L 155 310 L 150 290 L 145 270 L 140 250 L 135 230 L 130 210 Z"
+              fill="#F1F5F9"
+              stroke="#CBD5E1"
+              strokeWidth="2"
+            />
+            
+            {/* 新疆地区 */}
+            <path
+              d="M 80 160 L 120 140 L 160 150 L 180 170 L 170 200 L 150 220 L 120 230 L 90 220 L 70 200 L 75 180 Z"
+              fill="#F1F5F9"
+              stroke="#CBD5E1"
+              strokeWidth="2"
+            />
+            
+            {/* 西藏地区 */}
+            <path
+              d="M 150 280 L 200 270 L 250 275 L 280 290 L 270 320 L 250 340 L 220 350 L 190 345 L 160 335 L 140 315 L 145 295 Z"
+              fill="#F1F5F9"
+              stroke="#CBD5E1"
+              strokeWidth="2"
+            />
+            
+            {/* 内蒙古地区 */}
+            <path
+              d="M 200 100 L 300 95 L 400 100 L 500 105 L 520 120 L 510 140 L 480 150 L 450 155 L 400 160 L 350 165 L 300 160 L 250 155 L 200 150 L 180 130 L 190 110 Z"
+              fill="#F1F5F9"
+              stroke="#CBD5E1"
+              strokeWidth="2"
+            />
+            
+            {/* 东北地区轮廓 */}
+            <path
+              d="M 480 80 L 520 75 L 560 80 L 580 100 L 575 120 L 570 140 L 550 155 L 530 160 L 510 155 L 490 150 L 475 130 L 470 110 L 475 90 Z"
+              fill="#F1F5F9"
               stroke="#CBD5E1"
               strokeWidth="2"
             />
             
             {/* 海南岛 */}
-            <ellipse cx="320" cy="480" rx="25" ry="15" fill="#E2E8F0" stroke="#CBD5E1" strokeWidth="1"/>
+            <ellipse cx="420" cy="480" rx="25" ry="15" fill="#F1F5F9" stroke="#CBD5E1" strokeWidth="2"/>
             
             {/* 台湾岛 */}
-            <ellipse cx="520" cy="380" rx="15" ry="35" fill="#E2E8F0" stroke="#CBD5E1" strokeWidth="1"/>
+            <ellipse cx="550" cy="380" rx="12" ry="30" fill="#F1F5F9" stroke="#CBD5E1" strokeWidth="2"/>
             
             {/* 省份边界线 (简化) */}
-            <g stroke="#CBD5E1" strokeWidth="1" fill="none" opacity="0.6">
-              <line x1="200" y1="160" x2="300" y2="300" />
-              <line x1="280" y1="140" x2="400" y2="280" />
-              <line x1="350" y1="130" x2="450" y2="250" />
-              <line x1="420" y1="140" x2="500" y2="280" />
-              <line x1="300" y1="200" x2="500" y2="200" />
-              <line x1="250" y1="250" x2="550" y2="250" />
-              <line x1="200" y1="300" x2="580" y2="300" />
-              <line x1="180" y1="350" x2="570" y2="350" />
+            <g stroke="#CBD5E1" strokeWidth="1" fill="none" opacity="0.5">
+              {/* 华北地区分界 */}
+              <line x1="350" y1="160" x2="450" y2="200" />
+              <line x1="400" y1="160" x2="500" y2="180" />
+              
+              {/* 华东地区分界 */}
+              <line x1="450" y1="200" x2="550" y2="250" />
+              <line x1="480" y1="220" x2="580" y2="280" />
+              
+              {/* 华中地区分界 */}
+              <line x1="350" y1="250" x2="500" y2="300" />
+              <line x1="380" y1="280" x2="520" y2="320" />
+              
+              {/* 华南地区分界 */}
+              <line x1="320" y1="350" x2="520" y2="400" />
+              <line x1="350" y1="380" x2="500" y2="420" />
+              
+              {/* 西南地区分界 */}
+              <line x1="250" y1="300" x2="400" y2="380" />
+              <line x1="280" y1="320" x2="380" y2="400" />
+              
+              {/* 西北地区分界 */}
+              <line x1="200" y1="200" x2="350" y2="250" />
+              <line x1="250" y1="180" x2="400" y2="220" />
             </g>
             
-            {/* 地理标识 */}
-            <text x="100" y="120" fontSize="12" fill="#64748B" fontWeight="500">新疆</text>
-            <text x="200" y="100" fontSize="12" fill="#64748B" fontWeight="500">内蒙古</text>
-            <text x="450" y="110" fontSize="12" fill="#64748B" fontWeight="500">黑龙江</text>
-            <text x="350" y="200" fontSize="12" fill="#64748B" fontWeight="500">北京</text>
-            <text x="500" y="250" fontSize="12" fill="#64748B" fontWeight="500">上海</text>
-            <text x="300" y="350" fontSize="12" fill="#64748B" fontWeight="500">广东</text>
-            <text x="150" y="400" fontSize="12" fill="#64748B" fontWeight="500">云南</text>
-            <text x="120" y="300" fontSize="12" fill="#64748B" fontWeight="500">西藏</text>
-            <text x="400" y="320" fontSize="12" fill="#64748B" fontWeight="500">湖南</text>
-            <text x="250" y="280" fontSize="12" fill="#64748B" fontWeight="500">四川</text>
+            {/* 主要城市标识 */}
+            <g fontSize="10" fill="#64748B" fontWeight="500">
+              <text x="100" y="180">新疆</text>
+              <text x="350" y="130">内蒙古</text>
+              <text x="500" y="90">黑龙江</text>
+              <text x="420" y="170">北京</text>
+              <text x="520" y="270">上海</text>
+              <text x="450" y="410">广东</text>
+              <text x="280" y="370">云南</text>
+              <text x="180" y="310">西藏</text>
+              <text x="400" y="330">湖南</text>
+              <text x="300" y="310">四川</text>
+              <text x="460" y="210">山东</text>
+              <text x="420" y="250">河南</text>
+            </g>
           </svg>
 
           {/* 客户分布点 */}
           {Object.entries(customerDistribution).map(([province, data]) => {
             const coords = provinceCoordinates[province];
             if (!coords) return null;
-
-            // 将经纬度转换为SVG坐标系
-            const x = ((coords.x - 73) / (135 - 73)) * 800; // 经度范围大约 73-135
-            const y = ((53 - coords.y) / (53 - 18)) * 600; // 纬度范围大约 18-53，Y轴反转
 
             const size = getCircleSize(data.count);
             const color = getCircleColor(data.count);
@@ -186,8 +234,8 @@ const CustomerMap: React.FC<CustomerMapProps> = ({ customers }) => {
                 key={province}
                 className="absolute transform -translate-x-1/2 -translate-y-1/2 group cursor-pointer z-10"
                 style={{
-                  left: `${(x / 800) * 100}%`,
-                  top: `${(y / 600) * 100}%`
+                  left: `${(coords.x / 640) * 100}%`,
+                  top: `${(coords.y / 480) * 100}%`
                 }}
               >
                 {/* 客户分布圆点 */}
@@ -258,7 +306,7 @@ const CustomerMap: React.FC<CustomerMapProps> = ({ customers }) => {
           </div>
           
           <div className="text-xs text-gray-500">
-            点击圆点查看详细信息
+            悬停查看详细信息
           </div>
         </div>
       </div>
