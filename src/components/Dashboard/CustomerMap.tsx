@@ -120,28 +120,63 @@ const CustomerMap: React.FC<CustomerMapProps> = ({ customers }) => {
 
       {/* 地图容器 */}
       <div className="relative">
-        {/* 简化的中国地图背景 */}
-        <div className="w-full h-80 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg relative overflow-hidden">
-          {/* 地图网格背景 */}
-          <div className="absolute inset-0 opacity-20">
-            <svg width="100%" height="100%" className="text-blue-200">
-              <defs>
-                <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                  <path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" strokeWidth="0.5"/>
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#grid)" />
-            </svg>
-          </div>
+        {/* 中国地图背景 */}
+        <div className="w-full h-80 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg relative overflow-hidden border border-gray-200">
+          {/* SVG 中国地图轮廓 */}
+          <svg 
+            width="100%" 
+            height="100%" 
+            viewBox="0 0 800 600" 
+            className="absolute inset-0"
+            style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.1))' }}
+          >
+            {/* 中国大陆轮廓 (简化版) */}
+            <path
+              d="M 150 180 L 200 160 L 280 140 L 350 130 L 420 140 L 480 160 L 540 180 L 580 220 L 600 280 L 590 340 L 570 380 L 540 420 L 480 450 L 420 460 L 360 450 L 300 440 L 240 420 L 180 380 L 150 340 L 140 280 L 150 220 Z"
+              fill="#E2E8F0"
+              stroke="#CBD5E1"
+              strokeWidth="2"
+            />
+            
+            {/* 海南岛 */}
+            <ellipse cx="320" cy="480" rx="25" ry="15" fill="#E2E8F0" stroke="#CBD5E1" strokeWidth="1"/>
+            
+            {/* 台湾岛 */}
+            <ellipse cx="520" cy="380" rx="15" ry="35" fill="#E2E8F0" stroke="#CBD5E1" strokeWidth="1"/>
+            
+            {/* 省份边界线 (简化) */}
+            <g stroke="#CBD5E1" strokeWidth="1" fill="none" opacity="0.6">
+              <line x1="200" y1="160" x2="300" y2="300" />
+              <line x1="280" y1="140" x2="400" y2="280" />
+              <line x1="350" y1="130" x2="450" y2="250" />
+              <line x1="420" y1="140" x2="500" y2="280" />
+              <line x1="300" y1="200" x2="500" y2="200" />
+              <line x1="250" y1="250" x2="550" y2="250" />
+              <line x1="200" y1="300" x2="580" y2="300" />
+              <line x1="180" y1="350" x2="570" y2="350" />
+            </g>
+            
+            {/* 地理标识 */}
+            <text x="100" y="120" fontSize="12" fill="#64748B" fontWeight="500">新疆</text>
+            <text x="200" y="100" fontSize="12" fill="#64748B" fontWeight="500">内蒙古</text>
+            <text x="450" y="110" fontSize="12" fill="#64748B" fontWeight="500">黑龙江</text>
+            <text x="350" y="200" fontSize="12" fill="#64748B" fontWeight="500">北京</text>
+            <text x="500" y="250" fontSize="12" fill="#64748B" fontWeight="500">上海</text>
+            <text x="300" y="350" fontSize="12" fill="#64748B" fontWeight="500">广东</text>
+            <text x="150" y="400" fontSize="12" fill="#64748B" fontWeight="500">云南</text>
+            <text x="120" y="300" fontSize="12" fill="#64748B" fontWeight="500">西藏</text>
+            <text x="400" y="320" fontSize="12" fill="#64748B" fontWeight="500">湖南</text>
+            <text x="250" y="280" fontSize="12" fill="#64748B" fontWeight="500">四川</text>
+          </svg>
 
           {/* 客户分布点 */}
           {Object.entries(customerDistribution).map(([province, data]) => {
             const coords = provinceCoordinates[province];
             if (!coords) return null;
 
-            // 将经纬度转换为相对位置 (简化计算)
-            const x = ((coords.x - 73) / (135 - 73)) * 100; // 经度范围大约 73-135
-            const y = ((53 - coords.y) / (53 - 18)) * 100; // 纬度范围大约 18-53，Y轴反转
+            // 将经纬度转换为SVG坐标系
+            const x = ((coords.x - 73) / (135 - 73)) * 800; // 经度范围大约 73-135
+            const y = ((53 - coords.y) / (53 - 18)) * 600; // 纬度范围大约 18-53，Y轴反转
 
             const size = getCircleSize(data.count);
             const color = getCircleColor(data.count);
@@ -149,25 +184,26 @@ const CustomerMap: React.FC<CustomerMapProps> = ({ customers }) => {
             return (
               <div
                 key={province}
-                className="absolute transform -translate-x-1/2 -translate-y-1/2 group cursor-pointer"
+                className="absolute transform -translate-x-1/2 -translate-y-1/2 group cursor-pointer z-10"
                 style={{
-                  left: `${Math.max(5, Math.min(95, x))}%`,
-                  top: `${Math.max(5, Math.min(95, y))}%`
+                  left: `${(x / 800) * 100}%`,
+                  top: `${(y / 600) * 100}%`
                 }}
               >
                 {/* 客户分布圆点 */}
                 <div
-                  className="rounded-full border-2 border-white shadow-lg transition-all duration-200 group-hover:scale-125"
+                  className="rounded-full border-2 border-white shadow-lg transition-all duration-200 group-hover:scale-125 group-hover:shadow-xl"
                   style={{
                     width: `${size}px`,
                     height: `${size}px`,
-                    backgroundColor: color
+                    backgroundColor: color,
+                    boxShadow: `0 0 0 2px white, 0 4px 12px rgba(0,0,0,0.15)`
                   }}
                 />
                 
                 {/* 悬浮提示 */}
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                  <div className="bg-gray-900 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap">
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">
+                  <div className="bg-gray-900 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-lg">
                     <div className="font-medium">{coords.name}</div>
                     <div>{data.count} 位客户</div>
                     {/* 小箭头 */}
@@ -179,9 +215,21 @@ const CustomerMap: React.FC<CustomerMapProps> = ({ customers }) => {
           })}
 
           {/* 地图标题 */}
-          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm">
+          <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm border border-gray-200">
             <div className="text-sm font-medium text-gray-800">中国客户分布图</div>
             <div className="text-xs text-gray-600">圆点大小表示客户数量</div>
+          </div>
+
+          {/* 指南针 */}
+          <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm rounded-lg p-2 shadow-sm border border-gray-200">
+            <div className="w-8 h-8 relative">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-6 h-6 border-2 border-gray-300 rounded-full relative">
+                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-0 h-0 border-l-2 border-r-2 border-b-4 border-transparent border-b-red-500"></div>
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold text-gray-600">N</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -191,22 +239,26 @@ const CustomerMap: React.FC<CustomerMapProps> = ({ customers }) => {
             <div className="text-sm text-gray-600">客户密度:</div>
             <div className="flex items-center space-x-3">
               <div className="flex items-center">
-                <div className="w-3 h-3 rounded-full bg-red-500 mr-1"></div>
+                <div className="w-4 h-4 rounded-full bg-red-500 mr-2 border border-white shadow-sm"></div>
                 <span className="text-xs text-gray-600">高</span>
               </div>
               <div className="flex items-center">
-                <div className="w-3 h-3 rounded-full bg-amber-500 mr-1"></div>
+                <div className="w-4 h-4 rounded-full bg-amber-500 mr-2 border border-white shadow-sm"></div>
                 <span className="text-xs text-gray-600">中</span>
               </div>
               <div className="flex items-center">
-                <div className="w-3 h-3 rounded-full bg-green-500 mr-1"></div>
+                <div className="w-4 h-4 rounded-full bg-green-500 mr-2 border border-white shadow-sm"></div>
                 <span className="text-xs text-gray-600">低</span>
               </div>
               <div className="flex items-center">
-                <div className="w-3 h-3 rounded-full bg-gray-500 mr-1"></div>
+                <div className="w-4 h-4 rounded-full bg-gray-500 mr-2 border border-white shadow-sm"></div>
                 <span className="text-xs text-gray-600">极低</span>
               </div>
             </div>
+          </div>
+          
+          <div className="text-xs text-gray-500">
+            点击圆点查看详细信息
           </div>
         </div>
       </div>
@@ -219,7 +271,7 @@ const CustomerMap: React.FC<CustomerMapProps> = ({ customers }) => {
             .sort(([,a], [,b]) => b.count - a.count)
             .slice(0, 12) // 只显示前12个地区
             .map(([province, data]) => (
-              <div key={province} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+              <div key={province} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                 <span className="text-sm text-gray-700 truncate">{province}</span>
                 <span className="text-sm font-medium text-blue-600 ml-2">{data.count}</span>
               </div>
